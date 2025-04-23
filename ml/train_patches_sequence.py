@@ -419,6 +419,9 @@ class BlockTrainer:
         Loss function that aims to match the Lukas-Kanade optical flow from recr_a -> recr_b to match tgt_a -> tgt_b.
         """
 
+        if recr_a.shape[0] < 2:
+            return torch.tensor([0.0], dtype=torch.float32, device=device)
+
         flow_recr = self.lk_evaluator(recr_a, recr_b)
         flow_tgt = self.lk_evaluator(tgt_a, tgt_b)
 
