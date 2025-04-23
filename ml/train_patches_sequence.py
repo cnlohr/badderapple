@@ -397,7 +397,7 @@ class BlockTrainer:
         self.lk_evaluator = PyramidalLK(window_size=9, max_levels=None).to(device)
 
         # Weighting factor for LK flow loss
-        self.flow_lambda = 0.04
+        self.flow_lambda = 0.01
 
         os.makedirs(self.out_data_dir, exist_ok=False)
         os.makedirs(self.out_blocks_dir, exist_ok=False)
@@ -418,8 +418,18 @@ class BlockTrainer:
         """
         Loss function that aims to match the Lukas-Kanade optical flow from recr_a -> recr_b to match tgt_a -> tgt_b.
         """
+
         flow_recr = self.lk_evaluator(recr_a, recr_b)
         flow_tgt = self.lk_evaluator(tgt_a, tgt_b)
+
+        # Mask out areas where there are no edges
+        # Bad Apple has a lot of big static regions.
+        # While flow may be defined in blank areas due to window sizes and neighboring motion, it's probably wrong.
+        edge_recr_a = torch.hypot(*torch.gradient(recr_a, dim=(-1, -2)))
+        edge_tgt_a = torch.hypot(*torch.gradient(tgt_a, dim=(-1, -2)))
+
+        flow_recr = torch.where(edge_recr_a > 0, flow_recr, 0.0)
+        flow_tgt = torch.where(edge_tgt_a > 0, flow_tgt, 0.0)
 
         return torch.mean(torch.square(flow_recr - flow_tgt))
 
