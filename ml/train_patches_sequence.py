@@ -434,6 +434,11 @@ class BlockTrainer:
         flow_recr = torch.where(edge_recr_a > 0, flow_recr, 0.0)
         flow_tgt = torch.where(edge_tgt_a > 0, flow_tgt, 0.0)
 
+        # Given the tile-based nature of compression, it's likely motion may not line up exactly in the same spot
+        # Reduce the resolution at which we compare flow
+        flow_recr = F.avg_pool2d(flow_recr[-1], 4, 4)
+        flow_tgt = F.avg_pool2d(flow_tgt[-1], 4, 4)
+
         return torch.mean(torch.square(flow_recr - flow_tgt))
 
     def train(self):
