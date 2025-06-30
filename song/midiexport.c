@@ -268,7 +268,7 @@ int main( int argc, char ** argv )
 		struct NoteEvent * e = &AllNoteEvents[k];
 		if( e->Track == 5 )
 		{
-			e->Note = e->Note - minnoteby[5] + 64;
+			e->Note = e->Note - minnoteby[5] + 128;
 			e->OffTime = (e->OffTime - e->OnTime) * 2 + e->OnTime;
 		}
 	}
@@ -312,8 +312,9 @@ int main( int argc, char ** argv )
 			uint8_t note_and_track = e->Note - minnote; // | (e->Track<<7);  XXX TODO: IF we want track data, add this back.
 			uint16_t duration = (e->OffTime - e->OnTime + 1);
 			int eNextTime = ( i > 0 ) ? (e+1)->OnTime : 0;
-			uint16_t deltatime = (eNextTime - e->OnTime + 1 + 10); // +10 = round up.
+			uint16_t deltatime = (eNextTime - e->OnTime + 1); // +1 = round up.
 
+			// Make sure last note has an ending.
 			if( i == notehead - 1 ) deltatime = 120*16;
 
 			if( duration/120-1 > 31 )
@@ -321,6 +322,8 @@ int main( int argc, char ** argv )
 				fprintf( stderr, "Error: Warning: Note Too Long (at %d %d/%d) (Trk: %d Note: %d Duration:%d (trunc dur %d))\n", e->OnTime, e->OriginalID, notehead, e->Track, e->Note, duration, duration/120-1 );
 				duration = 120*12;
 			}
+
+			// Check special cases.
 			if( deltatime/120 == 7 )
 			{
 				fprintf( stderr, "Error: Warning: Interval Is exactly 7; special case, not allowed. (%d/%d) (Trk: %d Note: %d Duration:%d OnTime:%d)\n", e->OriginalID, notehead, e->Track, e->Note, duration, e->OnTime );

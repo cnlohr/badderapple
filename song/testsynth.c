@@ -4,7 +4,7 @@
 
 #define MAXNOTES 65536
 #define F_SPS 48000
-#define TIMESCALE ((F_SPS*60)/(138*4))
+#define TIMESCALE ((F_SPS*60)/(138*8))
 #define NUM_VOICES 4
 
 int main()
@@ -33,6 +33,10 @@ int main()
 	int trun = 0;
 	int playout = 0;
 	int ending = 0;
+	int noiselfsr = 1;
+	int noisetremain = 0;
+	int noisenote = 0;
+
 	for( t = 0; t < tend; t++ )
 	{
 //		fprintf( stderr, "T: %d\n", t );
@@ -49,26 +53,46 @@ int main()
 
 		while( t >= nexttrel && !ending )
 		{
+			int tnote = ( (next_note >> 8 ) & 0xff) + 47;
+			int astop = ( (next_note >> 3 ) & 0x1f) + t + 1;
 
-			int i;
-			for( i = 0; i < NUM_VOICES; i++ )
+			if( tnote < 128 )
 			{
-				if( voices[i] == 0 ) break;
-			}
-			if( i == NUM_VOICES )
-			{
-				fprintf( stderr, "WARNING: At time %d, too many voices\n", t );
+				int i;
+				for( i = 0; i < NUM_VOICES; i++ )
+				{
+					if( voices[i] == 0 ) break;
+				}
+				if( i == NUM_VOICES )
+				{
+					fprintf( stderr, "WARNING: At time %d, too many voices (Adding %d)\n", t, tnote );
+					int k;
+					for( k = 0; k < NUM_VOICES; k++ )
+					{
+						fprintf( stderr, " %d: %d  %d %d\n", k, voices[k], tstop[k], t );
+					}
+				}
+				else
+				{
+					voices[i] = tnote;
+					tstop[i] = astop;
+					fprintf( stderr, "Adding @%d [%04x] %d %d %d (%d/%d) [%d]\n", t, next_note,
+						voices[i], ((next_note >> 3) & 0x1f), next_note & 0x7, t, tstop[i], i );
+					fsin[i] = 0;
+				}
 			}
 			else
 			{
-				voices[i] = ( (next_note >> 8 ) & 0xff) + 47;
-				tstop[i] = ((next_note >> 3) & 0x1f) + t + 1;
-				fprintf( stderr, "Adding @%d [%04x] %d %d (%d/%d) [%d]\n", t, next_note, voices[i], ((next_note >> 3) & 0x1f), t, tstop[i], i );
-				fsin[i] = 0;
+				noisenote = tnote;
+				noisetremain = (astop-t)*1024;
+
+				fprintf( stderr, "Noise @%d [%04x] %d %d %d (%d/%d) [%d]\n", t, next_note,
+						voices[i], ((next_note >> 3) & 0x1f), next_note & 0x7, t, tstop[i], i );
 			}
 
 			int endurement = ((next_note) & 0x7);
 			if( endurement == 7 ) endurement = 8; // XXX Special case scenario at ending.
+			if( endurement == 6 ) endurement = 16; // XXX Special case scenario at ending.
 			nexttrel = t + endurement;
 			fprintf( stderr, "NEXT: LEN %d -> %d -> %d (%04x)\n", endurement, t, nexttrel, next_note );
 
@@ -133,6 +157,19 @@ int main()
 
 				fsin[i] += f / F_SPS * 3.1415926 * 2.0;
 			}
+
+			if( noisenote )
+			{
+				float noisef = noiselfsr/(65536.0) - 0.5;
+				int bit = ((noiselfsr >> 0) ^ (noiselfsr >> 2) ^ (noiselfsr >> 3) ^ (noiselfsr >> 5)) & 1u;
+				noiselfsr = (noiselfsr>>1) | (bit<<15);
+				float noisep = noisetremain / 4096.0;
+				noisetremain--;
+				if( noisep > 0.2 ) noisep = 0.2;
+				if( noisep < 0 ) noisep = 0;
+				sample += noisef * noisep;
+			}
+
 			//fprintf( stderr, "%f\n", sample );
 			fwrite( &sample, 1, 4, stdout );
 //			fflush( stdout );
