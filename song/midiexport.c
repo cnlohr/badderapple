@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
+#include <limits.h>
 
 int place = 0;
 
@@ -75,6 +76,7 @@ struct NoteEvent
 	int Track;
 	int Note;
 	int Velocity;
+	int OriginalID;
 };
 
 int NoteCompare( const void * a, const void *b )
@@ -124,11 +126,9 @@ int main( int argc, char ** argv )
 	int trk;
 	int timenow = 0;
 	int highesttime = 0;
-
-	int minnote = 255;
-	int maxnote = 0;
-
 	struct NoteEvent * lastNote[128] = { 0 };	
+	int minnoteby[16] = { 0 };
+	int maxnoteby[16] = { 0 };
 
 	for( trk = 0; trk < numTracks; trk++ )
 	{
@@ -136,6 +136,10 @@ int main( int argc, char ** argv )
 		int len = read4();
 		int trkend = place + len;
 		timenow = 0;
+
+		int tminnote = INT_MAX;
+		int tmaxnote = INT_MIN;
+
 		while( place != trkend )
 		{
 			int timed = readvar();
@@ -175,6 +179,8 @@ int main( int argc, char ** argv )
 					else
 						e->OffTime = timenow;
 					//fprintf( stderr, "Note off %d %02x %02x\n", minor, a, b );
+					if( e )
+						fprintf( stderr, "id:%d t:%d trk:%d note:%d vel:%d len:%d\n", e->OriginalID, e->OnTime, e->Track, e->Note, e->Velocity, e->OffTime - e->OnTime );
 					lastNote[a] = 0;
 					break;
 				case 0x90:
@@ -188,18 +194,27 @@ int main( int argc, char ** argv )
 						lastNote[a]->OffTime = timenow;
 					}
 
+					if( trk == 7 || trk == 6 )
+					{
+						fprintf( stderr, "Note: Not emitting track %d.\n", trk );
+						break;
+					}
 
-					struct NoteEvent * e = &AllNoteEvents[notehead++];
+					struct NoteEvent * e = &AllNoteEvents[notehead];
+					e->OriginalID = notehead;
+					notehead++;
 					if( MAX_NOTE_EVENTS == notehead ) FATAL( "Too many notes\n" );
 					e->OnTime = timenow;
 					e->Track = trk;
 					e->Note = a;
 
-					if( e->Note < minnote ) minnote = e->Note;
-					if( e->Note > maxnote ) maxnote = e->Note;
+
+					if( a > tmaxnote ) tmaxnote = a;
+					if( a < tminnote ) tminnote = a;
 
 					e->Velocity = b;
 					lastNote[a] = e;
+
 					//fprintf( stderr, "Note on  %d %02x %02x\n", minor, a, b );
 					break;
 				}
@@ -222,6 +237,48 @@ int main( int argc, char ** argv )
 			}
 			if( place > trkend )
 				FATAL( "Track overrun" );
+		}
+		fprintf( stderr, "Min note: %d\n", tminnote );
+		fprintf( stderr, "Max note: %d\n", tmaxnote );
+		minnoteby[trk] = tminnote;
+		maxnoteby[trk] = tmaxnote;
+	}
+
+
+	int minnote = INT_MAX;
+	int maxnote = INT_MIN;
+
+
+	int k;
+	for( k = 0; k < notehead; k++ )
+	{
+		struct NoteEvent * e = &AllNoteEvents[k];
+		if( e->Track < 5 )
+		{
+			if( e->Note < minnote ) minnote = e->Note;
+			if( e->Note > maxnote ) maxnote = e->Note;
+		}
+	}
+
+
+	fprintf( stderr, "Middle Min Note: %d - %d\n", minnote, maxnote );
+
+	for( k = 0; k < notehead; k++ )
+	{
+		struct NoteEvent * e = &AllNoteEvents[k];
+		if( e->Track == 5 )
+		{
+			e->Note = e->Note - minnoteby[5] + 64;
+			e->OffTime = (e->OffTime - e->OnTime) * 2 + e->OnTime;
+		}
+	}
+
+	for( k = 0; k < notehead; k++ )
+	{
+		struct NoteEvent * e = &AllNoteEvents[k];
+		if( e->Track == 5 )
+		{
+			if( e->Note > maxnote ) maxnote = e->Note;
 		}
 	}
 
@@ -255,25 +312,39 @@ int main( int argc, char ** argv )
 			uint8_t note_and_track = e->Note - minnote; // | (e->Track<<7);  XXX TODO: IF we want track data, add this back.
 			uint16_t duration = (e->OffTime - e->OnTime + 1);
 			int eNextTime = ( i > 0 ) ? (e+1)->OnTime : 0;
-			uint16_t deltatime = (eNextTime - e->OnTime + 1);
+			uint16_t deltatime = (eNextTime - e->OnTime + 1 + 10); // +10 = round up.
+
+			if( i == notehead - 1 ) deltatime = 120*16;
 
 			if( duration/120-1 > 31 )
 			{
-				fprintf( stderr, "Error: Warning: Note Too Long (at %d/%d/%d)\n", e->OnTime, i, notehead );
+				fprintf( stderr, "Error: Warning: Note Too Long (at %d %d/%d) (Trk: %d Note: %d Duration:%d (trunc dur %d))\n", e->OnTime, e->OriginalID, notehead, e->Track, e->Note, duration, duration/120-1 );
 				duration = 120*12;
 			}
 			if( deltatime/120 == 7 )
 			{
-				fprintf( stderr, "Error: Warning: Interval Is exactly 7; special case, not allowed.\n" );
+				fprintf( stderr, "Error: Warning: Interval Is exactly 7; special case, not allowed. (%d/%d) (Trk: %d Note: %d Duration:%d OnTime:%d)\n", e->OriginalID, notehead, e->Track, e->Note, duration, e->OnTime );
 				deltatime = 7*120;
 			}
+			if( deltatime/120 == 6 )
+			{
+				fprintf( stderr, "Error: Warning: Interval Is exactly 6; special case, not allowed. (%d/%d) (Trk: %d Note: %d Duration:%d OnTime:%d)\n", e->OriginalID, notehead, e->Track, e->Note, duration, e->OnTime );
+				deltatime = 6*120;
+			}
+
+			// Special deltas.
 			if( deltatime/120 == 8 )
 			{
 				deltatime = 7*120;
 			}
-			if( deltatime/120 > 8 )
+			if( deltatime/120 == 16 )
 			{
-				fprintf( stderr, "Error: Warning: Interval Too Long (at %d/%d/%d) (%d)\n", e->OnTime, i, notehead, deltatime );
+				deltatime = 6*120;
+			}
+
+			if( deltatime/120 >= 8 )
+			{
+				fprintf( stderr, "Error: Warning: Interval Too Long (at %d %d/%d) (%d subsec: %d) (Trk: %d Note: %d OnTime:%d)\n", e->OnTime, e->OriginalID, notehead, deltatime, deltatime/120, e->Track, e->Note, e->OnTime );
 				deltatime = 7*120;
 			}
 			uint8_t combda = (((duration/120)-1)<<3) + (deltatime/120); 

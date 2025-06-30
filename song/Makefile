@@ -5,8 +5,8 @@ CFLAGS:=-Og -g -I../common
 midiexport : midiexport.c
 	gcc $(CFLAGS) -o $@ $^ -lm
 
-fmraw.dat : midiexport BadApple-mod.mid
-	./midiexport < BadApple-mod.mid
+fmraw.dat : midiexport badderapple.mid
+	./midiexport < badderapple.mid
 
 track-float-48000.dat : testsynth fmraw.dat
 	./testsynth  > track-float-48000.dat
