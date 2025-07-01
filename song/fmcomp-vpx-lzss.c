@@ -447,7 +447,8 @@ int main()
 	sum += treeSizeLenAndRun;
 	sum += dtLenAndRun.numUnique * 1;
 
-	printf( "Total: %d\n", sum );
+	printf( "Total Bytes:\n" );
+	printf( "%d\n", sum );
 
 //	printf( "Synth LUT: %d\n", treeSizeNotes * 2 );
 

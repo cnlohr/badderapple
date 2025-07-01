@@ -742,6 +742,7 @@ int main()
 	printf( "Huff Tree (D): %d bytes\n", htnlen2 );
 #endif
 	printf( "Written Data: %d bytes\n", total_bytes );
-	printf( "TOTAL: %d bytes\n", htnlen + htnlen2 + total_bytes );
+	printf( "TOTAL bytes:\n" );
+	printf( "%d\n", htnlen + htnlen2 + total_bytes );
 	return 0;
 }

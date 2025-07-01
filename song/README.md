@@ -16,13 +16,13 @@ To do sanity checks, I decided to compare the compression a few steps along the 
 
 TODO: Add %ages. TODO: REWRITE
 
-| Compression | .xml | .json (jq formatting) | .json.min | .mid | .dat | 
+| Compression | .xml | .json (jq formatted) | .json.min | .mid | .dat | 
 | -- | -- | -- | -- | -- | -- |
-| uncompressed | 218988 | 152034 | 87019 | 17707 | 3824 |
-| [heatshrink](https://github.com/atomicobject/heatshrink) | 32958 | 23742 | 16291 | 3199 | 1127
-| gzip -9      | 12346 | 11799 | 10920 | 1329 | 737 |
-| zstd -9      | 10726 | 10235 | 9532 | 1332 | 764 |
-| bzip2 -9     | 9233 | 9198 | 9096 | 1442 | 894 |
+| uncompressed | 217686 | 150802 | 85855 | 17707 | 3820 |
+| [heatshrink](https://github.com/atomicobject/heatshrink) | 32497 | 23376 | 15644 | 3199 | 1060 |
+| gzip -9      | 12001 | 11458 | 10590 | 1329 | 682 |
+| zstd -9      | 10052 | 9480 | 8877 | 1332 | 724 |
+| bzip2 -9     | 8930 | 8800 | 8676 | 1442 | 830 |
 
 Curiously for small payloads, it looks like gzip outperforms zstd, in spite of zstd having 40 years to improve over it. This is not a fluke, and has been true for many of my test song datasets.
 
@@ -32,23 +32,24 @@ There's an issue, all of the good ones in this list these are state of the art a
 
 | Compression | Size |
 | -- | -- |
-| Raw .dat | 3824 |
-| Huffman (1 table) | 1858 |
-| Huffman (2 table) | 1760 |
-| Huffman (3 table) | 1608 |
-| VPX (no LZSS) | 1780 |
-| VPX (entropy LZSS) | 682 |
-| Huffman (2 table+reverse LZSS) | 930 |
+| Raw .dat | 3820 |
+| Huffman (1 table) | 1644 |
+| Huffman (3 table) | 1516 |
+| VPX (no LZSS) | 1680 |
+| VPX (LZSS, non-lzss) | TODO |
+| VPX (entropy-coded LZSS) | 673 |
+| Huffman (2-table+Regular LZSS) | TODO |
+| Huffman (2 table+reverse LZSS) | 848 |
 
 Note the uptick in size because to use VPX, you have to have a probability table, and huffman tables can be used in lower compression arenas to more effectivity. 
 
-I tried doing huffman + LZSS but it got unweildy.
+TODO: REVISIT SECTION:
 
-Then I decided to do a 1/2 hour experiment, and hook up VPX (with probability trees) with LZSS, (heatshrink-style).  For the old dataset it was 600 bytes, and for the pargraph below, 554 bytes.
+XXXX: THIS TEST WAS WRONG Then I decided to do a 1/2 hour experiment, and hook up VPX (with probability trees) with LZSS, (heatshrink-style).  For the old dataset it was 600 bytes, and for the pargraph below, 673 bytes.
 
-I then also used entropy coding to encode the run lengths and indexes where I assumed the numbers were smaller, so for small jumps, it would use less bits, and it went down to 741 bytes.
+I then also used entropy coding to encode the run lengths and indexes where I assumed the numbers were smaller, so for small jumps, it would use less bits, and it went down to 673 bytes.
 
-So, not only is our decoder only about 50 lines of code, significantly simpler than any of the big boy compression algorithms... It can even beat every one of our big boy compressors except for gzip and even then, just by a byte.
+So, not only is our decoder only about 50 lines of code, significantly simpler than any of the big boy compression algorithms... It can even beat every one of our big boy compressors!
 
 **TODO**: I want to test what happens if I store a probability table for the various bit places for the LZSS values to optimally encode each LZSS entry.  This would likely be a huge boon on large files.
 

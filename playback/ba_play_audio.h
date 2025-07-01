@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <math.h>
+#include <string.h>
 
 #ifndef BAS_DECORATOR
 #define BAS_DECORATOR
@@ -257,7 +258,6 @@ static inline void perform_16th_note( struct ba_audio_player_t * player )
 		}
 
 		int endurement = ((note) & 0x7);
-		if( endurement == 6 ) { endurement = 16; } // XXX Special case
 		if( endurement == 7 ) { endurement = 8; } // XXX Special case scenario at ending.
 
 		int duration = ((note >> 3) & 0x1f);
