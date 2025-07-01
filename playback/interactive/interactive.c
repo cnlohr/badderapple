@@ -60,6 +60,7 @@ uint8_t out_buffer_data[AUDIO_BUFFER_SIZE];
 ba_play_context ctx;
 
 uint64_t * audio_notes_playing_by_sixteenth;
+int * noise_playing_by_sixteenth;
 int highest_sixteenth;
 int * audio_notes_playing_by_sixteenth_to_cpid;
 float * audioOut = 0;
@@ -98,10 +99,12 @@ struct checkpoint
 	int audio_nexttrel;
 	int audio_ending;
 	int audio_t;
-	int audio_gotnotes;
 	int audio_sub_t_sample;
 	int audio_outbufferhead;
 	int audio_stackplace;
+
+	int audio_noisesum;
+	int audio_noisetremain;
 
 	int frame;
 	int vframe;
@@ -153,10 +156,12 @@ void ba_i_checkpoint()
 	cp->audio_nexttrel = ba_player.nexttrel;
 	cp->audio_ending = ba_player.ending;
 	cp->audio_t = ba_player.t;
-	cp->audio_gotnotes = ba_player.gotnotes;
 	cp->audio_sub_t_sample = ba_player.sub_t_sample;
 	cp->audio_outbufferhead = ba_player.outbufferhead;
 	cp->audio_stackplace = ba_player.stackplace;
+
+	cp->audio_noisesum = ba_player.noisesum;
+	cp->audio_noisetremain = ba_player.noisetremain;
 
 	cp->audio_sample_data = cpp ? cpp->audio_sample_data : 0 ;
 	cp->audio_sample_data_frame = cpp ? cpp->audio_sample_data_frame : -1;
@@ -182,8 +187,10 @@ void ba_i_checkpoint()
 	{
 		audio_notes_playing_by_sixteenth = realloc( audio_notes_playing_by_sixteenth, (audio_sixteenth+1) * sizeof( audio_notes_playing_by_sixteenth[0] ) );
 		audio_notes_playing_by_sixteenth_to_cpid = realloc( audio_notes_playing_by_sixteenth_to_cpid, (audio_sixteenth+1) * sizeof( audio_notes_playing_by_sixteenth_to_cpid[0] ) );
+		noise_playing_by_sixteenth = realloc( noise_playing_by_sixteenth, (audio_sixteenth+1)* sizeof( noise_playing_by_sixteenth[0] ) );
 		memset( &audio_notes_playing_by_sixteenth[highest_sixteenth+1], 0, sizeof( audio_notes_playing_by_sixteenth[0] ) * (audio_sixteenth-audio_sixteenth) );
 		memset( &audio_notes_playing_by_sixteenth_to_cpid[highest_sixteenth+1], 0, sizeof( audio_notes_playing_by_sixteenth_to_cpid[0] ) * (audio_sixteenth-audio_sixteenth) );
+		memset( &noise_playing_by_sixteenth[highest_sixteenth+1], 0, sizeof( noise_playing_by_sixteenth[0] ) * (audio_sixteenth-audio_sixteenth) );
 		highest_sixteenth = audio_sixteenth+1;
 	}
 
@@ -193,6 +200,7 @@ void ba_i_checkpoint()
 		(((uint64_t)ba_player.playing_freq[2])<<32) |
 		(((uint64_t)ba_player.playing_freq[3])<<48);
 	audio_notes_playing_by_sixteenth_to_cpid[audio_sixteenth] = nrcheckpoints;
+	noise_playing_by_sixteenth[audio_sixteenth] = cp->audio_noisetremain;
 
 	nrcheckpoints++;
 	//printf( "NRC: %d\n", nrcheckpoints );
@@ -902,7 +910,7 @@ void DrawVPX( Clay_RenderCommand * render )
 
 	float fx = b.x;
 	float fy = b.y;
-	char vs[25] = { 0 };
+	char vs[64] = { 0 };
 
 	int i;
 
@@ -1242,14 +1250,15 @@ void DrawAudioTrack( Clay_RenderCommand * render )
 		if( sxth < 0 ) continue;
 		if( sxth >= highest_sixteenth ) continue;
 		uint64_t sixteenth = audio_notes_playing_by_sixteenth[sxth];
+		int sixteenthnoise = noise_playing_by_sixteenth[sxth];
 		int n = 0;
 		for( n = 0; n < 4; n++ )
 		{
 			int fr = (sixteenth >> (16*n))&0xffff;
+			float relpos = sxth - cp->audio_sixteenth - partial;
 			if( fr )
 			{
 				float note = 7.1-log(fr);
-				float relpos = sxth - cp->audio_sixteenth - partial;
 				CNFGColor( ( sxth > center_audio_sixteenth ) ? 0xf0f0f018 : 0xc0c0c0b0 );
 				CNFGTackRectangle( xst + sper*relpos, b.y + yst * note, xst + sper*(relpos+1), b.y + yst * note + 10 );
 			}
@@ -1261,9 +1270,14 @@ void DrawAudioTrack( Clay_RenderCommand * render )
 
 				if( !fr ) continue;
 				float note = 7.1-log(fr);
-				float relpos = sxth - cp->audio_sixteenth - partial;
 				CNFGColor( 0xffffffff );
 				CNFGTackRectangle( xst + sper*relpos, b.y + yst * note, xst + sper*(relpos+stop-sxth), b.y + yst * note + 10 );
+			}
+
+			if( sixteenth )
+			{
+				int sxpl = 4;
+				CNFGTackRectangle( xst + sper*relpos, b.y + yst * sxpl, xst + sper*(relpos+10), b.y + yst * sxpl + 10 );
 			}
 		}
 	}
@@ -1416,6 +1430,10 @@ void DrawCellStateAudio( Clay_RenderCommand * render )
 	else if( cp->decodephase == "AUDIO: Processed Note" )
 	{
 		DrawFormat( fx+b.width/2-8, fy+4, -2, 0xffffffff, "Processed Note" );
+	}
+	else if( cp->decodephase == "AUDIO: Processed Noise" )
+	{
+		DrawFormat( fx+b.width/2-8, fy+4, -2, 0xffffffff, "Processed Noise" );
 	}
 	else if( cp->decodephase == "AUDIO: Reading Length and Run" )
 	{

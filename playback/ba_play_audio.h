@@ -83,10 +83,12 @@ struct ba_audio_player_t
 	int nexttrel;
 	int ending;
 	int t;
-	int gotnotes;
 	int sub_t_sample;
 	int outbufferhead;
 	int stackplace;
+	int16_t noiselfsr;
+	int16_t noisetremain;
+	int     noisesum;
 	uint16_t   playing_freq[NUM_VOICES];
 	uint16_t   phase[NUM_VOICES];
 	int        tstop[NUM_VOICES];
@@ -172,6 +174,7 @@ static void ba_audio_setup()
 	struct ba_audio_player_t * player = &ba_player;
 	memset( player, 0, sizeof( *player ) );
 	player->stack[0].remain = ESPBADAPPLE_SONG_LENGTH + 1;
+	player->noiselfsr = 1;
 	CHECKPOINT( audio_stack_place = 0, audio_stack_remain = player->stack[0].remain, audio_stack_offset = player->stack[0].offset );
 }
 
@@ -246,11 +249,25 @@ static inline void perform_16th_note( struct ba_audio_player_t * player )
 	while( player->t >= player->nexttrel && !player->ending )
 	{
 		int note = ba_audio_pull_note( player );
+
 		if( note < 0 )
 		{
 			CHECKPOINT( decodephase = "AUDIO: Ending" );
 			player->ending = 1;
 			break;
+		}
+
+		int endurement = ((note) & 0x7);
+		if( endurement == 6 ) { endurement = 16; } // XXX Special case
+		if( endurement == 7 ) { endurement = 8; } // XXX Special case scenario at ending.
+
+		int duration = ((note >> 3) & 0x1f);
+
+		if( (note>>8) == 81 )
+		{
+			CHECKPOINT( decodephase = "AUDIO: Processed Noise" );
+			player->nexttrel = player->t + endurement;
+			player->noisetremain = duration << 10;
 		}
 		else
 		{
@@ -266,10 +283,8 @@ static inline void perform_16th_note( struct ba_audio_player_t * player )
 			else
 			{
 				player->playing_freq[i] = frequencies[note >> 8];
-				player->tstop[i] = ((note >> 3) & 0x1f) + player->t + 1;
+				player->tstop[i] = duration + player->t + 1;
 				//player->phase[i] = 16384; // TODO: Do we want to randomize this to get some variety?  For now, let's try it in the center?  We could randomize by just not setting it.  TODO Try this.
-				int endurement = ((note) & 0x7);
-				if( endurement == 7 ) { endurement = 8; } // XXX Special case scenario at ending.
 				//printf( "%d %d %d STOP: %d  ENDURE: %d\n", ((note >> 3) & 0x1f), note & 7, note>>8, player->tstop[i], endurement );
 				player->nexttrel = player->t + endurement;
 				//printf( "%d\n", player->nexttrel );
@@ -317,6 +332,21 @@ int ba_audio_fill_buffer( volatile uint8_t * outbuffer, int outbuffertail )
 				if( ts >= 32768 ) ts = 65536-ts;
 				sample += ts;
 			}
+		}
+
+		int ntr = player->noisetremain;
+		if( ntr > 0 )
+		{
+			int l = player->noiselfsr;
+			if( ( outbufferhead & 3 ) == 0 )
+			{
+				int bit = ((l >> 0) ^ (l >> 2) ^ (l >> 3) ^ (l >> 5)) & 1u;
+				l = player->noiselfsr = (l>>1) | (bit<<15);
+				player->noisetremain = ntr - 1;
+				if( ntr > 255 ) ntr = 255;
+				player->noisesum = (l * ntr);
+			}
+			sample += player->noisesum;
 		}
 
 		outbuffer[outbufferhead] = (volatile uint32_t)((sample >> (1+8)));
