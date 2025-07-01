@@ -11,7 +11,7 @@
 // Allow referencing things in the past.
 // Kind of arbitrary tuning.
 const int MinRL = 2;
-const int MRBits = 10;
+const int MRBits = 11;
 const int RLBits = 8;
 const int MaxREV = (1<<MRBits)-1;
 const int MaxRL = (1<<RLBits)-1;
@@ -213,7 +213,7 @@ int main()
 				Prob1RL[k] += is1;
 				emit_best_rl>>=1;
 			}
-			if( emit_best_rl ) fprintf( stderr, "ERROR: Invalid RL Emitted %d remain\n", emit_best_rl );
+			if( emit_best_rl ) { fprintf( stderr, "ERROR: Invalid RL Emitted %d remain\n", emit_best_rl ); exit( -5 ); }
 
 			for( k = 0; k < MRBits; k++ )
 			{
@@ -221,7 +221,7 @@ int main()
 				Prob1MR[k] += is1;
 				offset>>=1;
 			}
-			if( offset ) fprintf( stderr, "ERROR: Invalid offset Emitted %d remain\n", offset );
+			if( offset ) { fprintf( stderr, "ERROR: Invalid offset Emitted %d remain\n", offset ); exit( -5 ); }
 		}
 		else
 		{

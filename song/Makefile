@@ -1,4 +1,4 @@
-all : testsynth midiexport fmcomp-vpx-lzss track-float-48000.dat
+all : testsynth midiexport fmcomp-vpx-lzss track-float-48000.dat 
 
 CFLAGS:=-Og -g -I../common
 
@@ -27,6 +27,8 @@ test-vpx-lzss : test-vpx-lzss.c
 testsynth : testsynth.c
 	gcc $(CFLAGS) -o $@ $^ -lm
 
+fmraw.dat.jq.json : fmraw.dat.json
+	cat fmraw.dat.json | jq > fmraw.dat.jq.json
 
 # Another try with huffman
 
@@ -36,7 +38,7 @@ fmcomp-huffman-reverselzss2 : fmcomp-huffman-reverselzss2.c
 ../playback/badapple_song_huffman_reverselzss.h : fmcomp-huffman-reverselzss2 fmraw.dat
 	./fmcomp-huffman-reverselzss2
 
-COMPLIST:=fmraw.dat.json.jq fmraw.dat.json fmraw.dat.xml fmraw.dat BadApple-mod.mid
+COMPLIST:=fmraw.dat.json.jq fmraw.dat.json fmraw.dat.xml fmraw.dat badder-apple-only-kick-track.mid
 
 sizecomp : fmraw.dat heatshrink
 	cat fmraw.dat.json | jq > fmraw.dat.json.jq

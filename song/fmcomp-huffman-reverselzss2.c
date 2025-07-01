@@ -29,8 +29,8 @@
 #include "hufftreegen.h"
 
 const int MinRL = 2;
-#define OFFSET_MINIMUM 7
-#define MAX_BACK_DEPTH 18
+#define OFFSET_MINIMUM 4
+#define MAX_BACK_DEPTH 64
 
 #define INCLUDE_RUN_LENGTH_IN_BACK_TRACK_OFFSET 1
 
@@ -626,7 +626,10 @@ int main()
 			int dm = DecodeMatch( s, completeNoteList + i, numNotes - i, &depth );
 			//printf( "Check [at byte %d]: %d -> %d -> %d\n", i, s, dm, depth );
 			int sderate = (log(bitcount-s+1)/log(2)) / 9;
-			if( dm - sderate > bestrl )
+			if( dm - sderate > bestrl && 
+				// Tricky - make sure that for our decided OFFSET_MINIMUM, we can emit it.
+				bitcount - s - OFFSET_MINIMUM - dm*INCLUDE_RUN_LENGTH_IN_BACK_TRACK_OFFSET >= 0
+			)
 			{
 				bestrl = dm;
 				bests = s;

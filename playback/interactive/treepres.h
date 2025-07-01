@@ -21,8 +21,7 @@ void PerformTreeRelax( struct treepresnode * tree, int nodes )
 {
 	int springs[nodes*2][2]; // Cannot be more springs than nodes*2.
 	int springct = 0;
-	const float idealspringsize = 38;
-	const float springforce_base = 0.060;
+	const float springforce_base = 0.050;
 	float repelforce;
 	float springforce = springforce_base;
 	int i;

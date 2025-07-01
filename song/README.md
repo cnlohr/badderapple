@@ -12,17 +12,19 @@ In general this is a cover of the "Bad Apple" version by Alstroemeria Records fe
 
 ## Results
 
-To do sanity checks, I decided to compare the compression a few steps along the way.  (All sizes in octets (bytes))
+To do sanity checks, I decided to compare the compression a few steps along the way.  The compression test dataset for the .dat is the `fmraw.dat` generated file which contains a binary encoding for note, delta time and length.  (All sizes in octets (bytes))
+
+TODO: Add %ages. TODO: REWRITE
 
 | Compression | .xml | .json (jq formatting) | .json.min | .mid | .dat | 
 | -- | -- | -- | -- | -- | -- |
-| uncompressed | 160952 | 111498 | 63483 | 12755 | 2824 |
-| [heatshrink](https://github.com/atomicobject/heatshrink) | 23926 | 17599 | 11255 | 2345 | 889
-| gzip -9      | 9145 | 8662 | 7986 | 1042 | 577 |
-| zstd -9      | 7245 | 6828 | 6429 | 1042 | 611 |
-| bzip2 -9     | 6818 | 6692 | 6518 | 1105 | 725 |
+| uncompressed | 218988 | 152034 | 87019 | 17707 | 3824 |
+| [heatshrink](https://github.com/atomicobject/heatshrink) | 32958 | 23742 | 16291 | 3199 | 1127
+| gzip -9      | 12346 | 11799 | 10920 | 1329 | 737 |
+| zstd -9      | 10726 | 10235 | 9532 | 1332 | 764 |
+| bzip2 -9     | 9233 | 9198 | 9096 | 1442 | 894 |
 
-Curiously for small payloads, it looks like gzip outperforms zstd, in spite of zstd having 40 years to improve over it.
+Curiously for small payloads, it looks like gzip outperforms zstd, in spite of zstd having 40 years to improve over it. This is not a fluke, and has been true for many of my test song datasets.
 
 There's an issue, all of the good ones in this list these are state of the art algorithms requiring a pretty serious OS to decode.  What if we only wan to run on a microcontroller?
 
@@ -30,26 +32,23 @@ There's an issue, all of the good ones in this list these are state of the art a
 
 | Compression | Size |
 | -- | -- |
-| Raw .dat | 2824 |
-| Huffman (1 table) | 1378 |
-| Huffman (2 table) | 1312 |
-| Huffman (3 table) | 1245 |
-| VPX (no LZSS) | 1209 |
-| VPX (non-entropy LZSS) | 602 |
-| VPX (entropy LZSS) | 547 |
-| Huffman (2 table+reverse LZSS) | 672 |
+| Raw .dat | 3824 |
+| Huffman (1 table) | 1858 |
+| Huffman (2 table) | 1760 |
+| Huffman (3 table) | 1608 |
+| VPX (no LZSS) | 1780 |
+| VPX (entropy LZSS) | 682 |
+| Huffman (2 table+reverse LZSS) | 930 |
 
 Note the uptick in size because to use VPX, you have to have a probability table, and huffman tables can be used in lower compression arenas to more effectivity. 
 
 I tried doing huffman + LZSS but it got unweildy.
 
-Then I decided to do a 1/2 hour experiment, and hook up VPX (with probability trees) with LZSS, (heatshrink-style).  
+Then I decided to do a 1/2 hour experiment, and hook up VPX (with probability trees) with LZSS, (heatshrink-style).  For the old dataset it was 600 bytes, and for the pargraph below, 554 bytes.
 
-600 bytes on the first try.
+I then also used entropy coding to encode the run lengths and indexes where I assumed the numbers were smaller, so for small jumps, it would use less bits, and it went down to 741 bytes.
 
-I then also used entropy coding to encode the run lengths and indexes where I assumed the numbers were smaller, so for small jumps, it would use less bits, and it went down to a final amount of **554 bytes**!
-
-So, not only is our decoder only about 50 lines of code, orders of magnitude simpler than any of the big boy compression algorithms... It eeks out just a little more compression than they can muster!
+So, not only is our decoder only about 50 lines of code, significantly simpler than any of the big boy compression algorithms... It can even beat every one of our big boy compressors except for gzip and even then, just by a byte.
 
 **TODO**: I want to test what happens if I store a probability table for the various bit places for the LZSS values to optimally encode each LZSS entry.  This would likely be a huge boon on large files.
 

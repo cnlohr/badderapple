@@ -8,7 +8,6 @@
 #define BAS_DECORATOR
 #endif
 #include "badapple_song_huffman_reverselzss.h"
-#include "vpxcoding_tinyread.h"
 
 #ifndef F_SPS
 #define F_SPS (46875)
@@ -86,7 +85,7 @@ struct ba_audio_player_t
 	int sub_t_sample;
 	int outbufferhead;
 	int stackplace;
-	int16_t noiselfsr;
+	uint16_t noiselfsr;
 	int16_t noisetremain;
 	int     noisesum;
 	uint16_t   playing_freq[NUM_VOICES];
@@ -263,7 +262,7 @@ static inline void perform_16th_note( struct ba_audio_player_t * player )
 
 		int duration = ((note >> 3) & 0x1f);
 
-		if( (note>>8) == 81 )
+		if( (note>>8) == 33 )
 		{
 			CHECKPOINT( decodephase = "AUDIO: Processed Noise" );
 			player->nexttrel = player->t + endurement;
@@ -278,11 +277,12 @@ static inline void perform_16th_note( struct ba_audio_player_t * player )
 
 			if( i == NUM_VOICES )
 			{
-				WARNING( "WARNING: At time %d, too many voices\n", player->t );
+				WARNING( "WARNING: At time %d, trying to add note %d, too many voices\n", player->t, note>>8 );
 			}
 			else
 			{
 				player->playing_freq[i] = frequencies[note >> 8];
+				player->phase[i] = 0;
 				player->tstop[i] = duration + player->t + 1;
 				//player->phase[i] = 16384; // TODO: Do we want to randomize this to get some variety?  For now, let's try it in the center?  We could randomize by just not setting it.  TODO Try this.
 				//printf( "%d %d %d STOP: %d  ENDURE: %d\n", ((note >> 3) & 0x1f), note & 7, note>>8, player->tstop[i], endurement );
@@ -342,9 +342,9 @@ int ba_audio_fill_buffer( volatile uint8_t * outbuffer, int outbuffertail )
 			{
 				int bit = ((l >> 0) ^ (l >> 2) ^ (l >> 3) ^ (l >> 5)) & 1u;
 				l = player->noiselfsr = (l>>1) | (bit<<15);
-				player->noisetremain = ntr - 1;
-				if( ntr > 255 ) ntr = 255;
-				player->noisesum = (l * ntr);
+				player->noisetremain = ntr - 32;
+				if( ntr > 2048 ) ntr = 2048;
+				player->noisesum = (l * ntr)>>14;
 			}
 			sample += player->noisesum;
 		}
