@@ -21,7 +21,7 @@ void PerformTreeRelax( struct treepresnode * tree, int nodes )
 {
 	int springs[nodes*2][2]; // Cannot be more springs than nodes*2.
 	int springct = 0;
-	const float springforce_base = 0.050;
+	const float springforce_base = 0.030;
 	float repelforce;
 	float springforce = springforce_base;
 	int i;
@@ -181,16 +181,16 @@ void SetNodePos( struct treepresnode * n, struct treepresnode * t )
 			atv = atan2( vpmex, vpmey );
 		}
 		
-		float oang = atv + (n->isone ? 1.5707963 : -1.5707963) / (t->depth + 3.0);
-		n->x = t->x + cos( oang ) * idealspringsize * (t->depth + 3.0);
-		n->y = t->y + sin( oang ) * idealspringsize * (t->depth + 3.0);
+		float oang = atv + (n->isone ? 1.5707963 : -1.5707963) / (t->depth + 6.0);
+		n->x = t->x + cos( oang ) * idealspringsize * (t->depth + 6.0);
+		n->y = t->y + sin( oang ) * idealspringsize * (t->depth + 6.0);
 	}
 	else
 	{
 		// The root is our parent.
 		float oang = n->isone ? 3.14159 : 0;
-		n->x = t->x + cos( oang ) * idealspringsize * (t->depth + 3.0);
-		n->y = t->y + sin( oang ) * idealspringsize * (t->depth + 3.0);
+		n->x = t->x + cos( oang ) * idealspringsize * (t->depth + 6.0);
+		n->y = t->y + sin( oang ) * idealspringsize * (t->depth + 6.0);
 	}
 }
 

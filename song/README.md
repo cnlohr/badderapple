@@ -36,25 +36,33 @@ There's an issue, all of the good ones in this list these are state of the art a
 | Huffman (1 table) | 1644 |
 | Huffman (3 table) | 1516 |
 | VPX (no LZSS) | 1680 |
-| VPX (entropy-coded LZSS) | 673 |
-| Huffman (2-table+Regular LZSS) | 880 |
-| Huffman (2 table+reverse LZSS) | 848 |
+| VPX (entropy LZSS) | 673 |
+| Huffman (2-table+LZSS) | 704 |
+| Huffman (2 table+reverse LZSS)† | 856 |
 
-Note the uptick in size because to use VPX, you have to have a probability table, and huffman tables can be used in lower compression arenas to more effectivity. 
+† we used this on the final project.  See rationale below.
 
-TODO: REVISIT SECTION:
+Note: these tests were generated with `make sizecomp` the code for several of these tests is in the `attic/` folder.
 
-XXXX: THIS TEST WAS WRONG Then I decided to do a 1/2 hour experiment, and hook up VPX (with probability trees) with LZSS, (heatshrink-style).  For the old dataset it was 600 bytes, and for the pargraph below, 673 bytes.
+Note, when not using lzss, the uptick in size because to use VPX, you have to have a probability table, and huffman tables can be used in lower compression arenas to more effectivity.
 
-I then also used entropy coding to encode the run lengths and indexes where I assumed the numbers were smaller, so for small jumps, it would use less bits, and it went down to 673 bytes.
+I decided to do a 1/2 hour experiment, and hook up VPX (with probability trees) with LZSS, (heatshrink-style).  It was down to around 720 bytes... But I then also used entropy coding to encode the run lengths and indexes where I assumed the numbers were smaller, so for small jumps, it would use less bits, and the size went down to 673 bytes!
 
 So, not only is our decoder only about 50 lines of code, significantly simpler than any of the big boy compression algorithms... It can even beat every one of our big boy compressors!
 
-**TODO**: I want to test what happens if I store a probability table for the various bit places for the LZSS values to optimally encode each LZSS entry.  This would likely be a huge boon on large files.
+This VPX solution perform VPX coding on the notes, note-lengths, and time between notes.  But it **also** perform vpx coding on the LZSS callbacks.
 
-The huffman and other VPX coding mechanisms can be found in the `attic/` folder.
+I decided to go back to huffman, mostly for the sake of the video and visualization! It also gave me a chance to express Exponential-Golomb coding.
 
-## Mechanism
+To compare apples-to-relatively-apples, I decided to do a huffman approach, with LZSS backtracking using Exponential-Golomb coding.  It was 704 bytes, just a little less compressed, at 704 bytes.
+
+There's one **big issue** with LZSS, it assumes you can refer back to an earlier part of your stream. This is great when you have lots of RAM, but not great if you are strapped for RAM resources.  So, I took a different approach. I'm going to call it reverse LZSS, which assumes you have no decomrpession buffer.  So this would be suitable for systems where RAM is extremely limited.
+
+Instead of referring back to earlier emitted bytes, we refer back to another part of the bitstream.  From there, the bistream also may refer back to an earlier part of the bistream, with varying lengths, etc.  Compression using reverse lzss is quite costly, because it simulates emitting the bits the whole way along.  I was happy to give up ~150 bytes of storage in exchange for a massive RAM savings.
+
+While we do need to remember where we were in our callback-stack, like which bit we were decoding before the last callback and how many notes to go, that works out to a very small amout of RAM.
+
+## Testing
 
 To produce the audio file for use with ffmpeg, `track-float-48000.dat`, as well as producing `badapple_song.h` in the `playback/` folder, you can use the following command:
 

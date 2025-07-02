@@ -28,11 +28,12 @@
 #define HUFFER_IMPLEMENTATION
 #include "hufftreegen.h"
 
-const int MinRL = 2;
-#define OFFSET_MINIMUM 4
-#define MAX_BACK_DEPTH 64
+const int MinRL = 3;
+#define OFFSET_MINIMUM 3
+#define MAX_BACK_DEPTH 16
 
 #define INCLUDE_RUN_LENGTH_IN_BACK_TRACK_OFFSET 1
+#define COMPCOSTTRADEOFF 6
 
 FILE * fData, *fD;
 
@@ -91,6 +92,29 @@ static inline int BitsForNumber( unsigned number )
 	y = x >> 1; if (y != 0) return 32 - (n - 2);
 	return 32 - (n - x);
 #endif
+}
+
+
+int ExpGolombCost( int ib )
+{
+	ib++;
+	int bitsemit = 0;
+	int bits = (ib == 0) ? 1 : BitsForNumber( ib );
+	int i;
+	for( i = 1; i < bits; i++ )
+	{
+		bitsemit++;
+	}
+
+	if( bits )
+	{
+		for( i = 0; i < bits; i++ )
+		{
+			bitsemit++;
+		}
+	}
+
+	return bitsemit;
 }
 
 
@@ -291,7 +315,7 @@ int main()
 		int searchStart = 0; //i - MaxREV - MaxRL - MinRL;
 		if( searchStart < 0 ) searchStart = 0;
 		int s;
-		int bestrl = 0, bestrunstart = 0;
+		int bestrl = 0, bestrunstart = 0, bestcompcost = 0;
 		for( s = searchStart; s <= i; s++ )
 		{
 			int ml;
@@ -310,7 +334,9 @@ int main()
 				if( completeNoteList[ml] != completeNoteList[mlc] ) break;
 			}
 
-			if( rl > bestrl )
+			int compcost = ExpGolombCost( rl ) + ExpGolombCost( i-s);
+
+			if( rl*4-compcost > bestrl*4 - bestcompcost  )
 			{
 				bestrl = rl;
 				bestrunstart = s;
@@ -620,19 +646,25 @@ int main()
 		int bestrl = -1;
 		int bests = -1;
 		int s = 0;
+		int bestcompcost = 0;
+
 		for( s = bitcount - 1; s >= 0; s-- )
 		{
 			int depth = 0;
 			int dm = DecodeMatch( s, completeNoteList + i, numNotes - i, &depth );
 			//printf( "Check [at byte %d]: %d -> %d -> %d\n", i, s, dm, depth );
-			int sderate = (log(bitcount-s+1)/log(2)) / 9;
-			if( dm - sderate > bestrl && 
+
+			//int sderate = (log(bitcount-s+1)/log(2)) / 9;
+			int compcost = ExpGolombCost( dm ) + ExpGolombCost( bitcount-s );
+
+			if( dm*COMPCOSTTRADEOFF - compcost /*- sderate*/ > bestrl*COMPCOSTTRADEOFF - bestcompcost && 
 				// Tricky - make sure that for our decided OFFSET_MINIMUM, we can emit it.
 				bitcount - s - OFFSET_MINIMUM - dm*INCLUDE_RUN_LENGTH_IN_BACK_TRACK_OFFSET >= 0
 			)
 			{
 				bestrl = dm;
 				bests = s;
+				bestcompcost = compcost;
 			}
 		}
 		if( bestrl > MinRL )
