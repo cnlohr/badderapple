@@ -1333,8 +1333,8 @@ void DrawCellStateAudioHuffman( Clay_RenderCommand * render )
 	for( i = 0; i < ct; i++ )
 	{
 		struct treepresnode * n = tree + i;
-		float ox = n->x + b.width/2;
-		float oy = n->y + b.height/2;
+		float ox = (int)(n->x + b.width/2);
+		float oy = (int)(n->y + b.height/2);
 
 		ox -= cx;
 		oy -= cy;
