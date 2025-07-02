@@ -47,6 +47,7 @@ make index.html
 
 #### ML
 
+
 ```bash
 cd comp2
 make clean tiles-64x48x8.dat
@@ -101,37 +102,6 @@ Then, I spent a while talking to my brother and his wife, both PhD's in math, an
 But, then, in early 2024, things really got into high gear again, because WCH, the creators of the CH32V003, announced other chips in the series with FLASH ranging from 32kB to 62kB, so it was time for the rubber to hit the road again.
 
 I implemented a k-means approach, and wowee! The tiles that came out of k-means was AMAZING!!!
-
-### Other notes
- * I got 15% savings when I broke the "run length" and "glyph ID" fields apart.
- * When having split tables, I tried exponential-golomb coding, and it didn't help.  Savings was not worth it.
- * Tride VPX with tiles, it was awful.
- * Tried VPX with RLE.  It beat huffman. (USE_VPX_LEN)
-   * Huffman tree RLE (451878 bits)
-   * VPX originally per tile (441250 bits)
-   * VPX when unified (440610 bits)!!
- * Show original with SKIP_FIRST_AFTER_TRANSITION
- * But could we have the holy grail?  Could we not skip transitions?
-
-Story arc:
- * RLE/Tiles/etc in raster mode.
- * Do it per tile, in time.
- * Don't run multiple unique streams.
-
-After Full VPX
-         Run:157208 bits / bytes: 19651
-         Run:140136 bits / bytes: 17517
- * But we know more, what if we consider the previous value? - Need another 256-byte table.
-         Run:151848 bits / bytes: 18981
-         Run:135120 bits / bytes: 16890
- * The missstep of VPX_CODING_ALLOW_BACKTRACK
- * Always do A/B tests, so the absolut doesn't matter but doing A/B to compare them more broadly.
-
-
-... lots of steps
-...
-
- * Inverting run data goes from 63365 to 63282... Totes not worth it.
 
 Any time you do an experiment with this you make headway.  It feels like recent AI research.
 
@@ -305,5 +275,38 @@ https://tiplanet.org/forum/viewtopic.php?t=24951
  * Graph 75+E - ac100v - 1.27MB - 85x63, Full Video - Unknown Technique
  * Graph 90+E - Loieducode / Gooseling - 64x56, Greyscale
  * Numworks - Probably very large - M4x1m3 - 320x240
- * fx-92 College 2D+ - - 96x31 - 
+ * fx-92 College 2D+ - - 96x31
+
+### Other notes
+ * I got 15% savings when I broke the "run length" and "glyph ID" fields apart.
+ * When having split tables, I tried exponential-golomb coding, and it didn't help.  Savings was not worth it.
+ * Tride VPX with tiles, it was awful.
+ * Tried VPX with RLE.  It beat huffman. (USE_VPX_LEN)
+   * Huffman tree RLE (451878 bits)
+   * VPX originally per tile (441250 bits)
+   * VPX when unified (440610 bits)!!
+ * Show original with SKIP_FIRST_AFTER_TRANSITION
+ * But could we have the holy grail?  Could we not skip transitions?
+
+Story arc:
+ * RLE/Tiles/etc in raster mode.
+ * Do it per tile, in time.
+ * Don't run multiple unique streams.
+
+After Full VPX
+         Run:157208 bits / bytes: 19651
+         Run:140136 bits / bytes: 17517
+ * But we know more, what if we consider the previous value? - Need another 256-byte table.
+         Run:151848 bits / bytes: 18981
+         Run:135120 bits / bytes: 16890
+ * The missstep of VPX_CODING_ALLOW_BACKTRACK
+ * Always do A/B tests, so the absolut doesn't matter but doing A/B to compare them more broadly.
+
+
+... lots of steps
+...
+
+ * Inverting run data goes from 63365 to 63282... Totes not worth it.
+
+
  
