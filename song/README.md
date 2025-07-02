@@ -36,9 +36,8 @@ There's an issue, all of the good ones in this list these are state of the art a
 | Huffman (1 table) | 1644 |
 | Huffman (3 table) | 1516 |
 | VPX (no LZSS) | 1680 |
-| VPX (LZSS, non-lzss) | TODO |
 | VPX (entropy-coded LZSS) | 673 |
-| Huffman (2-table+Regular LZSS) | TODO |
+| Huffman (2-table+Regular LZSS) | 880 |
 | Huffman (2 table+reverse LZSS) | 848 |
 
 Note the uptick in size because to use VPX, you have to have a probability table, and huffman tables can be used in lower compression arenas to more effectivity. 
