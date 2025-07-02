@@ -1,24 +1,7 @@
 
-// TODO: NOTE:
-//   There are some serious optimizations that are possible even from here.
-//      1. Instead of outputting a 1 or a 0 bit for every symbol or reverse pull.
-//         This is tricky though, because, you would need to "cork" the output and
-//         rewrite it once you know the proper length.  When we tested it, it only
-//         saved about 10 bytes, so we decided it was not worth it.
-//
-//      2. There is a silly optimization, to save 8 bytes, we can always include
-//         the run length in the "how far to go back" this makes no sense and just
-//         happens to make things smaller.  It was pure happenstance.
-//
-// General format:
-//   Pull off a bit.
-//       If 1: Back reference.  Pull off a UE for Run Length, Pull off UE for Run Offset.
-//          Put a bookmark where you are, go back and keep pulling
-//       If 0: Emit the literal.
-//   Subtract 1 from the run length.
-//   If run length == 0, pop up a level.
-//   Go back to step 1.
-
+// This is a general lzss enabled huffman compression technique, similar to gzip.
+// This was dead-ended because it uses too much RAM to decode.
+// WARNING WARNING: The output of this code has not been validated.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,20 +11,13 @@
 #define HUFFER_IMPLEMENTATION
 #include "hufftreegen.h"
 
-const int MinRL = 3;
-#define OFFSET_MINIMUM 3
-#define MAX_BACK_DEPTH 16
+const int MinRL = 1;
+#define OFFSET_MINIMUM 2
 
-#define INCLUDE_RUN_LENGTH_IN_BACK_TRACK_OFFSET 1
-#define COMPCOSTTRADEOFF 6
+#define COMPCOSTTRADEOFF 7
+
 
 FILE * fData, *fD;
-
-// Combine run + note + length
-//#define SINGLETABLE
-
-// Combine run + note + length
-//#define SINGLETABLE
 
 // Huffman generation trees.
 huffup * hu;
@@ -93,7 +69,6 @@ static inline int BitsForNumber( unsigned number )
 	return 32 - (n - x);
 #endif
 }
-
 
 int ExpGolombCost( int ib )
 {
@@ -189,6 +164,7 @@ int PullHuff( int * bp, huffelement * he )
 	} while( 1 );
 }
 
+#if 0
 int DecodeMatch( int startbit, uint32_t * notes_to_match, int length_max_to_match, int * depth )
 {
 //	printf( "RMRS: %d\n", startbit );
@@ -255,6 +231,7 @@ int DecodeMatch( int startbit, uint32_t * notes_to_match, int length_max_to_matc
 	//printf( "Match End: %d >= %d\n", matchno, length_max_to_match );
 	return matchno;
 }
+#endif
 
 int main()
 {
@@ -315,16 +292,13 @@ int main()
 		int searchStart = 0; //i - MaxREV - MaxRL - MinRL;
 		if( searchStart < 0 ) searchStart = 0;
 		int s;
-		int bestrl = 0, bestrunstart = 0, bestcompcost = 0;
+		int bestcompcost = 0, bestrl = 0, bestrunstart = 0;
 		for( s = searchStart; s <= i; s++ )
 		{
 			int ml;
 			int mlc;
 			int rl;
-
-			// Midway through a backseek.  Can't use it.
-//			if( bitmaplocation[s] < 0 ) continue;
-//			if( bitmaplocation[s] < bitcount - MaxREV ) continue;
+			int compcost;
 
 			for( 
 				ml = s, mlc = i, rl = 0;
@@ -334,15 +308,17 @@ int main()
 				if( completeNoteList[ml] != completeNoteList[mlc] ) break;
 			}
 
-			int compcost = ExpGolombCost( rl ) + ExpGolombCost( i-s);
+			compcost = ExpGolombCost( rl ) + ExpGolombCost( i-s );
 
-			if( rl*4-compcost > bestrl*4 - bestcompcost  )
+			if( rl*COMPCOSTTRADEOFF - compcost > bestrl*COMPCOSTTRADEOFF - bestcompcost )
 			{
 				bestrl = rl;
+				bestcompcost = compcost;
 				bestrunstart = s;
 			}
 		}
 		if( bestrl > MinRL )
+
 		{
 			//printf( "Found Readback at %d (%d %d) (D: %d)\n", i, i-bestrunstart, bestrl, i-bestrunstart-bestrl );
 			i += bestrl-1;
@@ -371,17 +347,13 @@ int main()
 		int pitch = nv>>8;
 		if( pitch > nHighestNote ) nHighestNote = pitch;
 		if( pitch < nLowestNote ) nLowestNote = pitch;
-#ifdef SINGLETABLE
-		int note = nv;
-#else
+
 		int note = nv>>8;
 		int len = nv&0xff;
-#endif
+
 		if( note >= highestNoteCnt ) highestNoteCnt = note+1;
 		numsym = HuffmanAppendHelper( &symbols, &symcounts, numsym, note );
-#ifndef SINGLETABLE
 		numlens = HuffmanAppendHelper( &lenss, &lencountss, numlens, len );
-#endif
 	}
 
 
@@ -392,19 +364,18 @@ int main()
 	int htlen = 0;
 	hu = GenPairTable( he, &htlen );
 
-#ifndef SINGLETABLE
 	int hufflenl;
 	hel = GenerateHuffmanTree( lenss, lencountss, numlens, &hufflenl );
 
 	int htlenl = 0;
 	hul = GenPairTable( hel, &htlenl );
-#endif
 
 	float principal_length_note = 0;
 	float huffman_length_note = 0;
 	float principal_length_rl = 0;
 	float huffman_length_rl = 0;
 
+	printf( "Emitted syms/lens: %d/%d  Num Reg:%d Num rev:%d\n", numsym, numlens, numReg,numRev );
 	// Total notes = numReg
 	printf( "NOTES:\n" );
 
@@ -421,7 +392,7 @@ int main()
 
 		printf( "\n" );
 	}
-#ifndef SINGLETABLE
+
 	printf( "LENS:\n" );
 	for( i = 0; i < htlenl; i++ )
 	{
@@ -436,7 +407,6 @@ int main()
 
 		printf( "\n" );
 	}
-#endif
 
 	printf( "Expected Huffman Length Note: %.0f bits\n", huffman_length_note );
 	printf( "Principal Length Note: %.0f bits\n", principal_length_note );
@@ -451,7 +421,7 @@ int main()
 	FILE * fTL = fopen( "huffTL_fmraw.dat", "wb" );
 	fD = fopen( "huffD_fmraw.dat", "wb" );
 
-	fData = fopen( "../playback/badapple_song_huffman_reverselzss.h", "wb" );
+	fData = fopen( "../playback/badapple_song_huffman_forwardlzss.h", "wb" );
 
 	fprintf( fData, "#ifndef ESPBADAPPLE_SONG_H\n" );
 	fprintf( fData, "#define ESPBADAPPLE_SONG_H\n\n" );
@@ -459,14 +429,24 @@ int main()
 
 	fprintf( fData, "#define ESPBADAPPLE_SONG_MINRL %d\n", MinRL );
 	fprintf( fData, "#define ESPBADAPPLE_SONG_OFFSET_MINIMUM %d\n", OFFSET_MINIMUM );
-	fprintf( fData, "#define ESPBADAPPLE_SONG_MAX_BACK_DEPTH %d\n", MAX_BACK_DEPTH );
-	fprintf( fData, "#define ESPBADAPPLE_SONG_MAX_BACK_DEPTH %d\n", MAX_BACK_DEPTH );
 	fprintf( fData, "#define ESPBADAPPLE_SONG_HIGHEST_NOTE %d\n", nHighestNote );
 	fprintf( fData, "#define ESPBADAPPLE_SONG_LOWEST_NOTE %d\n", nLowestNote );
 	fprintf( fData, "#define ESPBADAPPLE_SONG_LENGTH %d\n", numNotes );
 
 	fprintf( fData, "\n" );
 	fprintf( fData, "BAS_DECORATOR uint16_t espbadapple_song_huffnote[%d] = {\n\t", hufflen - numsym );
+
+
+	int emit_bits_class = 0;
+	int emit_bits_backtrack = 0;
+	int actualRev = 0;
+	int actualReg = 0;
+	int emit_bits_data = 0;
+
+	int bitmaplocation[numNotes];
+
+
+	// Emit tables
 	int maxpdA = 0;
 	int maxpdB = 0;
 	int htnlen = 0;
@@ -515,7 +495,6 @@ int main()
 
 	int htnlen2 = 0;
 
-#ifndef SINGLETABLE
 	fprintf( fData, "BAS_DECORATOR uint16_t espbadapple_song_hufflen[%d] = {\n\t", hufflenl - numlens );
 
 	maxpdA = 0;
@@ -561,7 +540,146 @@ int main()
 	}
 
 	fprintf( fData, "};\n\n" );
+
+
+
+
+	// Pass 2 - actually emit.
+	for( i = 0; i < numNotes; i++ )
+	{
+		// Search for repeated sections.
+		int searchStart = 0; //i - MaxREV - MaxRL - MinRL;
+		if( searchStart < 0 ) searchStart = 0;
+		int s;
+		int bestrl = 0, bestcompcost = 0, bestrunstart = 0;
+		for( s = searchStart; s <= i; s++ )
+		{
+			int ml;
+			int mlc;
+			int rl;
+			int compcost;
+
+			for( 
+				ml = s, mlc = i, rl = 0;
+				ml < i && mlc < numNotes; //&& rl < MaxRL;
+				ml++, mlc++, rl++ )
+			{
+				if( completeNoteList[ml] != completeNoteList[mlc] ) break;
+			}
+
+			compcost = ExpGolombCost( rl ) + ExpGolombCost( i-s );
+
+			if( rl*COMPCOSTTRADEOFF - compcost > bestrl*COMPCOSTTRADEOFF - bestcompcost )
+			{
+				bestrl = rl;
+				bestcompcost = compcost;
+				bestrunstart = s;
+			}
+		}
+
+		if( bestrl > MinRL )
+		{
+			emit_bits_class++;
+			int startplace = i;
+			printf( "OUTPUT   CB @ bp =%5d bestrl=%3d bests=%3d ", bitcount, bestrl, bestrunstart );
+			EmitBit( 1 );
+			i += bestrl - 1;
+			int offset = startplace - bestrunstart - OFFSET_MINIMUM;
+			//offset -= bestrl*INCLUDE_RUN_LENGTH_IN_BACK_TRACK_OFFSET;
+
+			if( offset < 0 )
+			{
+				fprintf( stderr, "Error: OFFSET_MINIMUM is too large (%d - %d - %d - %d = %d)\n", startplace, bestrunstart, bestrl, OFFSET_MINIMUM, offset );
+				exit ( -5 );
+			}
+			int emit_best_rl = bestrl - MinRL - 1;
+			//printf( "WRITE %d %d\n", emit_best_rl, offset );
+			printf( "Write: %d %d\n", emit_best_rl, offset );
+			emit_bits_backtrack += EmitExpGolomb( emit_best_rl );
+			emit_bits_backtrack += EmitExpGolomb( offset );
+			actualRev++;
+		}
+		else
+		{
+			// No readback found, we will have toa ctaully emit encode this note.
+			//AddValue( &dtNotes, note );
+			//AddValue( &dtLenAndRun, len );
+
+			uint32_t note_to_emit = completeNoteList[i];
+
+			emit_bits_class++;
+			printf( "OUTPUT DATA @ bp = %d (Values %02x %02x (index %d))\n", bitcount,  completeNoteList[i]>>8,  completeNoteList[i]&0xff, i );
+			EmitBit( 0 );
+#ifndef SINGLETABLE
+			int n = completeNoteList[i] >> 8;
+#else
+			int n = completeNoteList[i];
 #endif
+			int bitcountatstart = bitcount;
+			bitmaplocation[i] = bitcount;
+
+			for( k = 0; k < htlen; k++ )
+			{
+				huffup * thu = hu + k;
+				if( thu->value == n )
+				{
+					//printf( "Emitting NOTE %04x at %d\n", n, bitcount );
+					int ll;
+					emit_bits_data += thu->bitlen;
+					for( ll = 0; ll < thu->bitlen; ll++ )
+					{
+						EmitBit( thu->bitstream[ll] );
+					}
+					break;
+				}
+			}
+			if( k == htlen )
+			{
+				fprintf( stderr, "Fault: Internal Error (%04x not in map)\n", n );
+				return -4;
+			}
+
+			int lev =  completeNoteList[i] & 0xff;
+			for( k = 0; k < htlenl; k++ )
+			{
+				huffup * thul = hul + k;
+				if( thul->value == lev )
+				{
+					int ll;
+					//printf( "Emitting LEN %04x at %d\n", lev, bitcount );
+					emit_bits_data += thul->bitlen;
+					for( ll = 0; ll < thul->bitlen; ll++ )
+					{
+						EmitBit( thul->bitstream[ll] );
+					}
+					break;
+				}
+			}
+			if( k == htlenl )
+			{
+				fprintf( stderr, "Fault: Internal Error (run %d not in map)\n", l );
+				return -4;
+			}
+			//printf( "Write: %d\n", bitcount, bitcountatstart );
+			actualReg++;
+		}
+	}
+#if 0
+	printf( "emit_bits_data: %d\n", emit_bits_data );
+	printf( "actualRev: %d\n", actualRev );
+	printf( "actualReg: %d\n", actualReg );
+
+	printf( "Class: %d bits\n", emit_bits_class );
+	printf( "Backtrack: %d bits\n", emit_bits_backtrack );
+
+	printf( "HNTLEN: %d\n", htnlen );
+	printf( "HNTLEN2: %d\n", htnlen2 );
+	printf( "Data Bits: %d\n", bitcount);
+	printf( "Total Bytes:\n" );
+	printf( "%d\n", (bitcount+7)/8 + htnlen2 + htnlen );
+#endif
+#if 0
+
 
 	fprintf( fData, "BAS_DECORATOR uint32_t espbadapple_song_data[] = {\n\t" );
 
@@ -632,8 +750,6 @@ int main()
 
 
 
-	int bitmaplocation[numNotes];
-
 
 
 	int emit_bits_data = 0;
@@ -643,30 +759,45 @@ int main()
 	int actualReg = 0, actualRev = 0;
 	for( i = 0; i < numNotes; i++ )
 	{
+
+#if 0
 		int bestrl = -1;
 		int bests = -1;
 		int s = 0;
-		int bestcompcost = 0;
-
 		for( s = bitcount - 1; s >= 0; s-- )
 		{
 			int depth = 0;
 			int dm = DecodeMatch( s, completeNoteList + i, numNotes - i, &depth );
 			//printf( "Check [at byte %d]: %d -> %d -> %d\n", i, s, dm, depth );
-
-			//int sderate = (log(bitcount-s+1)/log(2)) / 9;
-			int compcost = ExpGolombCost( dm ) + ExpGolombCost( bitcount-s );
-
-			if( dm*COMPCOSTTRADEOFF - compcost /*- sderate*/ > bestrl*COMPCOSTTRADEOFF - bestcompcost && 
+			int sderate = (log(bitcount-s+1)/log(2)) / 9;
+			if( dm - sderate > bestrl && 
 				// Tricky - make sure that for our decided OFFSET_MINIMUM, we can emit it.
 				bitcount - s - OFFSET_MINIMUM - dm*INCLUDE_RUN_LENGTH_IN_BACK_TRACK_OFFSET >= 0
 			)
 			{
 				bestrl = dm;
 				bests = s;
-				bestcompcost = compcost;
 			}
 		}
+#endif
+		int bestback = -1;
+		int bestsbk = -1;
+		int sbk;
+		for( sbk = i-OFFSET_MINIMUM; sbk >= 0; sbk-- )
+		{
+			int matching;
+			for( matching = 1; matching+sbk < i; matching++ )
+			{
+				if( 
+			}
+		}
+
+const int MinRL = 2;
+#define OFFSET_MINIMUM 4
+#define MAX_BACK_DEPTH 64
+
+
+
 		if( bestrl > MinRL )
 		{
 			emit_bits_class++;
@@ -750,6 +881,7 @@ int main()
 		}
 	}
 
+#endif
 	printf( "Actual Rev/Reg: %d/%d\n", actualRev, actualReg );
 	printf( "Data Usage: %d bits / %d bytes\n", emit_bits_data, emit_bits_data/8 );
 	printf( "Backtrack Usage: %d bits / %d bytes\n", emit_bits_backtrack, emit_bits_backtrack/8 );

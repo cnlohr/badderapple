@@ -7,7 +7,7 @@ CFLAGS:=-O2 -g -DRESX=$(RESX) -DRESY=$(RESY) -DBLOCKSIZE=$(BLOCKSIZE) -Wno-unuse
 vpxtest : vpxtest.c ../common/bacommon.h
 	gcc -o $@ $< $(LDFLAGS) $(CFLAGS) -lm
 
-test.gif : vpxtest
+test.gif badapple_data.h : vpxtest
 	#./vpxtest ../comp2/stream-$(RESX)x$(RESY)x$(BLOCKSIZE).dat ../comp2/tiles-$(RESX)x$(RESY)x$(BLOCKSIZE).dat test.gif
 	./vpxtest ../streamrecomp/stream_stripped.dat ../comp2/tiles-$(RESX)x$(RESY)x$(BLOCKSIZE).dat test.gif
 

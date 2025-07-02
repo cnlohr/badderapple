@@ -4,7 +4,7 @@
 
 #define MAXNOTES 65536
 #define F_SPS 48000
-#define TIMESCALE ((F_SPS*60)/(138*8))
+#define TIMESCALE ((F_SPS*60)/(138*4))
 #define NUM_VOICES 4
 
 int main()
@@ -56,7 +56,7 @@ int main()
 			int tnote = ( (next_note >> 8 ) & 0xff) + 47;
 			int astop = ( (next_note >> 3 ) & 0x1f) + t + 1;
 
-			if( tnote < 128 )
+			if( tnote < 80 )
 			{
 				int i;
 				for( i = 0; i < NUM_VOICES; i++ )
@@ -84,7 +84,7 @@ int main()
 			else
 			{
 				noisenote = tnote;
-				noisetremain = (astop-t)*1024;
+				noisetremain = (astop-t)*64;
 
 				fprintf( stderr, "Noise @%d [%04x] %d %d %d (%d/%d) [%d]\n", t, next_note,
 						voices[i], ((next_note >> 3) & 0x1f), next_note & 0x7, t, tstop[i], i );
@@ -92,7 +92,7 @@ int main()
 
 			int endurement = ((next_note) & 0x7);
 			if( endurement == 7 ) endurement = 8; // XXX Special case scenario at ending.
-			if( endurement == 6 ) endurement = 16; // XXX Special case scenario at ending.
+			//if( endurement == 6 ) endurement = 16; // XXX Special case scenario at ending.
 			nexttrel = t + endurement;
 			fprintf( stderr, "NEXT: LEN %d -> %d -> %d (%04x)\n", endurement, t, nexttrel, next_note );
 
@@ -161,11 +161,14 @@ int main()
 			if( noisenote )
 			{
 				float noisef = noiselfsr/(65536.0) - 0.5;
-				int bit = ((noiselfsr >> 0) ^ (noiselfsr >> 2) ^ (noiselfsr >> 3) ^ (noiselfsr >> 5)) & 1u;
-				noiselfsr = (noiselfsr>>1) | (bit<<15);
+				if( (subsamp & 7) == 0 )
+				{
+					int bit = ((noiselfsr >> 0) ^ (noiselfsr >> 2) ^ (noiselfsr >> 3) ^ (noiselfsr >> 5)) & 1u;
+					noiselfsr = (noiselfsr>>1) | (bit<<15);
+				}
 				float noisep = noisetremain / 4096.0;
 				noisetremain--;
-				if( noisep > 0.2 ) noisep = 0.2;
+				if( noisep > 0.1 ) noisep = 0.1;
 				if( noisep < 0 ) noisep = 0;
 				sample += noisef * noisep;
 			}

@@ -123,6 +123,8 @@ int main( int argc, char ** argv )
 	int numTracks = read2();
 	int deltaTime = read2();
 
+	#define TIMECOMP 2
+
 	int trk;
 	int timenow = 0;
 	int highesttime = 0;
@@ -145,7 +147,7 @@ int main( int argc, char ** argv )
 			int timed = readvar();
 			//fprintf( stderr, "Timed: %5d:", timed );
 			timenow += timed;
-			if( timenow > highesttime ) highesttime = timenow;
+			if( timenow/TIMECOMP > highesttime ) highesttime = timenow/TIMECOMP;
 			int eventtype = read1();
 			if( eventtype == 0xff )
 			{
@@ -177,7 +179,7 @@ int main( int argc, char ** argv )
 					if( !e )
 						fprintf( stderr, "Matching note not found\n" );
 					else
-						e->OffTime = timenow;
+						e->OffTime = timenow/TIMECOMP;
 					//fprintf( stderr, "Note off %d %02x %02x\n", minor, a, b );
 					if( e )
 						fprintf( stderr, "id:%d t:%d trk:%d note:%d vel:%d len:%d\n", e->OriginalID, e->OnTime, e->Track, e->Note, e->Velocity, e->OffTime - e->OnTime );
@@ -191,7 +193,7 @@ int main( int argc, char ** argv )
 					if( lastNote[a] )
 					{
 						fprintf( stderr, "Warning: Note at %d has no off\n", e->OnTime );
-						lastNote[a]->OffTime = timenow;
+						lastNote[a]->OffTime = timenow/TIMECOMP;
 					}
 
 					if( trk == 7 || trk == 6 )
@@ -204,7 +206,7 @@ int main( int argc, char ** argv )
 					e->OriginalID = notehead;
 					notehead++;
 					if( MAX_NOTE_EVENTS == notehead ) FATAL( "Too many notes\n" );
-					e->OnTime = timenow;
+					e->OnTime = timenow/TIMECOMP;
 					e->Track = trk;
 					e->Note = a;
 
@@ -268,8 +270,8 @@ int main( int argc, char ** argv )
 		struct NoteEvent * e = &AllNoteEvents[k];
 		if( e->Track == 5 )
 		{
-			e->Note = e->Note - minnoteby[5] + 128;
-			e->OffTime = (e->OffTime - e->OnTime) * 2 + e->OnTime;
+			e->Note = e->Note - minnoteby[5] + 80; // 80 = noise note.
+			//e->OffTime = (e->OffTime - e->OnTime) + e->OnTime;
 		}
 	}
 
@@ -279,11 +281,13 @@ int main( int argc, char ** argv )
 		if( e->Track == 5 )
 		{
 			if( e->Note > maxnote ) maxnote = e->Note;
+			if( e->Note < minnote ) minnote = e->Note;
 		}
 	}
 
 	qsort( AllNoteEvents, notehead, sizeof( AllNoteEvents[0] ), NoteCompare );
 
+	fprintf( stderr, "Final Min Note: %d - %d\n", minnote, maxnote );
 	int i;
 
 	FILE * fMRaw = fopen( "fmraw.dat", "wb" );
@@ -329,21 +333,21 @@ int main( int argc, char ** argv )
 				fprintf( stderr, "Error: Warning: Interval Is exactly 7; special case, not allowed. (%d/%d) (Trk: %d Note: %d Duration:%d OnTime:%d)\n", e->OriginalID, notehead, e->Track, e->Note, duration, e->OnTime );
 				deltatime = 7*120;
 			}
-			if( deltatime/120 == 6 )
-			{
-				fprintf( stderr, "Error: Warning: Interval Is exactly 6; special case, not allowed. (%d/%d) (Trk: %d Note: %d Duration:%d OnTime:%d)\n", e->OriginalID, notehead, e->Track, e->Note, duration, e->OnTime );
-				deltatime = 6*120;
-			}
+//			if( deltatime/120 == 6 )
+//			{
+//				fprintf( stderr, "Error: Warning: Interval Is exactly 6; special case, not allowed. (%d/%d) (Trk: %d Note: %d Duration:%d OnTime:%d)\n", e->OriginalID, notehead, e->Track, e->Note, duration, e->OnTime );
+//				deltatime = 6*120;
+//			}
 
 			// Special deltas.
 			if( deltatime/120 == 8 )
 			{
 				deltatime = 7*120;
 			}
-			if( deltatime/120 == 16 )
-			{
-				deltatime = 6*120;
-			}
+//			if( deltatime/120 == 16 )
+//			{
+//				deltatime = 6*120;
+//			}
 
 			if( deltatime/120 >= 8 )
 			{

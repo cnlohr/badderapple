@@ -60,6 +60,7 @@ uint8_t out_buffer_data[AUDIO_BUFFER_SIZE];
 ba_play_context ctx;
 
 uint64_t * audio_notes_playing_by_sixteenth;
+int * noise_playing_by_sixteenth;
 int highest_sixteenth;
 int * audio_notes_playing_by_sixteenth_to_cpid;
 float * audioOut = 0;
@@ -98,10 +99,12 @@ struct checkpoint
 	int audio_nexttrel;
 	int audio_ending;
 	int audio_t;
-	int audio_gotnotes;
 	int audio_sub_t_sample;
 	int audio_outbufferhead;
 	int audio_stackplace;
+
+	int audio_noisesum;
+	int audio_noisetremain;
 
 	int frame;
 	int vframe;
@@ -153,10 +156,12 @@ void ba_i_checkpoint()
 	cp->audio_nexttrel = ba_player.nexttrel;
 	cp->audio_ending = ba_player.ending;
 	cp->audio_t = ba_player.t;
-	cp->audio_gotnotes = ba_player.gotnotes;
 	cp->audio_sub_t_sample = ba_player.sub_t_sample;
 	cp->audio_outbufferhead = ba_player.outbufferhead;
 	cp->audio_stackplace = ba_player.stackplace;
+
+	cp->audio_noisesum = ba_player.noisesum;
+	cp->audio_noisetremain = ba_player.noisetremain;
 
 	cp->audio_sample_data = cpp ? cpp->audio_sample_data : 0 ;
 	cp->audio_sample_data_frame = cpp ? cpp->audio_sample_data_frame : -1;
@@ -182,8 +187,10 @@ void ba_i_checkpoint()
 	{
 		audio_notes_playing_by_sixteenth = realloc( audio_notes_playing_by_sixteenth, (audio_sixteenth+1) * sizeof( audio_notes_playing_by_sixteenth[0] ) );
 		audio_notes_playing_by_sixteenth_to_cpid = realloc( audio_notes_playing_by_sixteenth_to_cpid, (audio_sixteenth+1) * sizeof( audio_notes_playing_by_sixteenth_to_cpid[0] ) );
-		memset( &audio_notes_playing_by_sixteenth[highest_sixteenth+1], 0, sizeof( audio_notes_playing_by_sixteenth[0] ) * (audio_sixteenth-audio_sixteenth) );
-		memset( &audio_notes_playing_by_sixteenth_to_cpid[highest_sixteenth+1], 0, sizeof( audio_notes_playing_by_sixteenth_to_cpid[0] ) * (audio_sixteenth-audio_sixteenth) );
+		noise_playing_by_sixteenth = realloc( noise_playing_by_sixteenth, (audio_sixteenth+1)* sizeof( noise_playing_by_sixteenth[0] ) );
+		memset( &audio_notes_playing_by_sixteenth[highest_sixteenth], 0, sizeof( audio_notes_playing_by_sixteenth[0] ) * (audio_sixteenth-audio_sixteenth+1) );
+		memset( &audio_notes_playing_by_sixteenth_to_cpid[highest_sixteenth], 0, sizeof( audio_notes_playing_by_sixteenth_to_cpid[0] ) * (audio_sixteenth-audio_sixteenth+1) );
+		memset( &noise_playing_by_sixteenth[highest_sixteenth], 0, sizeof( noise_playing_by_sixteenth[0] ) * (audio_sixteenth-audio_sixteenth+1) );
 		highest_sixteenth = audio_sixteenth+1;
 	}
 
@@ -193,6 +200,7 @@ void ba_i_checkpoint()
 		(((uint64_t)ba_player.playing_freq[2])<<32) |
 		(((uint64_t)ba_player.playing_freq[3])<<48);
 	audio_notes_playing_by_sixteenth_to_cpid[audio_sixteenth] = nrcheckpoints;
+	if( noise_playing_by_sixteenth[audio_sixteenth] < cp->audio_noisetremain ) noise_playing_by_sixteenth[audio_sixteenth] = cp->audio_noisetremain;
 
 	nrcheckpoints++;
 	//printf( "NRC: %d\n", nrcheckpoints );
@@ -902,7 +910,7 @@ void DrawVPX( Clay_RenderCommand * render )
 
 	float fx = b.x;
 	float fy = b.y;
-	char vs[25] = { 0 };
+	char vs[64] = { 0 };
 
 	int i;
 
@@ -1021,7 +1029,7 @@ void DrawCellState( Clay_RenderCommand * render )
 	}
 }
 
-void DrawAudioStack( struct checkpoint * cp, int x, int y, int w, int h )
+void DrawAudioStack( struct checkpoint * cp, int x, int y, int w, int h, int drawBackStack )
 {
 	if( !cp->audio_stack ) return;
 	int k;
@@ -1057,22 +1065,25 @@ void DrawAudioStack( struct checkpoint * cp, int x, int y, int w, int h )
 	CNFGColor( 0xf0f0f0ff );
 	CNFGTackSegment( wm/2+x, h-12+y, wm/2+x, h-10+y );
 
-	int step = 1;
-	for( k = cp->audio_stack_place; k >= 0; k-- )
+	if( drawBackStack )
 	{
-		struct ba_audio_player_stack_element * s = &(*cp->audio_stack)[k];
-		//struct ba_audio_player_stack_element * sm1 = &(*cp->audio_stack)[k-1];
-		int bp = (s->offset-center+wm/2)*pxscale;
-		int bpm1 = bp+10;
-		if( bp >= w ) bp = w-1;
-		if( bpm1 >= w ) bpm1 = w-1;
-		CNFGTackSegment( x+bp, h-12-step*10+y, x+bpm1, h-12-step*10+y );
-		CNFGTackSegment( x+bp, h-12-step*10+y, x+bp, h-8-step*10+y );
+		int step = 1;
+		for( k = cp->audio_stack_place; k >= 0; k-- )
+		{
+			struct ba_audio_player_stack_element * s = &(*cp->audio_stack)[k];
+			//struct ba_audio_player_stack_element * sm1 = &(*cp->audio_stack)[k-1];
+			int bp = (s->offset-center+wm/2)*pxscale;
+			int bpm1 = bp+10;
+			if( bp >= w ) bp = w-1;
+			if( bpm1 >= w ) bpm1 = w-1;
+			CNFGTackSegment( x+bp, h-12-step*10+y, x+bpm1, h-12-step*10+y );
+			CNFGTackSegment( x+bp, h-12-step*10+y, x+bp, h-8-step*10+y );
 
-		int otherside = ( bp < 40 ) ? digits(s->remain)*7+12 : 0;
-		DrawFormat( x+bp-digits(s->remain)*7+otherside, h-16-step*11+y, 1, 0xffffffff, "%d", s->remain );
-		CNFGSetLineWidth(2);
-		step++;
+			int otherside = ( bp < 40 ) ? digits(s->remain)*7+12 : 0;
+			DrawFormat( x+bp-digits(s->remain)*7+otherside, h-16-step*11+y, 1, 0xffffffff, "%d", s->remain );
+			CNFGSetLineWidth(2);
+			step++;
+		}
 	}
 
 	char bitstream_prev[5] = { 0 };
@@ -1242,14 +1253,15 @@ void DrawAudioTrack( Clay_RenderCommand * render )
 		if( sxth < 0 ) continue;
 		if( sxth >= highest_sixteenth ) continue;
 		uint64_t sixteenth = audio_notes_playing_by_sixteenth[sxth];
+		int sixteenthnoise = noise_playing_by_sixteenth[sxth];
 		int n = 0;
 		for( n = 0; n < 4; n++ )
 		{
 			int fr = (sixteenth >> (16*n))&0xffff;
+			float relpos = sxth - cp->audio_sixteenth - partial;
 			if( fr )
 			{
 				float note = 7.1-log(fr);
-				float relpos = sxth - cp->audio_sixteenth - partial;
 				CNFGColor( ( sxth > center_audio_sixteenth ) ? 0xf0f0f018 : 0xc0c0c0b0 );
 				CNFGTackRectangle( xst + sper*relpos, b.y + yst * note, xst + sper*(relpos+1), b.y + yst * note + 10 );
 			}
@@ -1261,9 +1273,15 @@ void DrawAudioTrack( Clay_RenderCommand * render )
 
 				if( !fr ) continue;
 				float note = 7.1-log(fr);
-				float relpos = sxth - cp->audio_sixteenth - partial;
 				CNFGColor( 0xffffffff );
 				CNFGTackRectangle( xst + sper*relpos, b.y + yst * note, xst + sper*(relpos+stop-sxth), b.y + yst * note + 10 );
+			}
+
+			if( sixteenthnoise > 0 )
+			{
+				CNFGColor( 0xf0f0f018 );
+				CNFGTackRectangle( xst + sper*relpos, b.y + 24, xst + sper*(relpos) + sper/2, b.y + 24 + 10 );
+				//DrawFormat( xst + sper*relpos, b.y + 23, 1, 0xffffffff, "%d", sixteenthnoise );
 			}
 		}
 	}
@@ -1271,7 +1289,7 @@ void DrawAudioTrack( Clay_RenderCommand * render )
 	CNFGTackSegment( xst, b.y, xst, b.y+b.height );
 
 
-	DrawAudioStack( cp, fx, fy, b.width, b.height );		
+	DrawAudioStack( cp, fx, fy, b.width, b.height, 1 );		
 
 ending:
 	CNFGFlushRender();
@@ -1311,14 +1329,12 @@ void DrawCellStateAudioHuffman( Clay_RenderCommand * render )
 	int ct = (isnote)?HuffNoteNodeCount:HuffLenRunNodeCount;
 
 	// TODO: Update cx, cy with position.
-
 	int i;
 	for( i = 0; i < ct; i++ )
 	{
 		struct treepresnode * n = tree + i;
 		float ox = n->x + b.width/2;
 		float oy = n->y + b.height/2;
-
 
 		ox -= cx;
 		oy -= cy;
@@ -1339,6 +1355,7 @@ void DrawCellStateAudioHuffman( Clay_RenderCommand * render )
 		CNFGTackRectangle( b.x + ox - 14, b.y + oy - 12, b.x + ox + 14, b.y + oy + 12);
 		DrawFormat( b.x + ox, b.y + oy - 10, -2, 0xffffffff, n->label );
 
+		// The || clause is when we are on the last bit.  We don't have a ofs.
 		if( i == cp->audio_last_ofs || ( cp->audio_pullhuff && cp->audio_pullhuff == n->value ) )
 		{
 			cx = timelerp( n->x, cx, 5 );
@@ -1368,7 +1385,7 @@ void DrawCellStateAudioStack( Clay_RenderCommand * render )
 	float fx = b.x;
 	float fy = b.y;
 
-	DrawAudioStack( cp, fx, fy, b.width, b.height );		
+	DrawAudioStack( cp, fx, fy, b.width, b.height, 0 );
 }
 
 void DrawCellStateAudio( Clay_RenderCommand * render )
@@ -1416,6 +1433,10 @@ void DrawCellStateAudio( Clay_RenderCommand * render )
 	else if( cp->decodephase == "AUDIO: Processed Note" )
 	{
 		DrawFormat( fx+b.width/2-8, fy+4, -2, 0xffffffff, "Processed Note" );
+	}
+	else if( cp->decodephase == "AUDIO: Processed Noise" )
+	{
+		DrawFormat( fx+b.width/2-8, fy+4, -2, 0xffffffff, "Processed Noise" );
 	}
 	else if( cp->decodephase == "AUDIO: Reading Length and Run" )
 	{
@@ -2064,7 +2085,6 @@ void RenderFrame()
 
 						if( NeedsHuffman() )
 						{
-
 							CLAY({ .custom = { .customData = DrawCellStateAudioStack } ,.layout = { .childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER}, .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIT() }, .padding = CLAY_PADDING_ALL(padding), .childGap = paddingChild } } )
 							{
 								CLAY_TEXT(CLAY_STRING( " \n \n " ), CLAY_TEXT_CONFIG({ .textAlignment = CLAY_TEXT_ALIGN_CENTER, .fontSize = 16, .textColor = {255, 255, 255, 255} }));	
