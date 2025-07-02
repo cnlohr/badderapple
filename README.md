@@ -1,6 +1,6 @@
 # espbadapple
-My shot at bad apple on an '8266.  The source video for bad apple is 512x384
 
+What started as my shot at bad apple on an ESP8266 ended with me seeing how well I could compress it down to under 64kB.
 
 ## Prep
 
@@ -13,6 +13,14 @@ For msys2 (Windows)
 ```
 pacman -S base-devel mingw-w64-x86_64-ffmpeg 
 pacman -S clang llvm clang64/mingw-w64-clang-x86_64-wasm-component-ld mingw-w64-clang-x86_64-wasmer mingw-w64-x86_64-binaryen # For web stuff.
+```
+
+For additional tooling for size comparisons on song:
+```
+sudo npm i -g yarn
+sudo yarn global add beesn
+
+sudo apt-get install zstd
 ```
 
 ### Workflow
@@ -164,15 +172,13 @@ To do sanity checks, I decided to compare the compression a few steps along the 
 
 Percentages are compared to my custom binary encoding.
 
-| Compression | .xml | .json (jq formatted) | .json.min | .mid | .dat | 
+| Compression | .xml | .json (jq formatted) | .json.min | .bson | .mid | .dat | 
 | -- | -- | -- | -- | -- | -- |
-| uncompressed | 217686 (5698%) | 150802 (3947%)| (2247%) 85855 | (463%) 17707 | (100%) 3820 |
-| [heatshrink](https://github.com/atomicobject/heatshrink) | 32497 (850%) | 23376 (611%) | 15644 (409%) | 3199 (83%) | 1060 (27%) |
-| gzip -9      | 12001 (314%) | 11458 (300%) | 10590 (277%) | 1329 (34%) | 682 (17.8%) |
-| zstd -9      | 10052 (263%) | 9480 (248%) | 8877 (232%) | 1332 (35%) | 724 (19.0%) |
-| bzip2 -9     | 8930 (234%) | 8800 (230%) | 8676 (227%) | 1442 (37%) | 830 (21.7%) |
-
-Curiously for small payloads, it looks like gzip outperforms zstd, in spite of zstd having 40 years to improve over it. This is not a fluke, and has been true for many of my test song datasets.
+| uncompressed | 217686 (5698%) | 150802 (3947%)| 85855 (2247%) | 88677 (2321%) | 17707 (463%) | **3820 (100%)** |
+| [heatshrink](https://github.com/atomicobject/heatshrink) | 32497 (850%) | 23376 (611%) | 15644 (409%) | 19192 (502%) | 3199 (83%) | 1060 (27%) |
+| gzip -9      | 12001 (314%) | 11458 (300%) | 10590 (277%) | 13720 (359%) | 1329 (34%) | 682 (17.8%) |
+| zstd -9      | 10052 (263%) | 9480 (248%) | 8877 (232%) | 12182 (319%)  | 1332 (35%) | 724 (19.0%) |
+| bzip2 -9     | 8930 (234%) | 8800 (230%) | 8676 (227%) | 11282 (295%) | 1442 (37%) | 830 (21.7%) |
 
 There's an issue, all of the good ones in this list these are state of the art algorithms requiring a pretty serious OS to decode.  What if we only wan to run on a microcontroller?
 
@@ -191,6 +197,15 @@ There's an issue, all of the good ones in this list these are state of the art a
 † we used this on the final project.  See rationale below.
 
 Note: these tests were generated with `make sizecomp` the code for several of these tests is in the `attic/` folder.
+
+### Observations
+
+1. For small payloads, it looks like gzip outperforms zstd, in spite of zstd having 40 years to improve over it. This is not a fluke, and has been true for many of my test song datasets.
+2. For larger payloads, bzip2 seems to outperform zstd. So, I guess the only place that zstd really shines in the speed by which it can uncompress.
+3. I expected BSON to save space, but it was larger, and compressed worse.  I guess it's only useful for increasing the speed of parsing.
+4. Finding a way to express your data more concisely absolutely obliterates any compression algorithms you can throw at your problem. Don't settle for a binary representation, like bson.
+
+### More Observations
 
 Note, when not using lzss, the uptick in size because to use VPX, you have to have a probability table, and huffman tables can be used in lower compression arenas to more effectivity.
 
