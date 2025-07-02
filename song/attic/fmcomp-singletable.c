@@ -176,6 +176,7 @@ int main()
 	printf( "Used mask: %04x\n", usedmask );
 	printf( "Huff Tree (N): %d bytes\n", htnlen );
 	printf( "Data len: %d bytes\n", total_bytes );
-	printf( "TOTAL: %d bytes\n", htnlen + total_bytes );
+	printf( "Total Bytes:\n" );
+	printf( "%d\n", htnlen + total_bytes );
 	return 0;
 }

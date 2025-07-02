@@ -1,4 +1,4 @@
-all : testsynth midiexport fmcomp-vpx-lzss track-float-48000.dat
+all : testsynth midiexport fmcomp-vpx-lzss track-float-48000.dat 
 
 CFLAGS:=-Og -g -I../common
 
@@ -24,9 +24,14 @@ fmcomp-vpx-lzss : fmcomp-vpx-lzss.c
 test-vpx-lzss : test-vpx-lzss.c
 	gcc $(CFLAGS) -o $@ $^ -lm -I../playback
 
+test-huff-revlzss : test-huff-revlzss.c
+	gcc $(CFLAGS) -o $@ $^ -lm -I../playback
+
 testsynth : testsynth.c
 	gcc $(CFLAGS) -o $@ $^ -lm
 
+fmraw.dat.jq.json : fmraw.dat.json
+	cat fmraw.dat.json | jq > fmraw.dat.jq.json
 
 # Another try with huffman
 
@@ -36,27 +41,8 @@ fmcomp-huffman-reverselzss2 : fmcomp-huffman-reverselzss2.c
 ../playback/badapple_song_huffman_reverselzss.h : fmcomp-huffman-reverselzss2 fmraw.dat
 	./fmcomp-huffman-reverselzss2
 
-COMPLIST:=fmraw.dat.json.jq fmraw.dat.json fmraw.dat.xml fmraw.dat BadApple-mod.mid
-
-sizecomp : fmraw.dat heatshrink
-	cat fmraw.dat.json | jq > fmraw.dat.json.jq
-	for s in $(COMPLIST); do \
-		echo $$s ; \
-		cat $$s | wc ; \
-		cat $$s | gzip -9 | wc ; \
-		cat $$s | zstd -9 | wc ; \
-		cat $$s | bzip2 -9 | wc ; \
-		cat $$s | heatshrink/heatshrink | wc; \
-	done
-	echo ""
-	gcc attic/fmcomp-singletable.c -o attic/fmcomp-singletable -I../common -lm
-	gcc attic/fmcomp-huffman.c -o attic/fmcomp-huffman -I../common -lm
-	gcc attic/fmcomp-vpx.c -o attic/fmcomp-vpx -I../common -lm
-	gcc attic/fmcomp-tripletable.c -o attic/fmcomp-tripletable -I../common -lm
-	attic/fmcomp-singletable
-	attic/fmcomp-huffman
-	attic/fmcomp-tripletable
-	attic/fmcomp-vpx
+sizecomp : fmraw.dat heatshrink fmcomp-vpx-lzss fmcomp-huffman-reverselzss2
+	./sizecomp.sh
 
 heatshrink :
 	git clone https://github.com/atomicobject/heatshrink

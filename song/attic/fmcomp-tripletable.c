@@ -350,6 +350,7 @@ int main()
 	printf( "Huff Tree (D): %d bytes\n", htnlen3 );
 	printf( "Huff Tree (D): %d bytes\n", htnlen3 );
 	printf( "Data len: %d bytes\n", total_bytes );
-	printf( "TOTAL: %d bytes\n", htnlen + htnlen2 + htnlen3 + total_bytes );
+	printf( "TOTAL Bytes:\n" );
+	printf( "%d\n", htnlen + htnlen2 + htnlen3 + total_bytes );
 	return 0;
 }

@@ -178,7 +178,8 @@ int main()
 	sum += treeSizeLenAndRun;
 	sum += dtLenAndRun.numUnique * 2;
 
-	printf( "Total: %d\n", sum );
+	printf( "Total bytes:\n" );
+	printf( "%d\n", sum );
 	//unsigned int pos;
 	//unsigned int size;
 
