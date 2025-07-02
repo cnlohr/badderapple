@@ -1329,7 +1329,6 @@ void DrawCellStateAudioHuffman( Clay_RenderCommand * render )
 	int ct = (isnote)?HuffNoteNodeCount:HuffLenRunNodeCount;
 
 	// TODO: Update cx, cy with position.
-
 	int i;
 	for( i = 0; i < ct; i++ )
 	{
@@ -1356,6 +1355,7 @@ void DrawCellStateAudioHuffman( Clay_RenderCommand * render )
 		CNFGTackRectangle( b.x + ox - 14, b.y + oy - 12, b.x + ox + 14, b.y + oy + 12);
 		DrawFormat( b.x + ox, b.y + oy - 10, -2, 0xffffffff, n->label );
 
+		// The || clause is when we are on the last bit.  We don't have a ofs.
 		if( i == cp->audio_last_ofs || ( cp->audio_pullhuff && cp->audio_pullhuff == n->value ) )
 		{
 			cx = timelerp( n->x, cx, 5 );
