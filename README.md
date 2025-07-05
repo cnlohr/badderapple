@@ -101,10 +101,9 @@ Then, I spent a while talking to my brother and his wife, both PhD's in math, an
 
 But, then, in early 2024, things really got into high gear again, because WCH, the creators of the CH32V003, announced other chips in the series with FLASH ranging from 32kB to 62kB, so it was time for the rubber to hit the road again.
 
-I implemented a k-means approach, and wowee! The tiles that came out of k-means was AMAZING!!!
+I implemented a k-means approach, and wowee! The tiles that came out of k-means was AMAZING!!! Any time you do an experiment with this you make headway.  It feels like recent AI research.
 
-Any time you do an experiment with this you make headway.  It feels like recent AI research.
-
+After using k-means, we were able to get great tile sets, so the shift went to various compression for the tile sets + describing the glyphs.
 
 # Primary Compression Techniques
 
@@ -195,7 +194,6 @@ Instead of referring back to earlier emitted bytes, we refer back to another par
 
 While we do need to remember where we were in our callback-stack, like which bit we were decoding before the last callback and how many notes to go, that works out to a very small amout of RAM.
 
-
 ## Testing
 
 To produce the audio file for use with ffmpeg, `track-float-48000.dat`, as well as producing `badapple_song.h` in the `playback/` folder, you can use the following command:
@@ -203,6 +201,14 @@ To produce the audio file for use with ffmpeg, `track-float-48000.dat`, as well 
 ```
 make track-float-48000.dat ../playback/badapple_song.h
 ```
+
+The .dat file can be used with ffmpeg as follows:
+
+```
+ffmpeg -y -f f32le -ar 48000 -ac 1 -i ../song/track-float-48000.dat <video data> <output.mp4>
+```
+
+The .h file is used with the playback system by being compiled in.
 
 ### Interprets `BadApple-mod.mid` and outputs `fmraw.dat` using `midiexport`
 
@@ -218,24 +224,6 @@ int run = (s)&0x07;
 
 Assuming a little endian system.
 
-### Ingests `fmraw.dat` and produces `../playback/badapple_song.h`
-
-This employs a 4-part compression algorithm.
-
-1. Uses a [heathrink](https://github.com/atomicobject/heatshrink)-like compression algorithm, based on [LZSS](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Storer%E2%80%93Szymanski) with the twist that it uses the VPX entropy coding to reduce the cost of smaller jumps and lengths.  So on avearge it can outperform heatshrink or LZSS.
-2. Then creates two probability trees.  One for notes, the other for (note length | duration until next note).
-3. NOTE: When creating the probabilities or encoding the data, it only considers the probability of the remaining notes after LZSS.  This is crucial for good compression.
-4. It creates two VPX probability trees for these two values.
-5. It creates another table so that it can tightly pack the (length | duration) tree.
-6. It produces a VPX bitstream output.
-
-The .dat file can be used with ffmpeg as follows:
-
-```
-ffmpeg -y -f f32le -ar 48000 -ac 1 -i ../song/track-float-48000.dat <video data> <output.mp4>
-```
-
-The .h file is used with the playback system by being compiled in.
 
 
 
