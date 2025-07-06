@@ -99,25 +99,157 @@ By really pushing things to the limits, one could theoretically fit bad apple in
 
 Then, I spent a while talking to my brother and his wife, both PhD's in math, and they introduced me to the K-means algorithm.  But by this time, I had been fatigued by bad apple.
 
-But, then, in early 2024, things really got into high gear again, because WCH, the creators of the CH32V003, announced other chips in the series with FLASH ranging from 32kB to 62kB, so it was time for the rubber to hit the road again.
+But, then, in early 2024, things really got into high gear again, because WCH, the creators of the CH32V003, announced other chips in the series with FLASH ranging from 32kB to 62kB, so it was time for the rubber to hit the road again.  I would target the ch32v006, with 62kB flash + 2.5kB Bootloader.  Also, Ronboe just sent me some of their 64x48 pixel OLED displays that cost less than $1/ea.
 
-I implemented a k-means approach, and wowee! The tiles that came out of k-means was AMAZING!!! Any time you do an experiment with this you make headway.  It feels like recent AI research.
+A friend pointed out that we should get a baseline.  Let's see what the state-of-the art is in video encoding, let's try encoding our video with XXX, a codec with the full force of millions of dollars of development?  How much can it encode Bad Apple down to? Let's just see what we're going to be up against.
+
+...Oof...  this is going to be one doozie.
+
+I implemented a k-means approach, and wowee! The tiles that came out of k-means was AMAZING!!! Any time you do an experiment with this you make headway.
 
 After using k-means, we were able to get great tile sets, so the shift went to various compression for the tile sets + describing the glyphs.
 
+The problem started to form clearly.  There were just a few things that needed to be compressed here:
+1. The song, made up of notes, with a frequency, duration and time-to-next-note. Each note could be expressed as two bytes. At 1910 notes, it would take about 3820 bytes.
+2. The glyphs, which make up tiles, about 256 qty, of 8x8 pixels, each pixel 3 varying intensities of grey. If naively encoded, would be 4096 bytes.
+3. The stream, information to convery which which glpyh is used in each tile for each frame of the video.  For 64x48 pixels, or 8x6 tiles x 6570 frames.  If naively encoded, would be 315360 bytes.
+
+All in all, I had to find some way to compress 323276 bytes worth of data, that was already pretty tight and an unknown quantity of code down into 64.5kB.  This was going to be challenging.
+
+I gave it a solid go and I was able to get it to fit.  I had to cut a lot of corners, and the quality was not quite where I wanted.  I was ready to, after 7 years just make the video and publish... Until I ran this whole thing by Lyuma and their brother, Hellcatv who pointed out I should be using arithmatic, range, or other better coding techniques.  I didn't believe that it would offer anything, but upon giving it a try, I knew I had to delay publushing for a year.
+
+While the story it self was extremely circuituous route, I think instead of telling a simplified version of it, I'd rather go into what some of the compression techniques that constitute these solutions.
+
 # Primary Compression Techniques
+
+In general, for compression techniques, you want to break your data into "symbols" instead of bytes.  Because maybe you don't have 256 possible values, but instead 7, 143, or 258.  By storing the data as symbols, it helps us compress things one-symbol-at-a-time instead of trying to pick apart a data stream.
 
 ## Huffman Coding
 
-TODO
+If you are trying to represent a stream of one of say 4 possible values, to represent each value, you would need to use two bits for each possible outcome.  For instance, if we wanted to use the following for values, we could use this table to encode the data:
+
+If our data was 32 symbols long as follows:
+
+`ddddbddddcddcdddddcdddddaddddccc`
+
+We could encode the data in ASCII, and it would take up 32 bytes (256 bits).  We could just store a string.  But we can do better.
+
+We could represent it using the minimum number of binary digits.
+
+Symbol | Bitstream
+--- | ---
+a | 00
+b | 01
+c | 10
+d | 11
+
+Then we could encode it as the following binary stream:
+
+`11111111011111111110111110111111111110111111111100111111`
+
+So, to represent 32 values, we would need to use 64 bits. 
+
+But, Huffman realized we could do better.  By looking at how frequently we use each bit, we could use less data.
+
+Symbol | Frequency
+ --- | ---
+a | 1
+b | 1
+c | 6
+d | 24
+
+If we could somehow make encoding a 3 use less bits than a 0, we could save space because there are so few 0's in the input data stream. The way we do this is we scan our table for the two most fewly used symbols, and combine them to make a new symbol.
+
+And we update our symbol frequency table.
+
+Symbol | Frequency
+ --- | ---
+ (a or b) | 2
+ c | 6
+ d | 24
+
+We then re-scan the table, seaching for the next two fewest used symbols (or groups of symbols).  In this case, we combine 2 and (0 or 1).
+
+So our new table is:
+
+Symbol | Frequency
+ --- | ---
+ (a or b) or c | 8
+ d | 24
+
+And we repeat until we only have one entry in our table that contains all symbols.
+
+Symbol | Frequency
+ --- | ---
+ ((a or b) or c) or d | 32
+
+This can be redrawn as a tree.
+
+```
+       root
+    /0      \1
+ (a|b)|c     d
+```
+
+```
+        root
+     /0      \1
+  (a|b)|c     d
+  /0   \1
+ (a|b)   c
+ /0 \1
+a    b 
+```
+
+By looking at this tree, we can make a bit of a table to let us know how we can encode a, b, c and d.
+
+Symbol | Encoding
+ a     | 000
+ b     | 001
+ c     | 01
+ d     | 1
+
+Any time we see an `a` we emit `000`, any time we see a `b`, emit `001` any time we see a `c`, emit `01` and any time we see a d, simply emit `1`.
+
+So, to encode our original stream, `ddddbddddcddcdddddcdddddaddddccc`, we could do it as follows: `1111000111110111011111101111110001111010101` or only 43 bits long, a 32% savings over our regular binary encoding, and an 83% savings over raw ASCII encoding!  
+
+But admittedly, you do need to store the tree somehow. For small amounts of data like 32 bytes, it's likely this would eat any of the possible savings.  But for larger data sets, the size of the tree is miniscule compared to the data.
+
+Huffman coding can be very fast and extremely to decode, since you just need to encode a tree... and it's provably optimal.  In that for fixedindiviual symbols, you can mathematically prove that it the most compressed you can make a data stream.  And for most of my life, I thought that's where the story stopped.  The thing is... It turns out there's a different theoretical limit.  I hadn't learned about until my friend Lyuma brought to my attention arithematic coding. Which could approach this other theoretical limit.
+
+In the companion simulator for badder apple, you can see the huffman trees that are used for decoding all the notes, and their lengths, and time to next note in the song. 
+
+TODO PICTURE.
+
+Additionally, if you would like to use huffman trees, you can use the header-only libraries I used in this project.  It uses something called `hufftreegen.h` where you start with a list of values you want to encode.  For each value, you can call `HuffmanAppendHelper`.  This generates a table with the different symbols to be used, and their frequencies.  Then, you can call `GenerateHuffmanTree` which will use those frequencies, and perform the operation we were **TODO TODO**
+
+## TODO: What is the curve called that optimizes this?  Make it a subsection
+
+## Arithmatic coding
+
+We don't use arithmatic coding, but it is an important mention because it is what seeded the ground to alert mathematicians that there could be something **better than huffman**. Arithmatic coding is a mechanism to lay out every possible symbol from 0 to 1, with the ratios of how likely each symbol is.  Then, we can, bit-at-a-time partition that space to become more and more narrow. 
+
+There are many online resources to help explain arithmatic coding, and I am not an expert. 
 
 ## VPX Coding
 
-TODO
+While arithmatic coding is particularly difficult to do in practice with bitstreams, there is a different take on it called range coding. This is the coding scheme used in Google's VP7, VP8, VP9 video encoding engines to encode symbols.
+
+VPX Coding, specifically, or Range Coding, generally, splits each symbol into an individual bitstream.  But for each bit, you must know how likely it is that the next bit will be a `0` or a `1`.  Like arithmatic coding, you treat it like a pie chart, where the more likely an outcome is, the more of the ratio it can take up, and thus the fewer bits that are needed to encode that data.
+
+Because VPX coding can use less than one bit per symbol (if you treat 0 and 1 each as two possible symbols) it matters less that you ues symbols.  Instead you can just use bytes, or words.  For instance, if there are 137 different symbols, you could encode that with 8-bits.
+
+**TODO** how to explain this?
+
+While range coding itself is also unintuitive, I tried to express it as best as I could in an online visualization for Badder Apple, seen here. You can see how each bit in and each bit out are used.
+
+Whenever an unlikely path is taken, for instance, if a 0 is very unlikely, but is selected none the less, it can take several bits to encode that 0.  But when a likely path is taken, you can get bit after bit out without it consuming even one bit.
+
+If you are curious to use vpx coding yourself for a project, for instance if you have a situation where you have a series of symbols, or numbers you want to express, or really, anything that can boil down to a bitstream of 0's and 1's, where you know how likely the next bit is to be a 0 or 1 is, you can use my project [vpxcoding](https://github.com/cnlohr/vpxcoding), that has an encoder, and a decoder.  And, the decoder is a header-only C library that works well for microcontrollers.  It's a little bit heavier than huffman to decode, but not by much!  To efficiently decode VPX you need a log2 table, which takes up 256 bytes (could be RAM or ROM).  And for a decoding context, it only takes a 33-byte structure in RAM.
 
 ## LZSS
 
-TODO
+
 
 ## Reverse-LZSS
 
