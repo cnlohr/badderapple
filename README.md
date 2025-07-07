@@ -1,6 +1,6 @@
 # espbadapple
 
-What started as my shot at bad apple on an ESP8266 ended with me seeing how well I could compress it down to under 64kB.
+What started as my shot at bad apple on an ESP8266 ended with me seeing how well I could compress it down to under 64kB.  The answer was surprisingly well.  The final outcome from this project was all 6570 frames, at 64x48 pixels, with sound and code for playback in 64.5kB, running on a ch32v006.
 
 ## Prep
 
