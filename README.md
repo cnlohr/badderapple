@@ -19,7 +19,6 @@ For additional tooling for size comparisons on song:
 ```
 sudo npm i -g yarn
 sudo yarn global add beesn
-
 sudo apt-get install zstd
 ```
 
@@ -66,7 +65,6 @@ cd ../vpxtest
 make clean test.gif #or test.mp4
 ```
 
-
 ### Future TODO
  - [x] Perceptual/Semantic Loss Function
  - [x] De-Blocking Filter
@@ -87,7 +85,7 @@ My first attempt was with RLE on the raster image, and I tried a number of other
 
 ### What is this C64 demo doing?
 
-It wasn't until Brendan Becker showed me https://www.youtube.com/watch?v=OsDy-4L6-tQ -- One of the clear huge boons is that the charset.  They claim 70 bytes/frame, at 12fps.
+It wasn't until [Inverse Phase](https://inversephase.bandcamp.com/) showed me [Onslaught - Bad Apple 64 - C64 Demo])(https://www.youtube.com/watch?v=OsDy-4L6-tQ) -- One of the clear huge boons is that the charset.  They claim 70 bytes/frame, at 12fps.
 
 It's clear that they're doing a 40x25 grid of 8x8's.  That would be 1,000 cells? At any rate
 
@@ -204,6 +202,7 @@ a    b
 By looking at this tree, we can make a bit of a table to let us know how we can encode a, b, c and d.
 
 Symbol | Encoding
+ --- | ---
  a     | 000
  b     | 001
  c     | 01
@@ -229,13 +228,16 @@ Additionally, if you would like to use huffman trees, you can use the header-onl
 
 We don't use arithmatic coding, but it is an important mention because it is what seeded the ground to alert mathematicians that there could be something **better than huffman**. Arithmatic coding is a mechanism to lay out every possible symbol from 0 to 1, with the ratios of how likely each symbol is.  Then, we can, bit-at-a-time partition that space to become more and more narrow. 
 
-There are many online resources to help explain arithmatic coding, and I am not an expert. 
+There are many online resources to help explain arithmatic coding, and I am not an expert.
 
 ## VPX Coding
 
 While arithmatic coding is particularly difficult to do in practice with bitstreams, there is a different take on it called range coding. This is the coding scheme used in Google's VP7, VP8, VP9 video encoding engines to encode symbols.
 
 VPX Coding, specifically, or Range Coding, generally, splits each symbol into an individual bitstream.  But for each bit, you must know how likely it is that the next bit will be a `0` or a `1`.  Like arithmatic coding, you treat it like a pie chart, where the more likely an outcome is, the more of the ratio it can take up, and thus the fewer bits that are needed to encode that data.
+
+WORK THIS IN:
+![Optimal Compression Ratio](https://github.com/user-attachments/assets/02b9d48f-497c-4633-87b8-42a0e345aeaa)
 
 Because VPX coding can use less than one bit per symbol (if you treat 0 and 1 each as two possible symbols) it matters less that you ues symbols.  Instead you can just use bytes, or words.  For instance, if there are 137 different symbols, you could encode that with 8-bits.
 
