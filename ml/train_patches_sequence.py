@@ -354,7 +354,7 @@ class BlockTrainer:
         self.dataset = VideoFrames(device)
         self.dataset.load_data("Touhou - Bad Apple.mp4")
 
-        self.recr = ImageReconstruction(n_sequence=len(self.dataset))
+        self.recr = ImageReconstruction(n_sequence=len(self.dataset), quantize=False)
 
         self.recr.init_blocks_tiledata("kmeans_256_ni_mse.dat")
         # self.recr.init_sequence("stream-kmeans_256_ni.dat")
@@ -365,7 +365,7 @@ class BlockTrainer:
         # sampe contiguous chunks with random offset
         # we want the tile-frame-to-frame loss to cover only frames also evaluated for sematic loss
         self.sampler = ContigChunkSampler(self.dataset,
-                                          batch_size=32,
+                                          batch_size=64,
                                           random_offset=True,
                                           shuffle=True)
         self.data_loader = DataLoader(self.dataset,
@@ -373,8 +373,8 @@ class BlockTrainer:
 
         self.optim = torch.optim.Adam(
             [
-                {"params": self.recr.blocks, "lr": 0.001},
-                {"params": self.recr.sequence, "lr": 0.001 * len(self.dataset) / nblocks}  # Categorical distributions are sampled less often than blocks
+                {"params": self.recr.blocks, "lr": 0.002},
+                {"params": self.recr.sequence, "lr": 0.002 * len(self.dataset) / nblocks}  # Categorical distributions are sampled less often than blocks
             ]
         )
 
@@ -453,7 +453,7 @@ class BlockTrainer:
 
         # gumbel-softmax temperature annealing - value updates once per epoch (aka once per pass thru video)
         gs_tau_scale = 1.0
-        gs_tau_min = 0.1
+        gs_tau_min = 0.01
         gs_tau_anneal_rate = 1e-2
 
         for epoch in range(1000000):
@@ -468,6 +468,12 @@ class BlockTrainer:
 
             self.sampler.set_epoch(epoch)  # update sampler offset and shuffle
 
+            # unlock blocks only after a while spent optimizing tile choice
+            if epoch < 100:
+                self.recr.blocks.requires_grad = False
+            else:
+                self.recr.blocks.requires_grad = True
+
             # anneal gumbel-softmax temperature
             self.recr.gs_tau = max(gs_tau_min, gs_tau_scale * np.exp(-gs_tau_anneal_rate * epoch))
 
@@ -478,16 +484,17 @@ class BlockTrainer:
                 reconstructed_img = self.recr(idx)
 
                 # upsample reconstructed and target images to match vgg trained image size (well, width at least)
-                tgt_us = nn.functional.interpolate(target_img, size=(192, 256), mode='nearest')
-                rcd_us = nn.functional.interpolate(reconstructed_img, size=(192, 256), mode='nearest')
+                tgt_us = nn.functional.interpolate(target_img, size=(84, 128), mode='nearest')
+                rcd_us = nn.functional.interpolate(reconstructed_img, size=(84, 128), mode='nearest')
 
                 loss_percep = self.perceptual_loss(rcd_us, tgt_us)
                 loss_change = self.recr.tile_f2f_penalty(idx)
 
                 # Frame-to-frame optical flow loss
                 # Leverages contiguous frames in batch dim from ContigChunkSampler
-                loss_flow = self.flow_loss(reconstructed_img[:-1, ...], reconstructed_img[1:, ...],
-                                           target_img[:-1, ...], reconstructed_img[1:, ...])
+                flow_skip = 5
+                loss_flow = self.flow_loss(reconstructed_img[:-flow_skip, ...], reconstructed_img[flow_skip:, ...],
+                                           target_img[:-flow_skip, ...], reconstructed_img[flow_skip:, ...]) / flow_skip
 
                 loss = loss_percep + self.change_lambda * loss_change + self.flow_lambda * loss_flow
 
