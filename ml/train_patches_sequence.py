@@ -493,9 +493,19 @@ class BlockTrainer:
 
                 # Frame-to-frame optical flow loss
                 # Leverages contiguous frames in batch dim from ContigChunkSampler
-                flow_skip = 5
-                loss_flow = self.flow_loss(reconstructed_img[:-flow_skip, ...], reconstructed_img[flow_skip:, ...],
-                                           target_img[:-flow_skip, ...], reconstructed_img[flow_skip:, ...]) / flow_skip
+
+                # with skip, in case of delayed block changes
+                loss_flow = torch.zeros_like(loss_percep)
+                na = 0
+                for flow_skip_i in range(5):
+                    flow_skip = flow_skip_i + 1
+                    loss_flow = loss_flow + self.flow_loss(reconstructed_img[:-flow_skip, ...],
+                                                           reconstructed_img[flow_skip:, ...],
+                                                           target_img[:-flow_skip, ...],
+                                                           reconstructed_img[flow_skip:, ...]) / flow_skip
+                    na += 1
+
+                loss_flow /= na
 
                 loss = loss_percep + self.change_lambda * loss_change + self.flow_lambda * loss_flow
 
