@@ -139,17 +139,17 @@ def deblocking_filter(img_raw, lut, quantize=False):
     filtered = torch.where(mask_x, trilinear_interp(lut, center, left, right), center)
 
     if quantize:
-        filtered = filtered + (torch.round(filtered) - filtered).detach()
+        filtered = filtered + (torch.floor(filtered / (2.0/3.0)).clamp(0, 2) - filtered).detach()
 
     # up/down filter is evaluated second
     padded2 = F.pad(filtered, (1, 1, 1, 1), mode='replicate')
     center2 = padded2[:, :, 1:-1, 1:-1]
-    up = padded2[:, :, 1:-1, :-2]
-    down = padded2[:, :, 1:-1, 2:]
+    up = padded2[:, :, :-2, 1:-1]
+    down = padded2[:, :, 2:, 1:-1]
     filtered2 = torch.where(mask_y, trilinear_interp(lut, center, up, down), center2)
 
     if quantize:
-        filtered2 = filtered2 + (torch.round(filtered2) - filtered2).detach()
+        filtered2 = filtered2 + (torch.floor(filtered2 / (2.0/3.0)).clamp(0, 2) - filtered2).detach()
 
     # Undo scaling
     filtered2 /= 2
@@ -296,7 +296,8 @@ class ImageReconstruction(nn.Module):
 
         if self.quantize:
             # quantize to [0, 1, 2] but preserve gradients
-            block_rep = self.blocks + (torch.round(2 * self.blocks) / 2 - self.blocks).detach()
+            block_rep = self.blocks + (torch.floor(self.blocks / (1.0/3.0)).clamp(0, 2) / 2 - self.blocks).detach()
+
         else:
             # straight through
             block_rep = self.blocks
