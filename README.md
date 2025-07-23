@@ -1,126 +1,96 @@
-# espbadapple
+# badder apple
 
-What started as my shot at bad apple on an ESP8266 ended with me seeing how well I could compress it down to under 64kB.  The answer was surprisingly well.  The final outcome from this project was all 6570 frames, at 64x48 pixels, with sound and code for playback in 64.5kB, running on a ch32v006.
+What started as my shot at bad apple on an ESP8266 ended in the biggest spiral into my longest running project. The final outcome from this project was all 6570 frames, at 64x48 pixels, with sound and code for playback in 64.5kB, running on a ch32v006.
 
-## Prep
+This is the story of badder apple.
 
-```
-sudo apt-get install build-essential libavutil-dev libswresample-dev libavcodec-dev libavformat-dev libswscale-dev
-```
+If you are interested in the specific [setup and running](#setup-and-running) instructions or [previous and future work](#previous-and-future-work), feel free to click there.
 
-For msys2 (Windows)
-
-```
-pacman -S base-devel mingw-w64-x86_64-ffmpeg 
-pacman -S clang llvm clang64/mingw-w64-clang-x86_64-wasm-component-ld mingw-w64-clang-x86_64-wasmer mingw-w64-x86_64-binaryen # For web stuff.
-```
-
-For additional tooling for size comparisons on song:
-```
-sudo npm i -g yarn
-sudo yarn global add beesn
-sudo apt-get install zstd
-```
-
-### Workflow
-
-#### Non-ML 
-
-```bash
-cd comp2
-make clean tiles-64x48x8.dat
-cd ../streamrecomp
-make clean stream_stripped.dat
-cd ../song
-make clean ../playback/badapple_song_huffman_reverselzss.h track-float-48000.dat
-cd ../vpxtest
-make clean test.mp4
-cd ../playback
-make clean playback.mp4
-cd interactive
-make interactive
-cd web
-export PATH=${PATH}:/clang64/bin # if on msys2, 
-make index.html
-```
-
-#### ML
-
-
-```bash
-cd comp2
-make clean tiles-64x48x8.dat
-cd ../ml
-make setup runcomp
-```
-
-wait a few minutes
-
-```bash
-cd ../ml
-make reconstruct
-cd ../streamrecomp
-make streamrecomp && ./streamrecomp
-cd ../vpxtest
-make clean test.gif #or test.mp4
-```
-
-### Future TODO
- - [x] Perceptual/Semantic Loss Function
- - [x] De-Blocking Filter
- - [ ] Motion Vectors
- - [x] Reference previous tiles.
- - [x] Add color inversion option for glyphs.  **when implemented, it didn't help.**
- - [x] https://engineering.fb.com/2016/08/31/core-infra/smaller-and-faster-data-compression-with-zstandard/ **compared with audio compression,  It's not that amazing.**
- - [x] https://github.com/webmproject/libvpx/blob/main/vpx_dsp/bitreader.c **winner winner chicken dinner**
- - [x] https://github.com/webmproject/libvpx/blob/main/vpx_dsp/bitwriter.c **winner winner chicken dinner**
+# Previous and Future Work
 
 ## History
 
-My thought to port bad apple started back in early 2017.  But I quickly ran out of steam.
+Originally, in 2016, I wanted to use the new-at-the-time [ESP8285](https://www.espressif.com/en/pcn-product/esp8285), an [ESP8266](https://www.espressif.com/en/products/socs/esp8266) with integrated flash.  I wanted to make the smallest bad apple.  I wanted to try to dead bug a crystal on the ground plane, and use my [NTSC Broadcast Television from an ESP8266 project](https://github.com/cnlohr/channel3) and make the (physically) smallest bad apple.
 
-### RLE
+My first attempt was with RLE on the raster image, and I tried a number of other tricks, like variable width integers, etc.  But nothing could get it compress all that much.  With the 512x384 res, it took about 1kB per frame to store.  Total size was about 11,602,173 bytes.  I tried other compression mechanisms on top of that, getting it down to ~4MB, but nothing really stuck.  I eventually had to put the project back on the shelf.  There were no tradeoffs I was willing to make.
 
-My first attempt was with RLE on the raster image, and I tried a number of other tricks, like variable width integers, etc.  But nothing could get it compress all that much.  With the 512x384 res, it took about 1kB per frame to store.  Total size was about 11,602,173 bytes.
+Then, one day in 2019, [Inverse Phase](https://inversephase.bandcamp.com/) showed me [Onslaught - Bad Apple 64 - C64 Demo])(https://www.youtube.com/watch?v=OsDy-4L6-tQ), which was able to compress bad apple down to 170kB, or 70 bytes/frame, at 12fps.  This seemed truly impossible to me,  this was massively smaller than what I was able to achieve.  Granted, at a lower resolution and framerate (312x184, at 12FPS)... It blew my mind.
 
-### What is this C64 demo doing?
-
-It wasn't until [Inverse Phase](https://inversephase.bandcamp.com/) showed me [Onslaught - Bad Apple 64 - C64 Demo])(https://www.youtube.com/watch?v=OsDy-4L6-tQ) -- One of the clear huge boons is that the charset.  They claim 70 bytes/frame, at 12fps.
-
-It's clear that they're doing a 40x25 grid of 8x8's.  That would be 1,000 cells? At any rate
-
-### The lull
-
-I somehow lost interest since there wasn't any really compelling and cool combination that could fit on the ESP8285.  So I stopped playing around until 2023, when the CH32V003 came out.  I continued to refine my algorithms, and playing.
-
-By really pushing things to the limits, one could theoretically fit bad apple in XXX kb **TODO IMAGE**
-
-Then, I spent a while talking to my brother and his wife, both PhD's in math, and they introduced me to the K-means algorithm.  But by this time, I had been fatigued by bad apple.
+I didn't do anything serious here because I had always struggled to find any good way to generate glyphs.  I tried a few different techniques but it kind of petered out, since all of my techniques produced lackluster output.  I would get occasional spirts of inspiration but no majorbreakthroughs.
 
 But, then, in early 2024, things really got into high gear again, because WCH, the creators of the CH32V003, announced other chips in the series with FLASH ranging from 32kB to 62kB, so it was time for the rubber to hit the road again.  I would target the ch32v006, with 62kB flash + 2.5kB Bootloader.  Also, Ronboe just sent me some of their 64x48 pixel OLED displays that cost less than $1/ea.
 
-A friend pointed out that we should get a baseline.  Let's see what the state-of-the art is in video encoding, let's try encoding our video with XXX, a codec with the full force of millions of dollars of development?  How much can it encode Bad Apple down to? Let's just see what we're going to be up against.
+**TODO** Add a theoretically best video. "A friend pointed out that we should get a baseline.  Let's see what the state-of-the art is in video encoding, let's try encoding our video with XXX, a codec with the full force of millions of dollars of development?  How much can it encode Bad Apple down to? Let's just see what we're going to be up against." ...Oof...  this is going to be one doozie.
 
-...Oof...  this is going to be one doozie.
+By March I hit a wall. I couldn't get the video to a quality I was happy with, and I couldn't find very good tiles.  The video was hovering around 80kB, with lackluster quality due to the poor tile selection.
 
-I implemented a k-means approach, and wowee! The tiles that came out of k-means was AMAZING!!! Any time you do an experiment with this you make headway.
+Then, while visiting my brother and sister in law, both PhD's in math, and they introduced me to the K-means algorithm and were rather perplexed I didn't know about it. 
 
-After using k-means, we were able to get great tile sets, so the shift went to various compression for the tile sets + describing the glyphs.
+As soon as I got a break, I implemented a k-means approach, and wowee! The tiles that came out of k-means was AMAZING!!! With these great tiles, the quality was solved  so the shift went to various compression for the tile sets + describing the glyphs.
 
 The problem started to form clearly.  There were just a few things that needed to be compressed here:
 1. The song, made up of notes, with a frequency, duration and time-to-next-note. Each note could be expressed as two bytes. At 1910 notes, it would take about 3820 bytes.
 2. The glyphs, which make up tiles, about 256 qty, of 8x8 pixels, each pixel 3 varying intensities of grey. If naively encoded, would be 4096 bytes.
-3. The stream, information to convery which which glpyh is used in each tile for each frame of the video.  For 64x48 pixels, or 8x6 tiles x 6570 frames.  If naively encoded, would be 315360 bytes.
+3. The stream, information to convery which which glpyh is used in each tile for each frame of the video.  For 64x48 pixels, or 8x6 tiles of 8x8 glyphs x 6570 frames.  If naively encoded, would be 315360 bytes.
 
-All in all, I had to find some way to compress 323276 bytes worth of data, that was already pretty tight and an unknown quantity of code down into 64.5kB.  This was going to be challenging.
+All in all, I had to find some way to compress 323276 bytes worth of data, that was already pretty tight and an unknown quantity of code down into 64.5kB... and I knew it would be a challenge.
 
-I gave it a solid go and I was able to get it to fit.  I had to cut a lot of corners, and the quality was not quite where I wanted.  I was ready to, after 7 years just make the video and publish... Until I ran this whole thing by Lyuma and their brother, Hellcatv who pointed out I should be using arithmatic, range, or other better coding techniques.  I didn't believe that it would offer anything, but upon giving it a try, I knew I had to delay publushing for a year.
+I gave it a solid go, using huffman trees to select my tiles and runlengthsm trying different runtime schemes, I was able to get it to fit.  I had to cut a lot of corners, and the quality was not quite where I wanted.  I was ready to, after 7 years just make the video and publish... Until I ran this whole thing by Lyuma and their brother, Hellcatv who pointed out I should be using arithmatic, range, or other better coding techniques.  I didn't believe that it would offer anything, but upon giving it a try, I knew I had to delay publushing for a year.  A decision I feel was a wise one.
 
-While the story it self was extremely circuituous route, I think instead of telling a simplified version of it, I'd rather go into what some of the compression techniques that constitute these solutions.
+I think instead of telling the story, I'd rather go into what some of the compression techniques that constitute these solutions.
 
 # Primary Compression Techniques
 
-In general, for compression techniques, you want to break your data into "symbols" instead of bytes.  Because maybe you don't have 256 possible values, but instead 7, 143, or 258.  By storing the data as symbols, it helps us compress things one-symbol-at-a-time instead of trying to pick apart a data stream.
+Symbols: In general, for compression techniques, you want to break your data into "symbols" instead of bytes.  Because maybe you don't have 256 possible values, but instead 7, 143, or 258.  By storing the data as symbols, it helps us compress things one-symbol-at-a-time instead of trying to pick apart a data stream.
+
+Minimizing Entropy: There are multiple ways to represent information, some ways compress much better than others.
+
+General Compression: You can take a bitstream and put it through existing compression schemes, which will give you a ballpark guess of how much a given data stream can be compressed.
+
+RLE: Run-length encoding, or say "nothing changes for n samples"
+
+Run-lengths ass symbols: Run lengths can instead of being encoded as a number, 
+
+Symbol Compression: Using Huffman coding, or VPX coding to compress symbols.
+
+Pattern Matching: You can reference earler parts of the decoded (or encoded) stream to encode repeated segments by reference instead of needing to re-encode entire sections. Systems like [LZSS](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Storer%E2%80%93Szymanski) are used in regular compression algorithms to find, and reference these earlier parts of the stream. 
+
+## Minimizing Entropy
+
+There are a lot of different ways to encode information, before compression.  This is illustrated by the chart below.  I took the bad apple song and represented the data in a variety of ways.  While all the ways convey the same information and can theoretically be compressed to similar levels, by representing information in binary, there are typically massive gains, and by simplifying the representation, it can be compressed greatly.  This is why you shouldn't necessarily encode everything as JSON, slap zstd or gzip ontop of it and call it good.
+
+| Compression | .xml | .json (jq formatted) | .json.min | .bson (binary JSON) | .mid | .dat | 
+| -- | -- | -- | -- | -- | -- | -- |
+| uncompressed | 217686 (5698%) | 150802 (3947%)| 85855 (2247%) | 88677 (2321%) | 17707 (463%) | **3820 (100%)** |
+| gzip -9      | 12001 (314%) | 11458 (300%) | 10590 (277%) | 13720 (359%) | 1329 (34%) | 682 (17.8%) |
+| zstd -9      | 10052 (263%) | 9480 (248%) | 8877 (232%) | 12182 (319%)  | 1332 (35%) | 724 (19.0%) |
+
+Originally, I used a scheme of where I would encode each tile one at a time through the length of the video.  And I would compress it as `[ run-length | symbol-to-switch-to ]` before another tile would change.  I then tried doing exactly the same, but, scanned left-to-right and top-top-bottom, and looked for changes over time.  I was using exactly the same binary representation for both. And the binary data takes exactly the same amount of data to encode each way. YET! Across the board, it was a serious win to represent the data the other way.
+
+In an example datastream I am using 256 tile, I can represent tile IDs as uint8_t's, so the stream can be represented as 64/8 * 48/8 * 6570 (Frames) = 315360 bytes.
+
+| Type | Data Length (32-bit tiles) | Data Length (8-bit tiles) |
+| -- | -- | -- |
+| Tile IDs Data                 | 1261440 (400%) | 315360 (100%) |
+| Original Ordering, gzip -9    | 146191 (46.4%) | **94440 (29.9%)** | 
+| Original Ordering, zstd -9    | **130802 (41.5%)** | 95240 (30.2%) |
+| Reordered, gzip -9            | 119046 (37.7%) | 114779 (36.4%) |
+| Reordered, zstd -9            | **110001 (34.9%)** | **110119 (34.9%)** |
+
+Editing note: What? This is not the result I expected.  Why does this happen?  Why would the size of each tile being encoded change how effective gzip / zstd can compress the stream at a high level.
+
+Just looking at the gzip compression only.
+
+| Type | Data Length (32-bit tiles) | Data Length (8-bit tiles) |
+| -- | -- | -- |
+| Original Ordering, gzip -9    | 146191 (46.4%) | **94440 (29.9%)** | 
+| Reordered, gzip -9            | **119046 (37.7%)** | 114779 (36.4%) |
+
+I have no explaination for this... 
+
+Well, what I can say is at least with *my* compression algorithms, the left-to-right, top-to-bottom, frame-at-a-time ordering provides the most compression by a reasonable clip.
+
+I include both zstd and zlib here to illustrate that the best compression mechanism is content-sensitive.  From what I've found, gzip compresses better in areas where data is not particularly verbose, and zstd compresses better if your data is a bread sandwich.  If speed is a concern and your data sets are reasonably sized, zstd is a safe bet, for the 32-bit data, gzip took 45ms, and zstd took about 8ms, zstd being over 5x faster (For larger data sets, it worked out to be as much as 20x faster).
 
 ## Huffman Coding
 
@@ -269,7 +239,7 @@ If anyone knows the original author this passed through, I'd really appreciate k
 
 In general this is a cover of the "Bad Apple" version by Alstroemeria Records featuring nomico.  And depending on jurisdiction, they may maintain some form of copyright.  I disclaim all copyright from the song and midi file.  Feel free to treat my transformation of it under public domain.
 
-## Results
+## Audio Compression Results
 
 To do sanity checks, I decided to compare the compression a few steps along the way.  The compression test dataset for the .dat is the `fmraw.dat` generated file which contains a binary encoding for note, delta time and length.  (All sizes in octets (bytes))
 
@@ -360,6 +330,70 @@ Assuming a little endian system.
 
 
 
+# Setup and Running
+
+## Prep
+
+```
+sudo apt-get install build-essential libavutil-dev libswresample-dev libavcodec-dev libavformat-dev libswscale-dev
+```
+
+For msys2 (Windows)
+
+```
+pacman -S base-devel mingw-w64-x86_64-ffmpeg 
+pacman -S clang llvm clang64/mingw-w64-clang-x86_64-wasm-component-ld mingw-w64-clang-x86_64-wasmer mingw-w64-x86_64-binaryen # For web stuff.
+```
+
+For additional tooling for size comparisons on song:
+```
+sudo npm i -g yarn
+sudo yarn global add beesn
+sudo apt-get install zstd
+```
+
+### Workflow
+
+#### Non-ML 
+
+```bash
+cd comp2
+make clean tiles-64x48x8.dat
+cd ../streamrecomp
+make clean stream_stripped.dat
+cd ../song
+make clean ../playback/badapple_song_huffman_reverselzss.h track-float-48000.dat
+cd ../vpxtest
+make clean test.mp4
+cd ../playback
+make clean playback.mp4
+cd interactive
+make interactive
+cd web
+export PATH=${PATH}:/clang64/bin # if on msys2, 
+make index.html
+```
+
+#### ML
+
+
+```bash
+cd comp2
+make clean tiles-64x48x8.dat
+cd ../ml
+make setup runcomp
+```
+
+wait a few minutes
+
+```bash
+cd ../ml
+make reconstruct
+cd ../streamrecomp
+make streamrecomp && ./streamrecomp
+cd ../vpxtest
+make clean test.gif #or test.mp4
+```
 
 
 
@@ -399,6 +433,17 @@ https://tiplanet.org/forum/viewtopic.php?t=24951
  * Numworks - Probably very large - M4x1m3 - 320x240
  * fx-92 College 2D+ - - 96x31
 
+
+### Future TODO
+ - [x] Perceptual/Semantic Loss Function
+ - [x] De-Blocking Filter
+ - [ ] Motion Vectors
+ - [x] Reference previous tiles.
+ - [x] Add color inversion option for glyphs.  **when implemented, it didn't help.**
+ - [x] https://engineering.fb.com/2016/08/31/core-infra/smaller-and-faster-data-compression-with-zstandard/ **compared with audio compression,  It's not that amazing.**
+ - [x] https://github.com/webmproject/libvpx/blob/main/vpx_dsp/bitreader.c **winner winner chicken dinner**
+ - [x] https://github.com/webmproject/libvpx/blob/main/vpx_dsp/bitwriter.c **winner winner chicken dinner**
+
 ### Other notes
  * I got 15% savings when I broke the "run length" and "glyph ID" fields apart.
  * When having split tables, I tried exponential-golomb coding, and it didn't help.  Savings was not worth it.
@@ -431,4 +476,3 @@ After Full VPX
  * Inverting run data goes from 63365 to 63282... Totes not worth it.
 
 
- 
