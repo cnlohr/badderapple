@@ -17,6 +17,7 @@
 
 #define BADATA_DECORATOR const __attribute__((section(".fixedflash")))
 #define BAS_DECORATOR    const __attribute__((section(".fixedflash")))
+#define SECTION_DECORATOR __attribute__((section(".fixedflash")))
 
 #include "ba_play.h"
 #include "ba_play_audio.h"
@@ -37,12 +38,15 @@ volatile uint32_t kas = 0;
 #define SSD1306_OFFSET 32
 
 #define SSD1306_RST_PIN PC0
+#define SSD1306_I2C_BITBANG_SDA PC1
+#define SSD1306_I2C_BITBANG_SCL PC2
 
-#define I2CDELAY_FUNC( x ) asm volatile( "nop\nnop\n");
+#define I2CDELAY_FUNC( x )
+// asm volatile( "nop\nnop\n");
 
 #include "ssd1306mini.h"
 
-const uint8_t ssd1306_init_array[] __attribute__((section(".fixedflash"))) =
+const uint8_t ssd1306_init_array[] SECTION_DECORATOR =
 {
 	0xAE, // Display off
 	0x20, 0x00, // Horizontal addresing mode
@@ -63,6 +67,13 @@ const uint8_t ssd1306_init_array[] __attribute__((section(".fixedflash"))) =
 	0xAF, // Display On
 	SSD1306_PAGEADDR, 0, 7, // Page setup, start at 0 and end at 7
 };
+
+const uint8_t OledBufferReset[] SECTION_DECORATOR = 
+	{0xD3, 0x32, 0xA8, 0x01,
+	// Column start address (0 = reset)
+	// Column end address (127 = reset)
+	SSD1306_COLUMNADDR, SSD1306_OFFSET, SSD1306_OFFSET+SSD1306_W-1, 0xb0 };
+
 
 //uint8_t ssd1306_buffer[64];
 
@@ -92,9 +103,19 @@ uint16_t pixelmap[64*6];
 //pixelmap[64*6];
 int pmp;
 // From ttablegen.c
-const uint8_t potable[16] __attribute__((section(".fixedflash"))) = { 0x50, 0xf4, 0xf4, 0xf4, 0xf4, 0xf4, 0xfd, 0xfd, 0xf4, 0xfd, 0xfd, 0xfd, 0xf4, 0xfd, 0xfd, 0xfd, };
 
-void PMEmit( uint16_t pvo )
+// For computing along horizontal lines pixel values.
+// x = previous
+// y = next
+// pair-of-bits = this
+const uint8_t potable[16] = {
+	0x50, 0xf4, 0xf4, 0xf4,
+	0xf4, 0xf4, 0xfd, 0xfd,
+	0xf4, 0xfd, 0xfd, 0xfd,
+	0xf4, 0xfd, 0xfd, 0xfd,
+};
+
+static inline void PMEmit( uint16_t pvo )
 {
 
 	// If we only cared about left/right blurring, we could just say 
@@ -111,8 +132,10 @@ void EmitEdge( graphictype tgprev, graphictype tg, graphictype tgnext )
 	graphictype C = tgnext >> 8;
 	graphictype D = tgnext;      // implied & 0xff
 
-	graphictype E = (B&C)|(A&D); // 8 bits worth of MSB of (next+prev+1)/2
-	graphictype F = D|B;         // 8 bits worth of LSB of (next+prev+1)/2
+//	graphictype E = (B&C)|(A&D); // 8 bits worth of MSB of (next+prev+1)/2
+//	graphictype F = D|B;         // 8 bits worth of LSB of (next+prev+1)/2
+	graphictype E = tg >> 8;
+	graphictype F = tg;          // implied & 0xff
 
 /*	graphictype G = tg >> 8;
 	graphictype H = tg;          // implied & 0xff
@@ -128,7 +151,6 @@ void EmitEdge( graphictype tgprev, graphictype tg, graphictype tgnext )
 	//ssd1306_mini_i2c_sendbyte( tg );
 	PMEmit( (tghi << 8) | tglo );
 }
-
 
 
 void UpdatePixelMap()
@@ -180,9 +202,21 @@ void UpdatePixelMap()
 
 int main()
 {
-	funGpioInitAll();
 	SystemInit();
-	ssd1306_mini_i2c_setup();
+	funGpioInitAll();
+
+
+//	GPIOC->CFGLR = 0x7;
+
+	// PC0,1,2 = GPIO_CFGLR_OUT_PP, 3,4=GPIO_CFGLR_OUT_AF_PP
+	GPIOC->CFGLR = 0xbb111;
+
+	funDigitalWrite( SSD1306_I2C_BITBANG_SDA, 1 );
+	funDigitalWrite( SSD1306_I2C_BITBANG_SCL, 1 );
+	funDigitalWrite( SSD1306_RST_PIN, 0 );
+	Delay_Ms(10);
+	funDigitalWrite( SSD1306_RST_PIN, 1 );
+	Delay_Us(10);
 
 	// Trying another mode
 	ssd1306_mini_pkt_send( ssd1306_init_array, sizeof(ssd1306_init_array), 1 );
@@ -260,18 +294,15 @@ int main()
 	TIM1->CH3CVR = 16;
 	TIM1->CH4CVR = 16;
 
-	funPinMode( PC3, GPIO_CFGLR_OUT_AF_PP );
-	funPinMode( PC4, GPIO_CFGLR_OUT_AF_PP );
-
 // Debug pin
 //	funPinMode( PD6, GPIO_CFGLR_OUT_PP );
 
 	// Red LEDs
-	funDigitalWrite( PD7, 1 );
+//	funDigitalWrite( PD7, 1 );
 	//funPinMode( PD7, GPIO_CFGLR_OUT_PP );
 
-	// D7 = GPIO_CFGLR_OUT_PP, D3, D4 = GPIO_CFGLR_OUT_AF_PP
-	GPIOD->CFGLR = 0x700bb444;
+	// PD6,D7 = GPIO_CFGLR_OUT_PP, D3, D4 = GPIO_CFGLR_OUT_AF_PP
+	GPIOD->CFGLR = 0x110bb444;
 
 	while(1)
 	{
@@ -324,12 +355,7 @@ int main()
 		// Move the cursor "off screen"
 		// Scan over two scanlines to hide updates
 
-		ssd1306_mini_pkt_send( 
-			(const uint8_t[]){0xD3, 0x32, 0xA8, 0x01,
-			// Column start address (0 = reset)
-			// Column end address (127 = reset)
-			SSD1306_COLUMNADDR, SSD1306_OFFSET, SSD1306_OFFSET+SSD1306_W-1, 0xb0 },
-			8, 1 );
+		ssd1306_mini_pkt_send( OledBufferReset, sizeof(OledBufferReset), 1 );
 
 		// Send data
 		int y;
@@ -442,5 +468,74 @@ int main()
 		subframe++;
 		//funDigitalWrite( PD6, 1 );
 	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void handle_reset( void )
+{
+	asm volatile( "\n\
+.option push\n\
+.option norelax\n\
+	la gp, __global_pointer$\n\
+.option pop\n\
+	la sp, _eusrstack\n"
+".option arch, +zicsr\n"
+	// Setup the interrupt vector, processor status and INTSYSCR.
+
+"	li a0, 0x1880\n\
+	csrw mstatus, a0\n"
+	: : : "a0", "a3", "memory");
+
+	// Careful: Use registers to prevent overwriting of self-data.
+	// This clears out BSS.
+asm volatile(
+"	la a0, _sbss\n\
+	la a1, _ebss\n\
+	li a2, 0\n\
+	bge a0, a1, 2f\n\
+1:	sw a2, 0(a0)\n\
+	addi a0, a0, 4\n\
+	blt a0, a1, 1b\n\
+2:"
+	// This loads DATA from FLASH to RAM.
+/*
+"	la a0, _data_lma\n\
+	la a1, _data_vma\n\
+	la a2, _edata\n\
+1:	beq a1, a2, 2f\n\
+	lw a3, 0(a0)\n\
+	sw a3, 0(a1)\n\
+	addi a0, a0, 4\n\
+	addi a1, a1, 4\n\
+	bne a1, a2, 1b\n\
+2:\n"*/
+: : : "a0", "a1", "a2", "a3", "memory"
+);
+
+#if defined( FUNCONF_SYSTICK_USE_HCLK ) && FUNCONF_SYSTICK_USE_HCLK
+	SysTick->CTLR = 5;
+#else
+	SysTick->CTLR = 1;
+#endif
+
+	// set mepc to be main as the root app.
+asm volatile(
+"	csrw mepc, %[main]\n"
+"	mret\n" : : [main]"r"(main) );
 }
 
