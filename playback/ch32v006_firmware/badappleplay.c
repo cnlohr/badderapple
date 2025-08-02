@@ -512,7 +512,7 @@ asm volatile(
 	addi a0, a0, 4\n\
 	blt a0, a1, 1b\n\
 2:"
-	// This loads DATA from FLASH to RAM.
+	// This loads DATA from FLASH to RAM ---- BUT --- We don't use the .data section here.
 /*
 "	la a0, _data_lma\n\
 	la a1, _data_vma\n\
