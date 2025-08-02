@@ -2,3 +2,7 @@
 *.gif
 *.mp4
 *.gz
+*.bin
+*.zs
+*.elf
+*.csv
