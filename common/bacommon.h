@@ -219,6 +219,21 @@
 #define GLYPH_FLIP_X_MASK    0x2000
 #define GLYPH_FLIP_Y_MASK    0x1000
 
+
+
+
+
+
+
+
+#if defined( VPX_GREY4 ) || defined( VPX_GREY3 )
+	#define BITSETS_TILECOMP 2
+#elif defined( VPX_GREY16 )
+	#define BITSETS_TILECOMP 4
+#else
+	#define BITSETS_TILECOMP 1
+#endif
+
 #ifndef BA_CONFIG_ONLY
 
 
@@ -257,10 +272,12 @@ struct block
 #define CNFG_IMPLEMENTATION
 #include "rawdraw_sf.h"
 
+#ifndef OVERRIDE_RDCALLBACKS
 void HandleKey( int keycode, int bDown ) { }
 void HandleButton( int x, int y, int button, int bDown ) { }
 void HandleMotion( int x, int y, int mask ) { }
 int HandleDestroy() { return 0; }
+#endif
 
 void UpdateBlockDataFromIntensity( struct block * k );
 void DrawBlockBasic( int xofs, int yofs, blocktype bb, int original_glyph_id  );

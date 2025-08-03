@@ -279,6 +279,7 @@ int KOut( uint16_t tg )
 
 */
 #if 0
+// OLD BAD BAD BAD
 void EmitPartial( graphictype tgprev, graphictype tg, graphictype tgnext, int subframe )
 {
 	// This should only need +2 regs (or 3 depending on how the optimizer slices it)
@@ -340,6 +341,55 @@ void EmitPartial( graphictype tgprev, graphictype tg, graphictype tgnext, int su
 // If you go the other way with the sensitive one...
 //http://www.32x8.com/sop6_____A-B-C-D-E-F_____m_3-5-7-12-13-15-17-19-21-23-28-29-31-48-49-51-52-53-55-60-61-63_____d_2-6-8-9-10-11-14-18-22-24-25-26-27-30-32-33-34-35-36-37-38-39-40-41-42-43-44-45-46-47-50-54-56-57-58-59-62_____option-0_____999781866975857595711
 // LSB: y = E + C + A + DF + BF
+//was:
+//	if( subframe )
+//		tg = (D&E)|(B&E)|(B&C&F)|(A&D&F);     // 8 bits worth of MSB of this+(next+prev+1)/2-1 (Assuming values of 0,1,3)
+//	else
+//		tg = E|C|A|(D&F)|(B&F)/*|(B&D)*/;       // 8 bits worth of MSB|LSB of this+(next+prev+1)/2-1
+//                             ^^^ Some versions omit this.
+//Evan's LUT
+/*
+	// this left right
+		SETLUT(0, 0, 0) = 0.0; 000000 0 0
+		SETLUT(1, 0, 0) = 0.0; 000001 0 0
+		SETLUT(2, 0, 0) = 1.0; 000011 0 1
+		SETLUT(0, 1, 0) = 0.0; 000100 0 0
+		SETLUT(1, 1, 0) = 1.0; 000101 0 1
+		SETLUT(2, 1, 0) = 2.0; 000111 1 1
+		SETLUT(0, 2, 0) = 1.0; 001100 0 1
+		SETLUT(1, 2, 0) = 1.0; 001101 0 1
+		SETLUT(2, 2, 0) = 2.0; 001111 1 1
+		SETLUT(0, 0, 1) = 0.0; 010000 0 0
+		SETLUT(1, 0, 1) = 1.0; 010001 0 1
+		SETLUT(2, 0, 1) = 2.0; 010011 1 1
+		SETLUT(0, 1, 1) = 1.0; 010100 0 1
+		SETLUT(1, 1, 1) = 1.0; 010101 0 1
+		SETLUT(2, 1, 1) = 2.0; 010111 1 1
+		SETLUT(0, 2, 1) = 1.0; 011100 0 1
+		SETLUT(1, 2, 1) = 2.0; 011101 1 1
+		SETLUT(2, 2, 1) = 2.0; 011111 1 1
+		SETLUT(0, 0, 2) = 1.0; 110000 0 1
+		SETLUT(1, 0, 2) = 1.0; 110001 0 1
+		SETLUT(2, 0, 2) = 2.0; 110011 1 1
+		SETLUT(0, 1, 2) = 1.0; 110100 0 1
+		SETLUT(1, 1, 2) = 2.0; 110101 1 1
+		SETLUT(2, 1, 2) = 2.0; 110111 1 1
+		SETLUT(0, 2, 2) = 1.0; 111100 0 1
+		SETLUT(1, 2, 2) = 2.0; 111101 1 1
+		SETLUT(2, 2, 2) = 2.0; 111111 1 1
+
+	A = tgprev>>8
+	B = tgprev
+	C = tgnext>>8
+	D = tgnext
+	E = tg>>8
+	F = tg
+	LSB: E | C | A | (D&F) | (B&F) | (B&D)
+	MSB: (D&E) + (B&E) + (B&C&F) + (A&D&F)
+
+
+	MSB: 
+*/
 
 void EmitPartial( graphictype tgprev, graphictype tg, graphictype tgnext, int subframe )
 {
@@ -353,9 +403,9 @@ void EmitPartial( graphictype tgprev, graphictype tg, graphictype tgnext, int su
 	graphictype F = tg;          // implied & 0xff
 
 	if( subframe )
-		tg = (D&E)|(B&E)|(B&C&F)|(A&D&F);     // 8 bits worth of MSB of this+(next+prev+1)/2-1 (Assuming values of 0,1,3)
+		tg = (D&E) | (B&E) | (B&C&F) | (A&D&F);     // 8 bits worth of MSB of this+(next+prev+1)/2-1 (Assuming values of 0,1,3)
 	else
-		tg = E|C|A|(D&F)|(B&F)/*|(B&D)*/;       // 8 bits worth of MSB|LSB of this+(next+prev+1)/2-1
+		tg = E | C | A | (D&F) | (B&F) | (B&D);       // 8 bits worth of MSB|LSB of this+(next+prev+1)/2-1
 
 	KOut( tg );
 }
@@ -368,9 +418,16 @@ int PixelBlend( int tgprev, int tg, int tgnext )
 	if( tgnext == 2 ) tgnext = 3;
 	// this+(next+prev+1)/2-1 assuming 0..3, skip 2.
 	//printf( "%d\n", tg );
-	tg = (tg + (tgprev+tgnext+1)/2-1);
-	if( tg < 0 ) tg = 0;
-	if( tg > 2 ) tg = 2;
+
+	const uint8_t potable[16] = {
+		0x50, 0xf4, 0xf5, 0xf5,
+		0xf4, 0xf5, 0xfd, 0xfd,
+		0xf5, 0xfd, 0xfd, 0xfd,
+		0xf5, 0xfd, 0xfd, 0xfd,
+	};
+
+	tg = (potable[tgprev+tgnext*4]>>(tg*2)) &0x3;
+
 	return tg;
 }
 
@@ -401,7 +458,6 @@ void EmitSamples8()
 					graphictype tgnext = g[1];
 					graphictype tg = g[0];
 					graphictype tgprev = (bx > 0 ) ? ctx.glyphdata[gm[gmi-1]][7] : tgnext;
-
 					EmitPartial( tgprev, tg, tgnext, subframe );
 					sx = 1;
 				}

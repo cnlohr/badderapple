@@ -181,21 +181,26 @@ static void ba_audio_setup()
 static int ba_audio_pull_note( struct ba_audio_player_t * player )
 {
 	int stackplace = player->stackplace;
-	player->stack[stackplace].remain--;
-	CHECKPOINT( audio_stack_place = stackplace, audio_stack_remain = player->stack[stackplace].remain, decodephase = "AUDIO: Pulling Note" );
-	while( player->stack[stackplace].remain == 0 )
+	struct ba_audio_player_stack_element * stack = player->stack;
+	struct ba_audio_player_stack_element * stackpl = stack + stackplace;
+
+	stackpl->remain--;
+
+	CHECKPOINT( audio_stack_place = stackplace, audio_stack_remain = stackpl->remain, decodephase = "AUDIO: Pulling Note" );
+	while( stackpl->remain == 0 )
 	{
-		CHECKPOINT( audio_stack_place = stackplace, audio_stack_remain = player->stack[stackplace].remain, audio_stack_offset = player->stack[stackplace].offset, decodephase = "AUDIO: Popping back stack" );
+		CHECKPOINT( audio_stack_place = stackplace, audio_stack_remain = stackpl->remain, audio_stack_offset = stackpl->offset, decodephase = "AUDIO: Popping back stack" );
 		stackplace--;
 		if( stackplace < 0 ) return -5;
+		stackpl = stack + stackplace;
 	}
 
 	uint16_t * optr;
 
 	do
 	{
-		optr = &player->stack[stackplace].offset;
-		CHECKPOINT( audio_stack_place = stackplace, audio_stack_remain = player->stack[stackplace].remain, audio_stack_offset = player->stack[stackplace].offset, decodephase = "AUDIO: Reading Next" );
+		optr = &stackpl->offset;
+		CHECKPOINT( audio_stack_place = stackplace, audio_stack_remain = stackpl->remain, audio_stack_offset = stackpl->offset, decodephase = "AUDIO: Reading Next" );
 		int bpstart = *optr;
 		int is_backtrace = ba_audio_internal_pull_bit( player, optr );
 		CHECKPOINT( audio_bpr = *optr, audio_pullbit = *optr, audio_gotbit = is_backtrace, audio_last_bitmode = 0, audio_backtrace = is_backtrace, decodephase = is_backtrace ? "AUDIO: Backtrack" : "AUDIO: No Backtrack" );
@@ -207,18 +212,19 @@ static int ba_audio_pull_note( struct ba_audio_player_t * player )
 		int offset = ba_audio_internal_pull_exp_golomb( player, optr );
 
 		int tremain = runlen + ESPBADAPPLE_SONG_MINRL + 1;
-		if( tremain > player->stack[stackplace].remain ) tremain = player->stack[stackplace].remain;  //TODO: Fold tremain into remain logic below.
-		player->stack[stackplace].remain -= tremain;
-		//printf( "RATCHET IN: %d / LEFT: %d\n", tremain, player->stack[stackplace].remain );
+		if( tremain > stackpl->remain ) tremain = stackpl->remain;  //TODO: Fold tremain into remain logic below.
+		stackpl->remain -= tremain;
+		//printf( "RATCHET IN: %d / LEFT: %d\n", tremain, stack[stackplace].remain );
 		stackplace++;
-		CHECKPOINT( audio_stack_place = stackplace, audio_stack_remain = player->stack[stackplace].remain, audio_stack_offset = player->stack[stackplace].offset, audio_backtrack_remain = tremain, audio_backtrack_runlen = runlen, audio_backtrack_offset = offset, decodephase = "AUDIO: Committed Backtrack" );
+		stackpl = stack + stackplace;
+		CHECKPOINT( audio_stack_place = stackplace, audio_stack_remain = stackpl->remain, audio_stack_offset = stackpl->offset, audio_backtrack_remain = tremain, audio_backtrack_runlen = runlen, audio_backtrack_offset = offset, decodephase = "AUDIO: Committed Backtrack" );
 
-		player->stack[stackplace] = (struct ba_audio_player_stack_element)
+		*stackpl = (struct ba_audio_player_stack_element)
 		{ 
 			bpstart - ( offset + ESPBADAPPLE_SONG_OFFSET_MINIMUM + runlen + ESPBADAPPLE_SONG_MINRL + 1 ),
 			tremain
 		};
-		//printf( "RTK: %d %d\n", player->stack[stackplace].offset, player->stack[stackplace].remain );
+		//printf( "RTK: %d %d\n", stack[stackplace].offset, stack[stackplace].remain );
 	} while( 1 );
 
 	CHECKPOINT( audio_gotbit = -1, decodephase = "AUDIO: Reading Note", audio_last_ofs = 0, audio_last_he = 0, audio_pullhuff = 0 );
@@ -227,7 +233,7 @@ static int ba_audio_pull_note( struct ba_audio_player_t * player )
 	int lenandrun = ba_audio_internal_pull_huff( player, espbadapple_song_hufflen, optr );
 	CHECKPOINT( audio_gotbit = -1, audio_lenandrun = lenandrun, decodephase = "AUDIO: Read Len And Run" );
 
-	//printf( "[%02x %02x, %d, %d]\n", note, lenandrun, player->stack[stackplace].remain, stackplace );
+	//printf( "[%02x %02x, %d, %d]\n", note, lenandrun, stack[stackplace].remain, stackplace );
 	player->stackplace = stackplace;
 	return (note<<8) | lenandrun;
 }
@@ -337,6 +343,7 @@ int ba_audio_fill_buffer( volatile uint8_t * outbuffer, int outbuffertail )
 		int ntr = player->noisetremain;
 		if( ntr > 0 )
 		{
+#if 1
 			int l = player->noiselfsr;
 			if( ( outbufferhead & 3 ) == 0 )
 			{
@@ -347,6 +354,7 @@ int ba_audio_fill_buffer( volatile uint8_t * outbuffer, int outbuffertail )
 				player->noisesum = (l * ntr)>>14;
 			}
 			sample += player->noisesum;
+#endif
 		}
 
 		outbuffer[outbufferhead] = (volatile uint32_t)((sample >> (1+8)));

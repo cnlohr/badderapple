@@ -139,17 +139,17 @@ def deblocking_filter(img_raw, lut, quantize=False):
     filtered = torch.where(mask_x, trilinear_interp(lut, center, left, right), center)
 
     if quantize:
-        filtered = filtered + (torch.round(filtered) - filtered).detach()
+        filtered = filtered + (torch.floor(filtered / (2.0/3.0)).clamp(0, 2) - filtered).detach()
 
     # up/down filter is evaluated second
     padded2 = F.pad(filtered, (1, 1, 1, 1), mode='replicate')
     center2 = padded2[:, :, 1:-1, 1:-1]
-    up = padded2[:, :, 1:-1, :-2]
-    down = padded2[:, :, 1:-1, 2:]
+    up = padded2[:, :, :-2, 1:-1]
+    down = padded2[:, :, 2:, 1:-1]
     filtered2 = torch.where(mask_y, trilinear_interp(lut, center, up, down), center2)
 
     if quantize:
-        filtered2 = filtered2 + (torch.round(filtered2) - filtered2).detach()
+        filtered2 = filtered2 + (torch.floor(filtered2 / (2.0/3.0)).clamp(0, 2) - filtered2).detach()
 
     # Undo scaling
     filtered2 /= 2
@@ -296,7 +296,8 @@ class ImageReconstruction(nn.Module):
 
         if self.quantize:
             # quantize to [0, 1, 2] but preserve gradients
-            block_rep = self.blocks + (torch.round(2 * self.blocks) / 2 - self.blocks).detach()
+            block_rep = self.blocks + (torch.floor(self.blocks / (1.0/3.0)).clamp(0, 2) / 2 - self.blocks).detach()
+
         else:
             # straight through
             block_rep = self.blocks
@@ -354,7 +355,7 @@ class BlockTrainer:
         self.dataset = VideoFrames(device)
         self.dataset.load_data("Touhou - Bad Apple.mp4")
 
-        self.recr = ImageReconstruction(n_sequence=len(self.dataset))
+        self.recr = ImageReconstruction(n_sequence=len(self.dataset), quantize=False)
 
         self.recr.init_blocks_tiledata("kmeans_256_ni_mse.dat")
         # self.recr.init_sequence("stream-kmeans_256_ni.dat")
@@ -365,7 +366,7 @@ class BlockTrainer:
         # sampe contiguous chunks with random offset
         # we want the tile-frame-to-frame loss to cover only frames also evaluated for sematic loss
         self.sampler = ContigChunkSampler(self.dataset,
-                                          batch_size=32,
+                                          batch_size=64,
                                           random_offset=True,
                                           shuffle=True)
         self.data_loader = DataLoader(self.dataset,
@@ -373,8 +374,8 @@ class BlockTrainer:
 
         self.optim = torch.optim.Adam(
             [
-                {"params": self.recr.blocks, "lr": 0.001},
-                {"params": self.recr.sequence, "lr": 0.001 * len(self.dataset) / nblocks}  # Categorical distributions are sampled less often than blocks
+                {"params": self.recr.blocks, "lr": 0.002},
+                {"params": self.recr.sequence, "lr": 0.002 * len(self.dataset) / nblocks}  # Categorical distributions are sampled less often than blocks
             ]
         )
 
@@ -397,7 +398,7 @@ class BlockTrainer:
         self.lk_evaluator = PyramidalLK(window_size=9, max_levels=None).to(device)
 
         # Weighting factor for LK flow loss
-        self.flow_lambda = 0.04
+        self.flow_lambda = 0.01
 
         os.makedirs(self.out_data_dir, exist_ok=False)
         os.makedirs(self.out_blocks_dir, exist_ok=False)
@@ -418,8 +419,26 @@ class BlockTrainer:
         """
         Loss function that aims to match the Lukas-Kanade optical flow from recr_a -> recr_b to match tgt_a -> tgt_b.
         """
+
+        if recr_a.shape[0] < 2:
+            return torch.tensor([0.0], dtype=torch.float32, device=device)
+
         flow_recr = self.lk_evaluator(recr_a, recr_b)
         flow_tgt = self.lk_evaluator(tgt_a, tgt_b)
+
+        # Mask out areas where there are no edges
+        # Bad Apple has a lot of big static regions.
+        # While flow may be defined in blank areas due to window sizes and neighboring motion, it's probably wrong.
+        edge_recr_a = torch.hypot(*torch.gradient(recr_a, dim=(-1, -2)))
+        edge_tgt_a = torch.hypot(*torch.gradient(tgt_a, dim=(-1, -2)))
+
+        flow_recr = torch.where(edge_recr_a > 0, flow_recr, 0.0)
+        flow_tgt = torch.where(edge_tgt_a > 0, flow_tgt, 0.0)
+
+        # Given the tile-based nature of compression, it's likely motion may not line up exactly in the same spot
+        # Reduce the resolution at which we compare flow
+        flow_recr = F.avg_pool2d(flow_recr[-1], 4, 4)
+        flow_tgt = F.avg_pool2d(flow_tgt[-1], 4, 4)
 
         return torch.mean(torch.square(flow_recr - flow_tgt))
 
@@ -435,7 +454,7 @@ class BlockTrainer:
 
         # gumbel-softmax temperature annealing - value updates once per epoch (aka once per pass thru video)
         gs_tau_scale = 1.0
-        gs_tau_min = 0.1
+        gs_tau_min = 0.01
         gs_tau_anneal_rate = 1e-2
 
         for epoch in range(1000000):
@@ -450,6 +469,12 @@ class BlockTrainer:
 
             self.sampler.set_epoch(epoch)  # update sampler offset and shuffle
 
+            # unlock blocks only after a while spent optimizing tile choice
+            if epoch < 100:
+                self.recr.blocks.requires_grad = False
+            else:
+                self.recr.blocks.requires_grad = True
+
             # anneal gumbel-softmax temperature
             self.recr.gs_tau = max(gs_tau_min, gs_tau_scale * np.exp(-gs_tau_anneal_rate * epoch))
 
@@ -460,16 +485,27 @@ class BlockTrainer:
                 reconstructed_img = self.recr(idx)
 
                 # upsample reconstructed and target images to match vgg trained image size (well, width at least)
-                tgt_us = nn.functional.interpolate(target_img, size=(192, 256), mode='nearest')
-                rcd_us = nn.functional.interpolate(reconstructed_img, size=(192, 256), mode='nearest')
+                tgt_us = nn.functional.interpolate(target_img, size=(84, 128), mode='nearest')
+                rcd_us = nn.functional.interpolate(reconstructed_img, size=(84, 128), mode='nearest')
 
                 loss_percep = self.perceptual_loss(rcd_us, tgt_us)
                 loss_change = self.recr.tile_f2f_penalty(idx)
 
                 # Frame-to-frame optical flow loss
                 # Leverages contiguous frames in batch dim from ContigChunkSampler
-                loss_flow = self.flow_loss(reconstructed_img[:-1, ...], reconstructed_img[1:, ...],
-                                           target_img[:-1, ...], reconstructed_img[1:, ...])
+
+                # with skip, in case of delayed block changes
+                loss_flow = torch.zeros_like(loss_percep)
+                na = 0
+                for flow_skip_i in range(5):
+                    flow_skip = flow_skip_i + 1
+                    loss_flow = loss_flow + self.flow_loss(reconstructed_img[:-flow_skip, ...],
+                                                           reconstructed_img[flow_skip:, ...],
+                                                           target_img[:-flow_skip, ...],
+                                                           reconstructed_img[flow_skip:, ...]) / flow_skip
+                    na += 1
+
+                loss_flow /= na
 
                 loss = loss_percep + self.change_lambda * loss_change + self.flow_lambda * loss_flow
 

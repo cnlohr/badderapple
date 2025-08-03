@@ -1241,13 +1241,7 @@ int main( int argc, char ** argv )
 
 	// Just a quick test to see if we can compress the tilemaps.
 	FILE * fRawTiles = fopen( "TEST_rawtiles.dat", "wb" );
-#if defined( VPX_GREY4 ) || defined( VPX_GREY3 )
-	#define BITSETS_TILECOMP 2
-#elif defined( VPX_GREY16 )
-	#define BITSETS_TILECOMP 4
-#else
-	#define BITSETS_TILECOMP 1
-#endif
+
 	int bnw[BLOCKSIZE*BLOCKSIZE*maxtilect_remapped*BITSETS_TILECOMP];
 	for( i = 0; i < maxtilect_remapped; i++ )
 	{

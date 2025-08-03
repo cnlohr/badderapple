@@ -20,7 +20,7 @@
 #define SSD1306_I2C_BITBANG_SCL PC2
 #endif
 
-
+#if 0
 static inline void ssd1306_mini_i2c_setup(void)
 {
 	funPinMode( SSD1306_I2C_BITBANG_SDA, GPIO_CFGLR_OUT_10Mhz_PP );
@@ -33,7 +33,7 @@ static inline void ssd1306_mini_i2c_setup(void)
 	funDigitalWrite( SSD1306_RST_PIN, 1 );
 	Delay_Us(10);
 }
-
+#endif
 
 #define SDA_HIGH funDigitalWrite( SSD1306_I2C_BITBANG_SDA, 1 );
 #define SCL_HIGH funDigitalWrite( SSD1306_I2C_BITBANG_SCL, 1 );
