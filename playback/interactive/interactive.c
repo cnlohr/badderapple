@@ -398,12 +398,13 @@ void EmitPartial( graphictype tgprev, graphictype tg, graphictype tgnext, int su
 	graphictype F = tg;          // implied & 0xff
 
 	if( subframe )
-		tg = (D&E)|(B&E)|(B&C&F)|(A&D&F);     // 8 bits worth of MSB of this+(next+prev+1)/2-1 (Assuming values of 0,1,3)
+		tg = (D&E) | (B&E) | (B&C&F) | (A&D&F);     // 8 bits worth of MSB of this+(next+prev+1)/2-1 (Assuming values of 0,1,3)
 	else
-		tg = E|C|A|(D&F)|(B&F)|(B&D);       // 8 bits worth of MSB|LSB of this+(next+prev+1)/2-1
+		tg = E | C | A | (D&F) | (B&F) | (B&D);       // 8 bits worth of MSB|LSB of this+(next+prev+1)/2-1
 
 	KOut( tg );
 }
+
 
 // one pixel at a time.
 int PixelBlend( int tgprev, int tg, int tgnext )

@@ -37,19 +37,18 @@ int lastMouseY;
 int selTileX;
 int selTileY;
 
-int brush = -1;
+int brush = 0;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // For validating logic.
+//
+// The authortative portion of this code is in playback.c
+//
 typedef uint16_t graphictype;
 
 int EmitPartial( graphictype tgprev, graphictype tg, graphictype tgnext, int subframe )
 {
-	if( tgprev == 2 ) tgprev = 3;
-	if( tg == 2 ) tg = 3;
-	if( tgnext == 2 ) tgnext = 3;
-
 	// This should only need +2 regs (or 3 depending on how the optimizer slices it)
 	// (so all should fit in working reg space)
 	graphictype A = tgprev >> 8;
@@ -60,9 +59,9 @@ int EmitPartial( graphictype tgprev, graphictype tg, graphictype tgnext, int sub
 	graphictype F = tg;          // implied & 0xff
 
 	if( subframe )
-		tg = (D&E)|(B&E)|(B&C&F)|(A&D&F);     // 8 bits worth of MSB of this+(next+prev+1)/2-1 (Assuming values of 0,1,3)
+		tg = (D&E) | (B&E) | (B&C&F) | (A&D&F);     // 8 bits worth of MSB of this+(next+prev+1)/2-1 (Assuming values of 0,1,3)
 	else
-		tg = E|C|A|(D&F)|(B&F)/*|(B&D)*/;       // 8 bits worth of MSB|LSB of this+(next+prev+1)/2-1
+		tg = E | C | A | (D&F) | (B&F) | (B&D);       // 8 bits worth of MSB|LSB of this+(next+prev+1)/2-1
 
 	//KOut( tg );
 	return tg;
@@ -116,6 +115,8 @@ int PixelBlend( int tgprev, int tg, int tgnext )
 		for( testtgnext = 0; testtgnext < 3; testtgnext++ )
 		{
 			int evan = halut[testtg + testtgprev*3+testtgnext*9];
+
+
 			int tg = testtg;
 			int tgprev = testtgprev;
 			int tgnext = testtgnext;
@@ -124,33 +125,55 @@ int PixelBlend( int tgprev, int tg, int tgnext )
 			if( tgnext == 2 ) tgnext = 3;
 			// this+(next+prev+1)/2-1 assuming 0..3, skip 2.
 			//printf( "%d\n", tg );
-			tg = (tg + (tgprev+tgnext+1)/2-1);
+
+			const uint8_t potable[16] = {
+				0x50, 0xf4, 0xf5, 0xf5,
+				0xf4, 0xf5, 0xfd, 0xfd,
+				0xf5, 0xfd, 0xfd, 0xfd,
+				0xf5, 0xfd, 0xfd, 0xfd,
+			};
+
+			tg = (potable[tgprev+tgnext*4]>>(tg*2)) &0x3;
+
+			if( tg == 2 ) printf( "Illegal TG Output %d %d %d\n", tg, tgprev, tgnext );
+			if( tg == 3 ) tg = 2;
+/*			tg = (tg + (tgprev+tgnext+1)/2 - 1);
+printf( "%d\n", (tgprev+tgnext+1)/2 );
 			if( tg < 0 ) tg = 0;
-			if( tg > 2 ) tg = 2;
+			if( tg > 2 ) tg = 2;*/
 			if( tg != evan )
 			{
-				printf( "Horizontal Disagree: %d, %d, %d  mine:%d evan:%d\n", testtg, testtgprev, testtgnext, tg, evan );
+				printf( "Horizontal Disagree: t%d, p%d, n%d  mine:%d evan:%d\n", testtg, testtgprev, testtgnext, tg, evan );
 			}
 
 			tg = testtg;
 			tgprev = testtgprev;
 			tgnext = testtgnext;
 
+			if( tgprev == 2 ) tgprev = 3;
+			if( tg == 2 ) tg = 3;
+			if( tgnext == 2 ) tgnext = 3;
+
 			int tgprevbits = (tgprev & 1) | ((tgprev & 2)<<7);
 			int tgnextbits = (tgnext & 1) | ((tgnext & 2)<<7);
 			int tgbits = (tg & 1) | ((tg & 2)<<7);
 			uint16_t v0 = EmitPartial( tgprevbits, tgbits, tgnextbits, 0 ) & 0xff;
 			uint16_t v1 = EmitPartial( tgprevbits, tgbits, tgnextbits, 1 ) & 0xff;
+			if( v1 && !v0 ) printf( "Illegal at %d %d %d [%d %d]\n", testtg, testtgprev, testtgnext, v0, v1 );
 			int v = (v0 && v1) ? 2 : (v1||v0);
-			printf( "%d %d %d   %d %d -> %d\n", testtg, testtgprev, testtgnext, v0, v1, evan );
+			//printf( "%d %d %d   %d %d -> %d\n", testtg, testtgprev, testtgnext, v0, v1, evan );
 			if( v != evan )
-				printf( "Vertical Disagree:   %d, %d, %d  mine:%d evan:%d\n", testtg, testtgprev, testtgnext, v, evan );		
+				printf( "Vertical Disagree:   t%d, p%d, n%d  mine:%d [%d %d] evan:%d\n", testtg, testtgprev, testtgnext, v, v0, v1, evan );
 		}
 	}
+
+	if( tg > 2 ) tg = 2;
+	if( tgprev > 2 ) tgprev = 2;
+	if( tgnext > 2 ) tgnext = 2;
 	return halut[tg+tgprev*3+tgnext*9];
 }
 
-float GetTileByInternal( int x, int y )
+int GetTileByInternal( int x, int y )
 {
 	if( x < 0 ) x = 0;
 	if( x >= RESX ) x = RESX - 1;
@@ -163,38 +186,51 @@ float GetTileByInternal( int x, int y )
 	int bx = x % BLOCKSIZE;
 	int by = y % BLOCKSIZE;
 
-	return ((float*)tileData)[tileId*BLOCKSIZE*BLOCKSIZE + by * BLOCKSIZE + bx ];
+	float f = ((float*)tileData)[tileId*BLOCKSIZE*BLOCKSIZE + by * BLOCKSIZE + bx ];
+
+	int c = (int)(f * 2.999);
+	if( c == 2 ) c = 3;
+	return c;
 }
+
+int FtoC( float f )
+{
+	int c = (int)(f * 2.999);
+	if( c == 2 ) c = 3;
+	return c;
+}
+
 
 float GetTileBy( int x, int y )
 {
 	int bx = x % BLOCKSIZE;
 	int by = y % BLOCKSIZE;
 
-	int tg = GetTileByInternal( x, y ) * 2.1;
+	int tg = GetTileByInternal( x, y );
 	if( bx == 0 || bx == BLOCKSIZE-1 )
 	{
-		int tgprev = GetTileByInternal( x-1, y ) * 2.1;
-		int tgnext = GetTileByInternal( x+1, y ) * 2.1;
+		int tgprev = GetTileByInternal( x-1, y );
+		int tgnext = GetTileByInternal( x+1, y );
+		//printf( "%d %d %d -> %d\n", tgprev, tg, tgnext, PixelBlend( tgprev, tg, tgnext ) );
 		tg = PixelBlend( tgprev, tg, tgnext );
 	}
 
 	if( by == 0 || by == BLOCKSIZE-1 )
 	{
-		int tgprev = GetTileByInternal( x, y-1 ) * 2.1;
-		int tgnext = GetTileByInternal( x, y+1 ) * 2.1;
+		int tgprev = GetTileByInternal( x, y-1 );
+		int tgnext = GetTileByInternal( x, y+1 );
 		tg = PixelBlend( tgprev, tg, tgnext );
 	}
 
-	return tg / 2.0;
+	return tg;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int DrawInBoxAndTest( float tval, int x1, int y1, int x2, int y2 )
+int DrawInBoxAndTest( int c, int x1, int y1, int x2, int y2 )
 {
-	if( tval < 0.33 ) CNFGColor( 0x000000ff );
-	else if( tval < 0.66 ) CNFGColor( 0x808080ff );
+	if( c < 1 ) CNFGColor( 0x000000ff );
+	else if( c < 2 ) CNFGColor( 0x808080ff );
 	else CNFGColor( 0xffffffff );
 	CNFGTackRectangle( x1, y1, x2, y2 );	
 	return lastMouseX >= x1 && lastMouseX <= x2 && lastMouseY >= y1 && lastMouseY <= y2;
@@ -314,9 +350,9 @@ void RenderFrame()
 			int bx = x % BLOCKSIZE;
 			int by = y % BLOCKSIZE;
 
-			float tval = GetTileBy( x, y );
+			int c = GetTileBy( x, y );
 
-			if( DrawInBoxAndTest( tval, x * bw+xofs, y * bw+yofs, (x+1)*bw-1+xofs, (y+1)*bw-1+yofs ) && bClickEvent )
+			if( DrawInBoxAndTest( c, x * bw+xofs, y * bw+yofs, (x+1)*bw-1+xofs, (y+1)*bw-1+yofs ) && bClickEvent )
 			{
 				selTileX = tx;
 				selTileY = ty;
@@ -356,14 +392,13 @@ void RenderTileSet()
 			int by = y % BLOCKSIZE;
 
 			float tval = ((float*)tileData)[tileId*BLOCKSIZE*BLOCKSIZE + by * BLOCKSIZE + bx ];
-			if( tval < 0.33 ) CNFGColor( 0x000000ff );
-			else if( tval < 0.66 ) CNFGColor( 0x808080ff );
-			else CNFGColor( 0xffffffff );
 
 			int xofsi = xofs + tx*3;
 			int yofsi = yofs + ty*3;
 
-			if( DrawInBoxAndTest( tval, x * bw+xofsi, y * bw+yofsi, (x+1)*bw+xofsi, (y+1)*bw+yofsi ) && bClickEvent )
+			int c = FtoC( tval );
+
+			if( DrawInBoxAndTest( c, x * bw+xofsi, y * bw+yofsi, (x+1)*bw+xofsi, (y+1)*bw+yofsi ) && bClickEvent )
 			{
 				currentTile = tx + ty * 16;
 			}
@@ -388,10 +423,13 @@ void RenderTile()
 			float * fp = &((float*)tileData)[currentTile*BLOCKSIZE*BLOCKSIZE + y * BLOCKSIZE + x ];
 			float tval = *fp;
 
-			if( DrawInBoxAndTest( tval, x * bw+xofs, y * bw+yofs, (x+1)*bw-1+xofs, (y+1)*bw-1+yofs ) && bClickEvent )
+			int c = FtoC( tval );
+
+			if( DrawInBoxAndTest( c, x * bw+xofs, y * bw+yofs, (x+1)*bw-1+xofs, (y+1)*bw-1+yofs ) && bClickEvent )
 			{
 				// Edit tile.
 				*fp = brush / 2.0;
+				printf( "Tile: %f\n", *fp );
 				bDataTainted = true;
 			}
 		}
