@@ -257,10 +257,12 @@ struct block
 #define CNFG_IMPLEMENTATION
 #include "rawdraw_sf.h"
 
+#ifndef OVERRIDE_RDCALLBACKS
 void HandleKey( int keycode, int bDown ) { }
 void HandleButton( int x, int y, int button, int bDown ) { }
 void HandleMotion( int x, int y, int mask ) { }
 int HandleDestroy() { return 0; }
+#endif
 
 void UpdateBlockDataFromIntensity( struct block * k );
 void DrawBlockBasic( int xofs, int yofs, blocktype bb, int original_glyph_id  );
