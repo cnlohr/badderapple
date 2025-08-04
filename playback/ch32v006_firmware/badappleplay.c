@@ -46,7 +46,7 @@ volatile uint32_t kas = 0;
 
 #include "ssd1306mini.h"
 
-const uint8_t ssd1306_init_array[] SECTION_DECORATOR =
+const uint8_t ssd1306_init_array[] =
 {
 	0xAE, // Display off
 	0x20, 0x00, // Horizontal addresing mode
@@ -68,6 +68,7 @@ const uint8_t ssd1306_init_array[] SECTION_DECORATOR =
 	SSD1306_PAGEADDR, 0, 7, // Page setup, start at 0 and end at 7
 };
 
+// ??? No idea but if I don't put this in the main flash partition everything dies.
 const uint8_t OledBufferReset[] SECTION_DECORATOR = 
 	{0xD3, 0x32, 0xA8, 0x01,
 	// Column start address (0 = reset)
@@ -103,17 +104,6 @@ uint16_t pixelmap[64*6];
 //pixelmap[64*6];
 int pmp;
 // From ttablegen.c
-
-// For computing along horizontal lines pixel values.
-// x = previous
-// y = next
-// pair-of-bits = this
-const uint8_t potable[16] = {
-	0x50, 0xf4, 0xf5, 0xf5,
-	0xf4, 0xf5, 0xfd, 0xfd,
-	0xf5, 0xfd, 0xfd, 0xfd,
-	0xf5, 0xfd, 0xfd, 0xfd,
-};
 
 static inline void PMEmit( uint16_t pvo )
 {
@@ -202,11 +192,22 @@ void UpdatePixelMap()
 
 int main()
 {
-	SystemInit();
+#if 1
+	// This is normally in SystemInit() but pulling out here to keep things tight.
+	FLASH->ACTLR = FLASH_ACTLR_LATENCY_2;  // Can't run flash at full speed.
+
+	#define RCC_CSS 0
+	#define HSEBYP 0
+	#define BASE_CTLR	(((FUNCONF_HSITRIM) << 3) | RCC_HSION | HSEBYP | RCC_CSS)
+	RCC->CTLR = BASE_CTLR | RCC_HSION | RCC_HSEON | RCC_PLLON;  // Turn on HSE + PLL
+	while((RCC->CTLR & RCC_PLLRDY) == 0);                       // Wait till PLL is ready
+	RCC->CFGR0 = RCC_PLLSRC_HSE_Mul2 | RCC_SW_PLL | RCC_HPRE_DIV1; // Select PLL as system clock source
+
+#endif
+
+//	SystemInit();
+
 	funGpioInitAll();
-
-
-//	GPIOC->CFGLR = 0x7;
 
 	// PC0,1,2 = GPIO_CFGLR_OUT_PP, 3,4=GPIO_CFGLR_OUT_AF_PP
 	GPIOC->CFGLR = 0xbb111;
@@ -214,7 +215,7 @@ int main()
 	funDigitalWrite( SSD1306_I2C_BITBANG_SDA, 1 );
 	funDigitalWrite( SSD1306_I2C_BITBANG_SCL, 1 );
 	funDigitalWrite( SSD1306_RST_PIN, 0 );
-	Delay_Ms(10);
+//	Delay_Ms(10);
 	funDigitalWrite( SSD1306_RST_PIN, 1 );
 	Delay_Us(10);
 
@@ -335,7 +336,8 @@ int main()
 		}
 		else if( subframe & 1 )
 		{
-			UpdatePixelMap();
+//			if( frame < 2 ) // Stop on frame 1.
+				UpdatePixelMap();
 		}
 
 		funDigitalWrite( PD7, (frame < 442) || (frame > 460) );
@@ -366,9 +368,74 @@ int main()
 
 		//funDigitalWrite( PD6, 0 );
 
-		if( 1 ) // New, filtered output.
+#if 0
+		if( 0 )
 		{
+			// Vertically-filtered output (for debug)
+			glyphtype * gm = ctx.curmap;
+			// 2.59ms
+			for( y = 0; y < 6; y++ )
+			{
+				int x;
+				for( x = 0; x < 64; x++ )
+				{
+					uint16_t go = pixelmap[64*y+x];
 
+					// Black out first and last pixel. We're writing those in.
+					uint16_t gouse = go & 0x7e7e;
+
+					// Need to blur the first and last pixels.
+					uint16_t gomajor;
+					uint16_t gominor1;
+					uint16_t gominor2;
+
+					gominor1 = ( (go>>1) & 1) | ( ( go>>8 ) & 2 );
+
+					if( y>0 )
+					{
+						gominor2 = pixelmap[64*(y-1)+x];
+						gominor2 = (gominor2 & 1) | ((gominor2>>7)&2);
+					}
+					else
+					{
+						gominor2 = gominor1;
+					}
+
+					uint16_t tmp = potable[gominor2 | gominor1];
+
+					gominor1; (y<6)?(pixelmap[64*(y+1)+x]>>7):(go>>6);
+
+
+					//goprev = (goprev & 1) | ((goprev >> 7)&2);
+					//gonext = (gonext & 1) | ((gonext >> 7)&2);
+
+					if( subframe & 1 )
+						gouse>>=8;
+					ssd1306_mini_i2c_sendbyte( gouse );
+/*
+uint16_t pixelmap[64*6];
+*/
+/*
+					glyphtype gindex = *(gm++);
+					graphictype * g = ctx.glyphdata[gindex];
+					
+					//int go = (subframe & 1)?0xff:0x00;
+					int lg;
+					for( lg = 0; lg< 8; lg ++ )
+					{
+						int go = g[lg];
+						if( (subframe)&1 )
+							go >>= 8;
+						ssd1306_mini_i2c_sendbyte( go );
+					}
+*/
+				}
+			}
+		}
+		else 
+#endif
+		if( 1 ) // New, filtered output. (Poorly documented, impenetrable)
+		{
 			int pvx;
 			int pvy;
 
@@ -391,7 +458,7 @@ int main()
 				}
 				pnext = ((pvo>>8)&2) | ((pvo>>1)&1);
 
-				pprev = pnext;
+				//pprev = pnext;
 
 				pthis = (((pvo>>7)&2) | ((pvo>>0)&1))<<1;
 
@@ -422,7 +489,6 @@ int main()
 		}
 		else
 		{
-
 			glyphtype * gm = ctx.curmap;
 			// 2.59ms
 			for( y = 0; y < 6; y++ )
@@ -533,9 +599,12 @@ asm volatile(
 	SysTick->CTLR = 1;
 #endif
 
+	main();
+	// No interrupts, so no need to mret into main.
+
 	// set mepc to be main as the root app.
-asm volatile(
-"	csrw mepc, %[main]\n"
-"	mret\n" : : [main]"r"(main) );
+//asm volatile(
+//"	csrw mepc, %[main]\n"
+//"	mret\n" : : [main]"r"(main) );
 }
 

@@ -353,11 +353,26 @@ int SampleValueAt( int x, int y )
 
 int outx, outy, outsi;
 
+// Whether you do vertical-then-horizontal or vertical-then-temp-buffer-then-horizontal (1)
+#define SEPARABLE_FILTER 1
+
+// FBA is the image, but only blending vertical lines.  Horizontal comes later.
 uint8_t fba[RESY][RESX];
 
-int KOut( uint16_t tg )
+// FB0 is the "unfiltered" pixels.
+uint8_t fb0[RESY][RESX];
+
+static int kx, ky, okx, subframe;
+
+int KOut( uint16_t tg, uint16_t tgorig )
 {
-	static int kx, ky, okx, subframe;
+
+	for( int innery = 0; innery < 8; innery++ )
+	{
+		//((tg>>(innery+subframe*8))&1) | 
+		fb0[ky*8+innery][kx*8+okx] += (tgorig>>(innery))&1;
+	}
+
 	for( int innery = 0; innery < 8; innery++ )
 	{
 		//((tg>>(innery+subframe*8))&1) | 
@@ -396,28 +411,13 @@ void EmitPartial( graphictype tgprev, graphictype tg, graphictype tgnext, int su
 	graphictype D = tgnext;      // implied & 0xff
 	graphictype E = tg >> 8;
 	graphictype F = tg;          // implied & 0xff
-
+	graphictype tgout;
 	if( subframe )
-		tg = (D&E) | (B&E) | (B&C&F) | (A&D&F);     // 8 bits worth of MSB of this+(next+prev+1)/2-1 (Assuming values of 0,1,3)
+		tgout = (D&E) | (B&E) | (B&C&F) | (A&D&F);     // 8 bits worth of MSB of this+(next+prev+1)/2-1 (Assuming values of 0,1,3)
 	else
-		tg = E | C | A | (D&F) | (B&F) | (B&D);       // 8 bits worth of MSB|LSB of this+(next+prev+1)/2-1
+		tgout = E | C | A | (D&F) | (B&F) | (B&D);       // 8 bits worth of MSB|LSB of this+(next+prev+1)/2-1
 
-	KOut( tg );
-}
-
-
-// one pixel at a time.
-int PixelBlend( int tgprev, int tg, int tgnext )
-{
-	if( tg == 2 ) tg = 3;
-	if( tgprev == 2 ) tgprev = 3;
-	if( tgnext == 2 ) tgnext = 3;
-	// this+(next+prev+1)/2-1 assuming 0..3, skip 2.
-	//printf( "%d\n", tg );
-	tg = (tg + (tgprev+tgnext+1)/2-1);
-	if( tg < 0 ) tg = 0;
-	if( tg > 2 ) tg = 2;
-	return tg;
+	KOut( tgout, tg );
 }
 
 void EmitSamples8( struct checkpoint * cp, float ofsx, float ofsy, float fzoom, glyphtype * gm,
@@ -426,6 +426,7 @@ void EmitSamples8( struct checkpoint * cp, float ofsx, float ofsy, float fzoom, 
 	int bx, by;
 	int subframe;
 	memset( fba, 0, sizeof( fba ) );
+	memset( fb0, 0, sizeof( fb0 ) );
 
 	for( subframe = 0; subframe < 2; subframe++ )
 	{
@@ -458,7 +459,7 @@ void EmitSamples8( struct checkpoint * cp, float ofsx, float ofsy, float fzoom, 
 				for( ; sx < sxend; sx++ )
 				{
 					uint16_t tg = g[sx];
-					KOut( tg >> (subframe*8) );
+					KOut( tg >> (subframe*8), tg >> (subframe*8) );
 				}
 				//if( sx < 8 )
 				{
@@ -482,11 +483,19 @@ void EmitSamples8( struct checkpoint * cp, float ofsx, float ofsy, float fzoom, 
 		int vi = 0;
 		if( ( y & 7 ) == 0 )
 		{
-			vi = PixelBlend( fba[y+1][x], fba[y][x], (y>0)?fba[y-1][x]:fba[y+1][x] );
+#if SEPARABLE_FILTER
+			vi = PixelBlendPlayback( fba[y+1][x], fba[y][x], (y>0)?fba[y-1][x]:fba[y+1][x] );
+#else
+			vi = PixelBlendPlayback( fb0[y+1][x], fba[y][x], (y>0)?fb0[y-1][x]:fb0[y+1][x] );
+#endif
 		}
 		else if( ( y & 7 ) == 7 )
 		{
-			vi = PixelBlend( (y < RESY-1)?fba[y+1][x]:fba[y-1][x], fba[y][x], fba[y-1][x] );
+#if SEPARABLE_FILTER
+			vi = PixelBlendPlayback( (y < RESY-1)?fba[y+1][x]:fba[y-1][x], fba[y][x], fba[y-1][x] );
+#else
+			vi = PixelBlendPlayback( (y < RESY-1)?fb0[y+1][x]:fb0[y-1][x], fba[y][x], fb0[y-1][x] );
+#endif
 		}
 		else
 		{
