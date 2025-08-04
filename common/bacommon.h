@@ -133,12 +133,11 @@
 #endif 
 
 //////////////// HUFFMAN + K-MEANS ONLY BELOW THIS LINE /////////////////////
-
-#define K_MEANS_HERO_FRAME  1688
-#define K_MEANS_HERO_CELLX   3
-#define K_MEANS_HERO_CELLY   2
-#define K_MEANS_HERO_FRAME_START 1686
-#define K_MEANS_HERO_FRAME_END   1702
+//#define K_MEANS_HERO_FRAME  1688
+//#define K_MEANS_HERO_CELLX   3
+//#define K_MEANS_HERO_CELLY   2
+//#define K_MEANS_HERO_FRAME_START 1686
+//#define K_MEANS_HERO_FRAME_END   1702
 
 
 // THINGS TO NOTE:

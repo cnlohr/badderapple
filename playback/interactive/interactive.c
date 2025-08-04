@@ -1267,7 +1267,7 @@ void DrawAudioTrack( Clay_RenderCommand * render )
 		int n = 0;
 		for( n = 0; n < 4; n++ )
 		{
-			int fr = (sixteenth >> (16*n))&0xffff;
+			int fr = (sixteenth >> (16*n+PRECISION_SHIFT_ADD))&0xffff;
 			float relpos = sxth - cp->audio_sixteenth - partial;
 			if( fr )
 			{

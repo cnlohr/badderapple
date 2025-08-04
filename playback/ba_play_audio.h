@@ -32,12 +32,15 @@
 #define CHECKBITS_AUDIO(x...)
 #endif
 
+#define PRECISION_SHIFT_ADD 4
+#define BASE_PITCH 440
+
 // Note 0 in MIDI is -69 from A 440.  We are offset at 47, because the lowest note in our stream is note 47.
 #define LOWEST_NOTE (47.0) // Could tune up or down to taste.
 
 #ifndef WASM
 #define SYFN( n ) \
-	(uint16_t)((pow( 2, (((float)n + LOWEST_NOTE) - 69.0)/12.0 ) * 440.0 * 65536.0 * 2.0 / 2.0 / (float)F_SPS) + 0.5)
+	(uint16_t)((pow( 2, (((float)n + LOWEST_NOTE) - 69.0)/12.0 ) * BASE_PITCH * 65536.0 * (1<<PRECISION_SHIFT_ADD) * 2.0 / 2.0 / (float)F_SPS) + 0.5)
 #else
 // WASM (Clang)
 // Thanks, @kayla
@@ -49,7 +52,7 @@
         (0.1600026978 * ((f) - (int)(f)) * ((f) - (int)(f)) * ((f) - (int)(f)) * ((f) - (int)(f)) * ((f) - (int)(f)) / 120.)))
 
 #define SYFN( n ) \
-	(uint16_t)((STATICPOW2( (((float)n + LOWEST_NOTE + 24) - 69.0)/12.0 ) * 110.0 * 65536.0 * 2.0 / 2.0 / (float)F_SPS) + 0.5)
+	(uint16_t)((STATICPOW2( (((float)n + LOWEST_NOTE + 24) - 69.0)/12.0 ) * (1<<PRECISION_SHIFT_ADD) * BASE_PITCH/4.0 * 65536.0 * 2.0 / 2.0 / (float)F_SPS) + 0.5)
 #endif
 
 #define NOTE_RANGE  ( ESPBADAPPLE_SONG_HIGHEST_NOTE - ESPBADAPPLE_SONG_LOWEST_NOTE + 1 )
@@ -58,7 +61,7 @@ const uint16_t frequencies[NOTE_RANGE] = {
 	SYFN( 0), SYFN( 1), SYFN( 2), SYFN( 3), SYFN( 4), SYFN( 5), SYFN( 6), SYFN( 7), SYFN( 8), SYFN( 9),
 	SYFN(10), SYFN(11), SYFN(12), SYFN(13), SYFN(14), SYFN(15), SYFN(16), SYFN(17), SYFN(18), SYFN(19),
 	SYFN(20), SYFN(21), SYFN(22), SYFN(23), SYFN(24), SYFN(25), SYFN(26), SYFN(27), SYFN(28), SYFN(29),
-	SYFN(30), SYFN(31), SYFN(32) };
+	SYFN(30), SYFN(31), SYFN(32), SYFN(33) };
 
 typedef uint16_t notetype;
 
@@ -90,7 +93,7 @@ struct ba_audio_player_t
 	int16_t noisetremain;
 	int     noisesum;
 	uint16_t   playing_freq[NUM_VOICES];
-	uint16_t   phase[NUM_VOICES];
+	uint32_t   phase[NUM_VOICES];  // 32 bit to allow for more precision than 16-bit on the playing freq, otherwise it's too imprecise for good sound.
 	int        tstop[NUM_VOICES];
 
 	struct ba_audio_player_stack_element stack[ESPBADAPPLE_SONG_MAX_BACK_DEPTH];
@@ -334,7 +337,7 @@ int ba_audio_fill_buffer( volatile uint8_t * outbuffer, int outbuffertail )
 				int phase = player->phase[i];
 				phase += pn;
 				player->phase[i] = phase;
-				int ts = phase;
+				uint16_t ts = (uint16_t)(phase>>PRECISION_SHIFT_ADD);
 				if( ts >= 32768 ) ts = 65536-ts;
 				sample += ts;
 			}
