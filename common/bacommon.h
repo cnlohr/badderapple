@@ -265,10 +265,6 @@ struct block
 #endif
 };
 
-
-
-
-
 #define CNFG_IMPLEMENTATION
 #include "rawdraw_sf.h"
 
@@ -489,6 +485,25 @@ static int H264FUNDeBruijnLog2( uint64_t v )
 }
 
 #endif
+
+
+// This table contains the information about how to blend one pixel at a time.
+// You can index into it via X->prev, Y->next, >>(2*this)
+static const uint8_t potable[16] = {
+	0x50, 0xf4, 0xf5, 0xf5,
+	0xf4, 0xf5, 0xfd, 0xfd,
+	0xf5, 0xfd, 0xfd, 0xfd,
+	0xf5, 0xfd, 0xfd, 0xfd,
+};
+
+
+// one pixel at a time.
+// This is the authortative pixel blend rules.
+static int PixelBlendPlayback( int tgprev, int tg, int tgnext )
+{
+	tg = (potable[tgprev+tgnext*4]>>(tg*2)) &0x3;
+	return tg;
+}
 
 #endif
 

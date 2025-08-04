@@ -126,14 +126,7 @@ int PixelBlend( int tgprev, int tg, int tgnext )
 			// this+(next+prev+1)/2-1 assuming 0..3, skip 2.
 			//printf( "%d\n", tg );
 
-			const uint8_t potable[16] = {
-				0x50, 0xf4, 0xf5, 0xf5,
-				0xf4, 0xf5, 0xfd, 0xfd,
-				0xf5, 0xfd, 0xfd, 0xfd,
-				0xf5, 0xfd, 0xfd, 0xfd,
-			};
-
-			tg = (potable[tgprev+tgnext*4]>>(tg*2)) &0x3;
+			tg = PixelBlendPlayback( tgprev, tg, tgnext );
 
 			if( tg == 2 ) printf( "Illegal TG Output %d %d %d\n", tg, tgprev, tgnext );
 			if( tg == 3 ) tg = 2;
@@ -200,8 +193,7 @@ int FtoC( float f )
 	return c;
 }
 
-
-float GetTileBy( int x, int y )
+float GetTileByVertical( int x, int y )
 {
 	int bx = x % BLOCKSIZE;
 	int by = y % BLOCKSIZE;
@@ -209,16 +201,26 @@ float GetTileBy( int x, int y )
 	int tg = GetTileByInternal( x, y );
 	if( bx == 0 || bx == BLOCKSIZE-1 )
 	{
-		int tgprev = GetTileByInternal( x-1, y );
-		int tgnext = GetTileByInternal( x+1, y );
+		int tgprev = GetTileByInternal( (x>0)?(x-1):(x+1), y );
+		int tgnext = GetTileByInternal( (x<RESX-1)?(x+1):(x-1), y );
 		//printf( "%d %d %d -> %d\n", tgprev, tg, tgnext, PixelBlend( tgprev, tg, tgnext ) );
 		tg = PixelBlend( tgprev, tg, tgnext );
 	}
 
+	return tg;
+}
+
+float GetTileBy( int x, int y )
+{
+	int bx = x % BLOCKSIZE;
+	int by = y % BLOCKSIZE;
+
+	int tg = GetTileByVertical( x, y );
+
 	if( by == 0 || by == BLOCKSIZE-1 )
 	{
-		int tgprev = GetTileByInternal( x, y-1 );
-		int tgnext = GetTileByInternal( x, y+1 );
+		int tgprev = GetTileByVertical( x, (y>0)?(y-1):(y+1) );
+		int tgnext = GetTileByVertical( x, (y<RESY-1)?(y+1):(y-1) );
 		tg = PixelBlend( tgprev, tg, tgnext );
 	}
 
@@ -307,6 +309,15 @@ int SaveData()
 	char fname[1024];
 	sprintf( fname, "../comp2/stream-%dx%dx8.dat", RESX, RESY );
 	FILE * f = fopen( fname, "wb" );
+	if( !f || fwrite( streamData, sizeof(streamData), 1, f ) != 1 )
+	{
+		fprintf( stderr, "Error: can't open backup file\n" );
+		return -7;
+	}
+	fclose( f );
+
+	sprintf( fname, "../streamrecomp/stream_stripped.dat" );
+	f = fopen( fname, "wb" );
 	if( !f || fwrite( streamData, sizeof(streamData), 1, f ) != 1 )
 	{
 		fprintf( stderr, "Error: can't open backup file\n" );
