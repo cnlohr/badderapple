@@ -31,10 +31,123 @@
  Read through the bitstream, using the huffman tree and maintaining an index
  everywhere along the way.
 
- Usage:
+ Usage example:
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 
 #define HUFFER_IMPLEMENTATION
 #include "hufftreegen.h"
+
+#define NELEM 1000000
+
+int data_to_compress[NELEM];
+
+// Stored as individual 1's and 0's for clarity.
+uint8_t compressed_bitstream[NELEM*16];
+
+int main()
+{
+	int i, j, k;
+
+	// Generate a random distribution of 5 unique values, weighted towards lower numbers.
+	for( i = 0; i < NELEM; i++ )
+	{
+		data_to_compress[i] = (rand()%3)*(rand()%3)*(rand()%3);
+	}
+
+	hufftype * vals = 0;
+	hufffreq * counts = 0;
+	int nunique = 0;
+	for( i = 0; i < NELEM; i++ )
+	{
+		nunique = HuffmanAppendHelper( &vals, &counts, nunique, data_to_compress[i] );
+	}
+
+	printf( "%d unique elements\n", nunique );
+
+	int huff_decode_len = 0;
+	huffelement * huff_decode = GenerateHuffmanTree( vals, counts, nunique, &huff_decode_len );
+
+	printf( "Tree has %d entries (%p)\n", huff_decode_len, huff_decode );
+	printf( " Index: Frequency -> If 0, jump to, If 1 jump to (Or terminal)\n" );
+	for( i = 0; i < huff_decode_len; i++ )
+	{
+		huffelement * he = huff_decode + i;
+		printf( " %2d: %6d -> ", i, he->freq );
+		if( he->is_term )
+			printf( "TERMINAL (Emit %d)\n", he->value );
+		else
+			printf( "if 0 goto %d / if 1 goto %d\n", he->pair0, he->pair1 );
+	}
+
+
+	int huff_encode_len = 0;
+	huffup * huff_encode = GenPairTable( huff_decode, &huff_encode_len );
+
+	printf( "Encode %d entries\n", huff_encode_len );
+	printf( " Index: Value: Frequency -> Bitstream to encode this symbol\n" );
+	for( i = 0; i < nunique; i++ )
+	{
+		huffup * hu = huff_encode + i;
+		printf( " %2d: %3d: %6d -> ", i, hu->value, hu->freq );
+		for( j = 0; j < hu->bitlen; j++ )
+		{
+			printf( "%c", hu->bitstream[j] + '0' );
+		}
+		printf( "\n" );
+	}
+
+	int bspos = 0;
+	for( i = 0; i < NELEM; i++ )
+	{
+		for( j = 0; j < huff_encode_len; j++ )
+		{
+			huffup * hu = huff_encode + j;
+			// Find the right symbol to output
+			if( hu->value == data_to_compress[i] )
+			{
+				for( k = 0; k < hu->bitlen; k++ )
+				{
+					// Write data into stream
+					compressed_bitstream[bspos++] = hu->bitstream[k];
+				}
+				break;
+			}
+		}
+		assert( j != huff_encode_len );
+	}
+
+	printf( "Total Elements: %d, Stored as 8-bit values totaling %d bits\n", NELEM, NELEM*8 );
+	printf( "Compressed data stream: %d bits (%.2f%% of original)\n", bspos, bspos*100.0/(NELEM*8) );
+
+	j = 0;
+	int place_in_tree = 0;
+	for( i = 0; i < bspos; )
+	{
+		huffelement * he = huff_decode + place_in_tree;
+		if( he->is_term )
+		{
+			int check = data_to_compress[j++];
+			if( he->value != check )
+			{
+				printf( "Compression failed. %d received, expected %d at symbol %d\n", he->value, check, j-1 );
+				assert( 0 );
+			}
+			place_in_tree = 0;
+		}
+		else
+		{
+			place_in_tree = compressed_bitstream[i++] ? he->pair1 : he->pair0;
+		}
+	}
+
+	printf( "Validated OK\n" );
+
+	return 0;
+}
+
 
 */
 

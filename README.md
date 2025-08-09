@@ -188,13 +188,48 @@ But admittedly, you do need to store the tree somehow. For small amounts of data
 
 Huffman coding can be very fast and extremely to decode, since you just need to encode a tree... and it's provably optimal.  In that for fixedindiviual symbols, you can mathematically prove that it the most compressed you can make a data stream.  And for most of my life, I thought that's where the story stopped.  The thing is... It turns out there's a different theoretical limit.  I hadn't learned about until my friend Lyuma brought to my attention arithematic coding. Which could approach this other theoretical limit.
 
-In the companion simulator for badder apple, you can see the huffman trees that are used for decoding all the notes, and their lengths, and time to next note in the song. 
+In the companion simulator for badder apple, you can see the huffman trees that are used for decoding all the notes, and their lengths, and time to next note in the song. Anywhere there's an uptick in the scrub bar, you can click on it then watch as the huffman tree is navigated.  Starting at the center of the tree, each bit is read from the input stream and if it's a 1 it goes down the white edge, if it's a 0 it goes down the black edge.  Once a leaf node is detected, the traversal stops.
 
-TODO PICTURE.
+![Huffman Tree Explainer](https://github.com/user-attachments/assets/29c49e9e-5aa0-49cf-a104-e5b403939f8e)
 
-Additionally, if you would like to use huffman trees, you can use the header-only libraries I used in this project.  It uses something called `hufftreegen.h` where you start with a list of values you want to encode.  For each value, you can call `HuffmanAppendHelper`.  This generates a table with the different symbols to be used, and their frequencies.  Then, you can call `GenerateHuffmanTree` which will use those frequencies, and perform the operation we were **TODO TODO**
+Additionally, if you would like to use huffman trees, you can use the [header-only huffman tree library](https://github.com/cnlohr/cntools/blob/master/hufftreegen_sf/hufftreegen.h) I used in this project.  It is just `hufftreegen.h` where you start with a list of values you want to encode.  For each value, you can call `HuffmanAppendHelper`.  This generates a table with the different symbols to be used, and their frequencies.  Then, you can call `GenerateHuffmanTree` which will use those frequencies to build a tree, which provides you the table to do bitstream decoding, as well as what's needed for `GenPairTable` To provide what's needed for encoding a bitstream.
 
-## TODO: What is the curve called that optimizes this?  Make it a subsection
+The output from the sample program found at the top of hufftreegen.h is as follows:
+
+```
+5 unique elements
+Tree has 9 entries (0x579aa1cc36f0)
+ Index: Frequency -> If 0, jump to, If 1 jump to (Or terminal)
+  0: 1000000 -> if 0 goto 1 / if 1 goto 4
+  1: 296250 -> if 0 goto 6 / if 1 goto 2
+  2: 184679 -> if 0 goto 3 / if 1 goto 5
+  3:  73636 -> if 0 goto 8 / if 1 goto 7
+  4: 703750 -> TERMINAL (Emit 0)
+  5: 111043 -> TERMINAL (Emit 2)
+  6: 111571 -> TERMINAL (Emit 4)
+  7:  36877 -> TERMINAL (Emit 8)
+  8:  36759 -> TERMINAL (Emit 1)
+Encode 5 entries
+ Index: Value: Frequency -> Bitstream to encode this symbol
+  0:   4: 111571 -> 00
+  1:   1:  36759 -> 0100
+  2:   8:  36877 -> 0101
+  3:   2: 111043 -> 011
+  4:   0: 703750 -> 1
+Total Elements: 1000000, Stored as 8-bit values totaling 8000000 bits
+Compressed data stream: 1554565 bits (19.43% of original)
+Validated OK
+```
+
+You can see that the most popular value (0) only needs one bit to define it, a single 1.  But if there's a prefix of 0, then it could be one of the other values.
+
+A key portion of this is the simplicity of the decode.  You'll notice the decode table at the top can be easily bit packed into a concise table.  The frequency isn't needed, only the "this element is a terminal element or a go-to element", a "where-to-go-if-0/1" and "value."  Because the where-to-go and value are mutually exclusive they can overlap in the data they take up.  Additionally because the table can only ever look forward, you can encode the table as deltas.  I.e. Skip forward _this_ amount if a 0 or 1.
+
+We use these tables to perform the huffman decoding in espbadapple.
+
+### Huffman limitations
+
+Because the huffman tree requires whole bits to decide which way to take in a tree, we are leaving something on the table. Imagine if the optimal entropy would result in say 2.5 bits should get spent on a symbol.  Huffman would need to either spend 2 or 3 bits.  Even though 2.5 bits is possible and could compress better.
 
 ## Arithmatic coding
 
@@ -202,34 +237,142 @@ We don't use arithmatic coding, but it is an important mention because it is wha
 
 There are many online resources to help explain arithmatic coding, and I am not an expert.
 
+But there's one special case of arithmatic coding called [range coding](https://en.wikipedia.org/wiki/Range_coding).  This is a simplification of the general ideal field of arithmatic coding, with an implementation being VPX Coding.
+
+All you need to know for range coding is the percentage chance that a given symbol would be a 0 or a 1.
+
+In a stream where most of your data is 0's and few elements are 1's, for instance, you can use less than a bit to represent a 0, and more than a bit to represent a 1.  In probability having a weighted chance of heads or tails (0 or 1) is called Expected Surprisal.  And interestingly, the equation governing this,
+
+```
+-p*log2(p)-q*log2(q) where q = 1.0-p
+```
+
+is almost the same as the real-world compression performance of the belowmentioned VPX coding!
+
+![Optimal Compression Ratio](https://github.com/user-attachments/assets/02b9d48f-497c-4633-87b8-42a0e345aeaa)
+
 ## VPX Coding
 
 While arithmatic coding is particularly difficult to do in practice with bitstreams, there is a different take on it called range coding. This is the coding scheme used in Google's VP7, VP8, VP9 video encoding engines to encode symbols.
 
 VPX Coding, specifically, or Range Coding, generally, splits each symbol into an individual bitstream.  But for each bit, you must know how likely it is that the next bit will be a `0` or a `1`.  Like arithmatic coding, you treat it like a pie chart, where the more likely an outcome is, the more of the ratio it can take up, and thus the fewer bits that are needed to encode that data.
 
-WORK THIS IN:
-![Optimal Compression Ratio](https://github.com/user-attachments/assets/02b9d48f-497c-4633-87b8-42a0e345aeaa)
-
 Because VPX coding can use less than one bit per symbol (if you treat 0 and 1 each as two possible symbols) it matters less that you ues symbols.  Instead you can just use bytes, or words.  For instance, if there are 137 different symbols, you could encode that with 8-bits.
 
-**TODO** how to explain this?
 
-While range coding itself is also unintuitive, I tried to express it as best as I could in an online visualization for Badder Apple, seen here. You can see how each bit in and each bit out are used.
+
+~~**TODO** how to explain this?
+While range coding itself is also unintuitive, I tried to express it as best as I could in an online visualization for Badder Apple, seen here. You can see how each bit in and each bit out are used.~~
 
 Whenever an unlikely path is taken, for instance, if a 0 is very unlikely, but is selected none the less, it can take several bits to encode that 0.  But when a likely path is taken, you can get bit after bit out without it consuming even one bit.
 
 If you are curious to use vpx coding yourself for a project, for instance if you have a situation where you have a series of symbols, or numbers you want to express, or really, anything that can boil down to a bitstream of 0's and 1's, where you know how likely the next bit is to be a 0 or 1 is, you can use my project [vpxcoding](https://github.com/cnlohr/vpxcoding), that has an encoder, and a decoder.  And, the decoder is a header-only C library that works well for microcontrollers.  It's a little bit heavier than huffman to decode, but not by much!  To efficiently decode VPX you need a log2 table, which takes up 256 bytes (could be RAM or ROM).  And for a decoding context, it only takes a 33-byte structure in RAM.
 
-## LZSS
+## LZSS/LZ77
 
+[LZSS](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Storer%E2%80%93Szymanski), Lempel–Ziv–Storer–Szymanski compression is a type of compression where it's goal is to find repeated segments of output data, and, instead of needing to re-encode that segment constantly, it can simply reference the earlier string, and with a length, simply repeat it in the current location.
 
+This is a common technique used in an enormous number of compression schemes to compress data because it is so effective. One of the major assumptions LZSS makes is that you have lots of memory, and can be tricky to implement.
+
+TODO: Some how make a diagram or something explaining this.
+
+## Heatshrink
+
+There is an embedded compression tool called [heatshrink](https://github.com/atomicobject/heatshrink) that implements an exceedingly easy-to-decode version of LZSS where it uses fixed-size callback windows and lengths to encode references. One major assumption of heatshrink is that it assumes it can reference windows of decoded data, which means we need to keep decoded data in RAM.  For us, the RAM usage was a no-go.  Because we had at least some code to work with, we could do something a little more sophisticated.
+
+## Exponential-Golomb coding
+
+[Exponential-Golomb coding](https://en.wikipedia.org/wiki/Exponential-Golomb_coding) or Golmb encoding is a way of encoding numbers with variable numbers of bits. Much like huffman can, except, in situations where you don't have context, and numbers could be arbitrarily large.
+
+It's used all over the place in the h.264 and h.265 video specifications to store numbers.  If you see `ue` as a type specifier in the spec, that means that's a golmb encoded number.
+
+```
+ 0 -> 1 -> 1
+ 1 -> 10 -> 010
+ 2 -> 11 -> 011
+ 3 -> 100 -> 00100
+ 4 -> 101 -> 00101
+ 5 -> 110 -> 00110
+ 6 -> 111 -> 00111
+ 7 -> 1000 -> 0001000
+ 8 -> 1001 -> 0001001
+```
+
+While this can't pick up on patterns, it does give us a great tool to make references, since most of the time we want to reference something in the near past, and only a few symbols at a time.  This offered a not insignificant benefit over heatshrink for encoding the distance back and length of the run.
+
+You also may note that it has more 0's than 1's, so there's somewhere else it's not optimal.  But overall, it's surprisingly effective.
+
+Some basic code for reading golmb coded is as follows:
+```c
+	int exp = 0;
+	do
+	{
+		if( bit() ) break;
+		exp++;
+	} while( 1 );
+
+	int br;
+	int v = 1;
+	for( br = 0; br < exp; br++ )
+	{
+		v = v << 1;
+		v |= bit();
+	}
+	return v-1;
+```
+
+And encoding:
+```c
+int EmitExpGolomb( int ib )
+{
+	ib++;
+	int bitsemit = 0;
+	int bits = (ib == 0) ? 1 : BitsForNumber( ib );
+	int i;
+	for( i = 1; i < bits; i++ )
+	{
+		EmitBit( 0 );
+		bitsemit++;
+	}
+
+	if( bits )
+	{
+		for( i = 0; i < bits; i++ )
+		{
+			EmitBit( ((ib)>>(bits-i-1)) & 1 );
+			bitsemit++;
+		}
+	}
+	return bitsemit;
+}
+
+// Return the number of bits needed to encode a number, i.e. 
+// 0 = 0, 1 = 1, 2,3 = 2, 4,5,6,7 = 3
+static inline int BitsForNumber( unsigned number )
+{
+	if( number == 0 ) return 0;
+	number++;
+	return 32 - __builtin_clz( number - 1 );
+}
+```
 
 ## Reverse-LZSS
 
-TODO
+Because we are heavily lacking in the RAM department, I turned LZSS upside-down, and instead of backtracking in the decoded stream, I decided to decode in the original data stream.  This _is_ less effective, because many of the references backwards in time do not align to useful bit boundaries, but overall, it is not that bad.
+
+The idea is that each bit in the stream either indicates a literal note is being emitted, or, a refernce to somewhere earlier in the stream is being created. When a reference is created, it pushes the current decode location and number of notes to decode onto a stack, and the encoder begins decoding the incoming bitstream starting at that previous reference.
+
+You can see what this looks like in practice, when you see a sustained hop-up in the scrubber, you can click in and watch as not just notes are pulled off but reference.  Where it first reads the number of 0's for how-far-back-to-jump, its content as a number then the length-of-that-jump's 0's, and the content, to get the information to backtrack.
+
+![Reverse LZSS Backtrack](https://github.com/user-attachments/assets/b4f2a4d6-df65-4afb-9f7d-9c185df17192)
+
+Because we are only storing a stack, we only need to save the current location and number of notes remaining, so with 18 as the deepest we can go, our state size is only 72 bytes!
+
+Another point of optimization is that we store each note/callback with an extra bit noting if it's a note or a callback, and that could probably be shrunk.
 
 # Song
+
+With all of the ground compression schemes laid, we can now move into the first challenge in the compression.  The song.
 
 ## Using BadApple-mod.mid
 
