@@ -20,7 +20,11 @@ I didn't do anything serious here because I had always struggled to find any goo
 
 But, then, in early 2024, things really got into high gear again, because WCH, the creators of the CH32V003, announced other chips in the series with FLASH ranging from 32kB to 62kB, so it was time for the rubber to hit the road again.  I would target the ch32v006, with 62kB flash + 2.5kB Bootloader.  Also, Ronboe just sent me some of their 64x48 pixel OLED displays that cost less than $1/ea.
 
-**TODO** Add a theoretically best video. "A friend pointed out that we should get a baseline.  Let's see what the state-of-the art is in video encoding, let's try encoding our video with XXX, a codec with the full force of millions of dollars of development?  How much can it encode Bad Apple down to? Let's just see what we're going to be up against." ...Oof...  this is going to be one doozie.
+Add a theoretically best video. "A friend pointed out that we should get a baseline.  Let's see what the state-of-the art is in video encoding, let's try encoding our video with h265 (HEVC)¹, a codec with the full force of millions of dollars of development?  How much can it encode Bad Apple down to? Let's just see what we're going to be up against."
+
+<IMG SRC=https://github.com/user-attachments/assets/e645dcee-80ec-4da6-8c78-48bd2ba74ce0 WIDTH=100%>
+
+...Oof..  this is going to be one doozie.
 
 By March I hit a wall. I couldn't get the video to a quality I was happy with, and I couldn't find very good tiles.  The video was hovering around 80kB, with lackluster quality due to the poor tile selection.
 
@@ -251,14 +255,13 @@ is almost the same as the real-world compression performance of the belowmention
 
 ![Optimal Compression Ratio](https://github.com/user-attachments/assets/02b9d48f-497c-4633-87b8-42a0e345aeaa)
 
-## VPX Coding
+## VPX (range) Coding
 
 While arithmatic coding is particularly difficult to do in practice with bitstreams, there is a different take on it called range coding. This is the coding scheme used in Google's VP7, VP8, VP9 video encoding engines to encode symbols.
 
 VPX Coding, specifically, or Range Coding, generally, splits each symbol into an individual bitstream.  But for each bit, you must know how likely it is that the next bit will be a `0` or a `1`.  Like arithmatic coding, you treat it like a pie chart, where the more likely an outcome is, the more of the ratio it can take up, and thus the fewer bits that are needed to encode that data.
 
 Because VPX coding can use less than one bit per symbol (if you treat 0 and 1 each as two possible symbols) it matters less that you ues symbols.  Instead you can just use bytes, or words.  For instance, if there are 137 different symbols, you could encode that with 8-bits.
-
 
 
 ~~**TODO** how to explain this?
@@ -473,6 +476,11 @@ int run = (s)&0x07;
 
 Assuming a little endian system.
 
+# Video
+
+## Glyphs
+
+## 
 
 
 # Setup and Running
@@ -621,3 +629,10 @@ After Full VPX
  * Inverting run data goes from 63365 to 63282... Totes not worth it.
 
 
+# Footnotes
+
+¹
+```
+ffmpeg -i badapple-sm8628149.mp4 -vf "scale=64:48,setsar=1:1" -c:v libx265 -x265-params keyint=1000:no-open-gop:intra-refresh=10000 -b:v 1k -maxrate 3k  -an outx265.mkv
+ffmpeg -i outx265.mkv -pix_fmt gray8 -vf format=gray -r 30 -t 00:01:00.000 output.gif
+```
