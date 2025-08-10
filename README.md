@@ -25,7 +25,7 @@ My first attempt was with RLE on the raster image, and I tried a number of other
 
 Then, one day in 2019, [Inverse Phase](https://inversephase.bandcamp.com/) showed me [Onslaught - Bad Apple 64 - C64 Demo](https://www.youtube.com/watch?v=OsDy-4L6-tQ), which was able to compress bad apple down to 170kB, or 70 bytes/frame, at 12fps.  This seemed truly impossible to me,  this was massively smaller than what I was able to achieve.  Granted, at a lower resolution and framerate (312x184, at 12FPS)... It blew my mind.
 
-I didn't do anything serious here because I had always struggled to find any good way to generate glyphs.  I tried a few different techniques but it kind of petered out, since all of my techniques produced lackluster output.  I would get occasional spirts of inspiration but no majorbreakthroughs.
+I didn't do anything serious here because I had always struggled to find any good way to generate glyphs (or 8x8 groups of pixels).  I tried a few different techniques but it kind of petered out, since all of my techniques produced lackluster output.  I would get occasional spirts of inspiration but no majorbreakthroughs.
 
 But, then, in early 2024, things really got into high gear again, because WCH, the creators of the CH32V003, announced other chips in the series with FLASH ranging from 32kB to 62kB, so it was time for the rubber to hit the road again.  I would target the ch32v006, with 62kB flash + 2.5kB Bootloader.  Also, Ronboe just sent me some of their 64x48 pixel OLED displays that cost less than $1/ea.
 
@@ -64,7 +64,7 @@ General Compression: You can take a bitstream and put it through existing compre
 
 RLE: Run-length encoding, or say "nothing changes for n samples"
 
-Run-lengths ass symbols: Run lengths can instead of being encoded as a number, 
+Run-lengths as symbols: Run lengths can instead of being encoded as a number, 
 
 Symbol Compression: Using Huffman coding, or VPX coding to compress symbols.
 
@@ -434,7 +434,7 @@ Note: these tests were generated with `make sizecomp` the code for several of th
 ### Observations
 
 1. For small payloads, it looks like gzip outperforms zstd, in spite of zstd having 40 years to improve over it. This is not a fluke, and has been true for many of my test song datasets.
-2. For larger payloads, bzip2 seems to outperform zstd. So, I guess the only place that zstd really shines in the speed by which it can uncompress.
+2. For larger payloads, bzip2 seems to outperform zstd. In this test, the only place that zstd really shines in the speed by which it can uncompress.
 3. I expected BSON to save space, but it was larger, and compressed worse.  I guess it's only useful for increasing the speed of parsing.
 4. Finding a way to express your data more concisely absolutely obliterates any compression algorithms you can throw at your problem. Don't settle for a binary representation, like bson.
 
@@ -492,15 +492,25 @@ Assuming a little endian system.
 
 ## Glyphs
 
-The key innovation that really kicked this project into high gear was the aforementioned [Onslaught - Bad Apple 64 - C64 Demo](https://www.youtube.com/watch?v=OsDy-4L6-tQ). Instead of trying to cleverly encode every pixel, or every other pixel such as the case with [Timendus's bad apple](https://github.com/Timendus/chip-8-bad-apple), we can encode the data as glyphs.  Sort of how people in the 1970's would use [PETSCII](https://en.wikipedia.org/wiki/PETSCII) to draw something like ascii art, but with symbols that were specifically selected to aid in drawing.
-
-**TODO** How did Onslaught select the symbols?
-
-My initial approach was 
+The key innovation that really kicked this project into high gear was the aforementioned [Onslaught - Bad Apple 64 - C64 Demo](https://www.youtube.com/watch?v=OsDy-4L6-tQ). Instead of trying to cleverly encode every pixel, or every other pixel such as the case with [Timendus's bad apple](https://github.com/Timendus/chip-8-bad-apple), we can encode the data as "glyphs" (or just 8x8 groups of pixels)  Sort of how people in the 1970's would use [PETSCII](https://en.wikipedia.org/wiki/PETSCII) to draw something like ascii art, but with symbols that were specifically selected to aid in drawing.  Then each frame is stitched together with these tiles.  Instead of needing to keep track of all 64x48 (3072) pixels, we only need to keep track of 6x8 (48) tiles.
 
 <P ALIGN=CENTER>
 <IMG SRC=https://github.com/user-attachments/assets/593ef5a3-15a1-4c89-bf95-ad5de7d06474 WIDTH=50%>
 </P>
+
+
+**TODO** How did Onslaught select the symbols?
+
+Originally, I started with an incredibly laborous mechanism where I would create a large corpus of glyphs, then, try to find out which ones looked most similar to other glyphs.  Starting with a corpus of 100,000 glyphs or so and winnowing this back, trying to make the tiles in the stream match the glyphs and keeping track of how many times each glyph was used, culling the least used glyphs, iteratively, back and forth many times.  This process was time consuming and the output was terrible.
+
+TODO: 8x8 tiles?!
+
+<P ALIGN=CENTER>
+<IMG SRC=https://github.com/user-attachments/assets/60b4afe9-7586-4241-8810-4874a182ae3a WIDTH=50%>
+</P>
+
+
+
 
 
 ## 
@@ -612,7 +622,7 @@ https://tiplanet.org/forum/viewtopic.php?t=24951
 ### Future TODO
  - [x] Perceptual/Semantic Loss Function
  - [x] De-Blocking Filter
- - [ ] Motion Vectors
+ - [ ] Motion Vectors - cannot - is mutually exclusive with 
  - [x] Reference previous tiles.
  - [x] Add color inversion option for glyphs.  **when implemented, it didn't help.**
  - [x] https://engineering.fb.com/2016/08/31/core-infra/smaller-and-faster-data-compression-with-zstandard/ **compared with audio compression,  It's not that amazing.**

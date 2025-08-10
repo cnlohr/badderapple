@@ -8,6 +8,7 @@
 #include "gifenc.h"
 static ge_GIF *gif;
 
+#define GIFSCALE 2
 #define TILEX (FWIDTH/TILE_W)
 #define TILEY (FHEIGHT/TILE_H)
 
@@ -105,12 +106,26 @@ void EmitFrametile( int16_t tile )
 
 		if( frame > 0 && frame < 6568 )
 		{
+			int rsx, rsy;
+
 			for( y = 0; y < FHEIGHT; y++ )
 			for( x = 0; x < FWIDTH; x++ )
 			{
-				gif->frame[(x+y*FWIDTH)] = framebuffer[x+y*FWIDTH]?1:0;
+				int v = framebuffer[x+y*FWIDTH]?1:0;
+				for( rsy = 0; rsy < GIFSCALE; rsy++ )
+				for( rsx = 0; rsx < GIFSCALE; rsx++ )
+				{
+					gif->frame[((x*GIFSCALE+rsx)+(y*GIFSCALE+rsy)*(FWIDTH*GIFSCALE))] = v;
+				}
 			}
-		        ge_add_frame(gif, 2);
+
+
+			// Dither framerate of output to hit 30 FPS
+			static double total_frame_delay;
+			total_frame_delay += 1.0/30.0;
+			int to_emit_delay = total_frame_delay*100;
+			ge_add_frame(gif, to_emit_delay);
+			total_frame_delay -= to_emit_delay/100.0;
 		}
 
 
@@ -126,7 +141,7 @@ int main()
 
 	gif = ge_new_gif(
 		"example.gif",  /* file name */
-		FWIDTH, FHEIGHT,           /* canvas size */
+		FWIDTH*GIFSCALE, FHEIGHT*GIFSCALE,           /* canvas size */
 		(uint8_t []) {  /* palette */
 		    0x00, 0x00, 0x00, /* 0 -> black */
 		    0xFF, 0xff, 0xff, /* 1 -> white */

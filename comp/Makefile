@@ -1,13 +1,13 @@
 all : decodevideo rletest rle255 tiletest16 test_tilehuff example.gif
 
-CFLAGS:=-O2 -g -Wno-unused-result
+CFLAGS:=-O2 -g -Wno-unused-result -I../common
 LDFLAGS:=-g
 LDLIBS:=-lX11
 
 hufftreegentest : hufftreegentest.c
 	gcc -g -O0 -o $@ $^
 
-decodevideo : ffmdecode.o decodevideo.o
+decodevideo : ../common/ffmdecode.o decodevideo.o
 	gcc -g -O0 -o $@ $^ -lavcodec -lavformat -lswscale -lavutil 
 
 rletest : rletest.c
@@ -27,10 +27,23 @@ test_tilehuff : test_tilehuff.c outdata.c gifenc.c
 
 
 videoout.dat : badapple-sm8628149.mp4 decodevideo
-	./decodevideo badapple-sm8628149.mp4 128 96
+	./decodevideo badapple-sm8628149.mp4 64 48
 #512 384
 
-outdata.c : videoout.dat tiletest16
+outdata.c : videoout.dat tiletest8
+	./tiletest8 1 #badapple-sm8628149.mp4
+	./tiletest8 2 2 -1
+	./tiletest8 3 20000 .0005
+	./tiletest8 2 2 .0005
+	./tiletest8 3 20000 .0005
+	./tiletest8 2 2 .005
+	./tiletest8 3 20000 .005
+	./tiletest8 2 2 .03
+	./tiletest8 3 20000 .03
+	./tiletest8 4
+
+
+_outdata.c : videoout.dat tiletest16
 	# Stage 1 has no properties.  It only takes in a video (which is actually videoout.dat) and outputs rawtiledata.dat
 	./tiletest16 1 #badapple-sm8628149.mp4
 	# Stage 2 [cutoff] [dynamic cutoff]
@@ -43,6 +56,15 @@ outdata.c : videoout.dat tiletest16
 	./tiletest16 3 20000 .0005
 	./tiletest16 2 2 .0005  # Was 0.002
 	./tiletest16 3 20000 .0005
+
+
+	./tiletest16 3 20000 .005
+	./tiletest16 2 2 .005  # Was 0.002
+	./tiletest16 3 2000 .01
+	./tiletest16 2 2 .01  # Was 0.002
+	./tiletest16 3 3000 .02
+	./tiletest16 2 2 .015  # Was 0.002
+	./tiletest16 3 1000 .03
 	# Produce final output.
 	./tiletest16 4
 
@@ -83,5 +105,5 @@ example.gif : test_tilehuff
 # #define SUPERTINY
 
 clean :
-	rm -rf *.o *~ dectest outdata.c example.gif videoout.dat test_tilehuff tiletest8 tiletest16 hufftreegentest
+	rm -rf *.o *~ dectest outdata.c example.gif videoout.dat test_tilehuff tiletest8 tiletest16 hufftreegentest ../common/ffmdecode.o
 

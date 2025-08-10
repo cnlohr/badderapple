@@ -16,14 +16,23 @@ void got_video_frame( unsigned char * rgbbuffer, int linesize, int width, int he
 	int x;
 	int y;
 	printf( "%d %d %d %p %p %d\n", width, height, linesize, fd, fd+width*height, frame );
-	for( y = 0; y < height; y++ )
+	for( y = 0; y < targh; y++ )
 	{
-		for( x = 0; x < width; x++ )
+		for( x = 0; x < targw; x++ )
 		{
-			*(fd++) = (rgbbuffer[x*3+0+y*linesize] + rgbbuffer[x*3+1+y*linesize] + rgbbuffer[x*3+2+y*linesize])/3;
+			int div = 0;
+			int sum = 0;
+			int xa, ya;
+			for( ya = height * y / targh; ya < height * (y+1) / targh; ya++ )
+			for( xa = width  * x / targw; xa < width  * (x+1) / targw; xa++ )
+			{
+				sum += (rgbbuffer[xa*3+0+ya*linesize] + rgbbuffer[xa*3+1+ya*linesize] + rgbbuffer[xa*3+2+ya*linesize]);
+				div += 3;
+			}
+			*(fd++) = sum / div;
 		}
 	}
-	fwrite( data, width, height, f );
+	fwrite( data, targw, targh, f );
 	frames++;	
 }
 
