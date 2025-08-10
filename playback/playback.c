@@ -575,7 +575,12 @@ int main()
 
 #endif
 
-		ge_add_frame(gifout, 2);
+		// Dither framerate of output.
+		static double total_frame_delay;
+		total_frame_delay += 1.0/30.0;
+		int to_emit_delay = total_frame_delay*100;
+		ge_add_frame(gifout, to_emit_delay);
+		total_frame_delay -= to_emit_delay/100.0;
 
 		frame++;
 

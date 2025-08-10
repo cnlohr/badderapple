@@ -2,7 +2,9 @@
 
 What started as my shot at bad apple on an ESP8266 ended in the biggest spiral into my longest running project. The final outcome from this project was all 6570 frames, at 64x48 pixels, with sound and code for playback in 64.5kB, running on a ch32v006.
 
-<IMG SRC=https://github.com/user-attachments/assets/5ae7793a-7fb5-4d80-a559-d7f40e62a149 WIDTH=50% ALIGN=middle>
+<p align="center">
+<IMG SRC=https://github.com/user-attachments/assets/5c77bf51-2895-4764-a540-fee0bc53da5a WIDTH=50%>
+</p>
 
 (160% playback speed because ... gif's) TODO: Can we use non-gifs? `ffmpeg -i playback.gif -vcodec libwebp -lossless 1 -vf setpts=1.6666*PTS test.webp`
 
