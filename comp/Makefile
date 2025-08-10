@@ -38,8 +38,10 @@ outdata.c : videoout.dat tiletest8
 	./tiletest8 3 20000 .0005
 	./tiletest8 2 2 .005
 	./tiletest8 3 20000 .005
-	./tiletest8 2 2 .03
-	./tiletest8 3 20000 .03
+	./tiletest8 2 2 .018
+	./tiletest8 3 20000 .018
+	./tiletest8 2 2 .02
+	./tiletest8 3 20000 .02
 	./tiletest8 4
 
 

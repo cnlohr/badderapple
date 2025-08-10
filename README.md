@@ -501,13 +501,13 @@ The key innovation that really kicked this project into high gear was the aforem
 
 **TODO** How did Onslaught select the symbols?
 
-Originally, I started with an incredibly laborous mechanism where I would create a large corpus of glyphs, then, try to find out which ones looked most similar to other glyphs.  Starting with a corpus of 100,000 glyphs or so and winnowing this back, trying to make the tiles in the stream match the glyphs and keeping track of how many times each glyph was used, culling the least used glyphs, iteratively, back and forth many times.  This process was time consuming and the output was terrible.
+Originally, I started with an incredibly laborous mechanism where I would create a large corpus of glyphs, then, try to find out which ones looked most similar to other glyphs.  Starting with a corpus of 100,000 glyphs or so and winnowing this back, trying to make the tiles in the stream match the glyphs and keeping track of how many times each glyph was used, culling the least used glyphs, iteratively, back and forth many times.  This process was time consuming and the output was pretty rough.  The following is one run I was able to get the size down to 75kB with, with 260 glyphs.
 
 <P ALIGN=CENTER>
-<IMG SRC=https://github.com/user-attachments/assets/a1c2f130-cdb0-4b24-84fc-7e0fa88dfb43 WIDTH=50%>
+<IMG SRC=https://github.com/user-attachments/assets/49444434-3b9b-4b25-a9f3-07782b9a481d WIDTH=50%>
 </P>
 
-
+*TODO* But I knew I could do better.
 
 
 
