@@ -2,11 +2,9 @@
 
 What started as my shot at bad apple on an ESP8266 ended in the biggest spiral into my longest running project. The final outcome from this project was all 6570 frames, at 64x48 pixels, with sound and code for playback in 64.5kB, running on a ch32v006.
 
-<p align="center">
+<P ALIGN=CENTER>
 <IMG SRC=https://github.com/user-attachments/assets/5c77bf51-2895-4764-a540-fee0bc53da5a WIDTH=50%>
-</p>
-
-(160% playback speed because ... gif's) TODO: Can we use non-gifs? `ffmpeg -i playback.gif -vcodec libwebp -lossless 1 -vf setpts=1.6666*PTS test.webp`
+</P>
 
 ```
 Memory region         Used Size  Region Size  %age Used
@@ -33,7 +31,9 @@ But, then, in early 2024, things really got into high gear again, because WCH, t
 
 A friend pointed out that we should get a baseline¹.  Let's see what the state-of-the art is in video encoding, let's try encoding our video with h265 (HEVC), a codec with the full force of millions of dollars of development?  How much can it encode Bad Apple down to? Let's just see what we're going to be up against."
 
-<IMG SRC=https://github.com/user-attachments/assets/e645dcee-80ec-4da6-8c78-48bd2ba74ce0 WIDTH=50% ALIGN=middle>
+<P ALIGN=CENTER>
+<IMG SRC=https://github.com/user-attachments/assets/e645dcee-80ec-4da6-8c78-48bd2ba74ce0 WIDTH=50%>
+</P>
 
 ...Oof..  this is going to be one doozie.
 
@@ -274,6 +274,7 @@ VPX Coding, specifically, or Range Coding, generally, splits each symbol into an
 
 Because VPX coding can use less than one bit per symbol (if you treat 0 and 1 each as two possible symbols) it matters less that you ues symbols.  Instead you can just use bytes, or words.  For instance, if there are 137 different symbols, you could encode that with 8-bits.
 
+**TODO** Add example code.
 
 ~~**TODO** how to explain this?
 While range coding itself is also unintuitive, I tried to express it as best as I could in an online visualization for Badder Apple, seen here. You can see how each bit in and each bit out are used.~~
@@ -491,8 +492,18 @@ Assuming a little endian system.
 
 ## Glyphs
 
-## 
+The key innovation that really kicked this project into high gear was the aforementioned [Onslaught - Bad Apple 64 - C64 Demo](https://www.youtube.com/watch?v=OsDy-4L6-tQ). Instead of trying to cleverly encode every pixel, or every other pixel such as the case with [Timendus's bad apple](https://github.com/Timendus/chip-8-bad-apple), we can encode the data as glyphs.  Sort of how people in the 1970's would use [PETSCII](https://en.wikipedia.org/wiki/PETSCII) to draw something like ascii art, but with symbols that were specifically selected to aid in drawing.
 
+**TODO** How did Onslaught select the symbols?
+
+My initial approach was 
+
+<P ALIGN=CENTER>
+<IMG SRC=https://github.com/user-attachments/assets/593ef5a3-15a1-4c89-bf95-ad5de7d06474 WIDTH=50%>
+</P>
+
+
+## 
 
 # Setup and Running
 
