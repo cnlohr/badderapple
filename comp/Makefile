@@ -16,13 +16,13 @@ rletest : rletest.c
 rle255 : rle255.o
 	gcc -o $@ $^ $(LDFLAGS) $(LDLIBS) $(CFLAGS)
 
-tiletest16 :  tiletest16.o gifenc.o
+tiletest16 :  tiletest16.o ../common/gifenc.o
 	gcc -o $@ $^ $(LDFLAGS) $(LDLIBS) $(CFLAGS)
 
 tiletest8 :  tiletest8.o gifenc.o
 	gcc -o $@ $^ $(LDFLAGS) $(LDLIBS) $(CFLAGS)
 
-test_tilehuff : test_tilehuff.c outdata.c gifenc.c
+test_tilehuff : test_tilehuff.c outdata.c ../common/gifenc.o
 	gcc -o $@ $^ $(LDFLAGS) $(LDLIBS) $(CFLAGS)
 
 
@@ -105,5 +105,5 @@ example.gif : test_tilehuff
 # #define SUPERTINY
 
 clean :
-	rm -rf *.o *~ dectest outdata.c example.gif videoout.dat test_tilehuff tiletest8 tiletest16 hufftreegentest ../common/ffmdecode.o
+	rm -rf *.o *~ dectest outdata.c example.gif videoout.dat test_tilehuff tiletest8 tiletest16 hufftreegentest ../common/ffmdecode.o ../common/gifenc.o
 

@@ -503,10 +503,8 @@ The key innovation that really kicked this project into high gear was the aforem
 
 Originally, I started with an incredibly laborous mechanism where I would create a large corpus of glyphs, then, try to find out which ones looked most similar to other glyphs.  Starting with a corpus of 100,000 glyphs or so and winnowing this back, trying to make the tiles in the stream match the glyphs and keeping track of how many times each glyph was used, culling the least used glyphs, iteratively, back and forth many times.  This process was time consuming and the output was terrible.
 
-TODO: 8x8 tiles?!
-
 <P ALIGN=CENTER>
-<IMG SRC=https://github.com/user-attachments/assets/60b4afe9-7586-4241-8810-4874a182ae3a WIDTH=50%>
+<IMG SRC=https://github.com/user-attachments/assets/a1c2f130-cdb0-4b24-84fc-7e0fa88dfb43 WIDTH=50%>
 </P>
 
 

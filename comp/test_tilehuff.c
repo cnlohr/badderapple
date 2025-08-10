@@ -139,16 +139,10 @@ int main()
 {
 	CNFGSetup( "badapple", FWIDTH, FHEIGHT );
 
-	gif = ge_new_gif(
-		"example.gif",  /* file name */
-		FWIDTH*GIFSCALE, FHEIGHT*GIFSCALE,           /* canvas size */
-		(uint8_t []) {  /* palette */
-		    0x00, 0x00, 0x00, /* 0 -> black */
-		    0xFF, 0xff, 0xff, /* 1 -> white */
-		},
-		1,              /* palette depth == log2(# of colors) */
-		1               /* infinite loop */
-		);
+
+	static uint8_t palette[48] = { 0, 0, 0, 255, 255, 255 };
+	gif = ge_new_gif( "example.gif", FWIDTH*GIFSCALE, FHEIGHT*GIFSCALE, palette, 2, -1, 0 );
+
 
 	FILE * videodata = fopen( "outvideo.dat", "rb" );
 	if( !videodata )
