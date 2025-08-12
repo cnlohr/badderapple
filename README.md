@@ -272,24 +272,88 @@ While arithmatic coding is particularly difficult to do in practice with bitstre
 
 VPX Coding, specifically, or Range Coding, generally, splits each symbol into an individual bitstream.  But for each bit, you must know how likely it is that the next bit will be a `0` or a `1`.  Like arithmatic coding, you treat it like a pie chart, where the more likely an outcome is, the more of the ratio it can take up, and thus the fewer bits that are needed to encode that data.
 
-Because VPX coding can use less than one bit per symbol (if you treat 0 and 1 each as two possible symbols) it matters less that you ues symbols.  Instead you can just use bytes, or words.  For instance, if there are 137 different symbols, you could encode that with 8-bits.
+Because VPX coding can use less than one bit per symbol (if you treat 0 and 1 each as two possible symbols) it matters less that you use symbols.  Instead you can just use bytes, or words.  For instance, if there are 137 different symbols, you could encode that with 8-bits, and if you get into a situation where for instance you could have either tile 127 or 255, because there is no tile 255, you know with complete certainty that the tile will be 127, and thus that last bit can be encoded with almost no entropy.  Admittedly not no entropy, so don't go crazy wasting bits, but it's still very efficient.
 
-**TODO** Add example code.
+While range coding itself is also unintuitive, I tried to express it as best as I could in the visualization for Badder Apple, seen here. You can see how each bit in and each bit out are used.  In the image below you can see the squares indicate reading bits in, the X's indicate getting bits out. So you can see here it only took 3 bits to encode 8 bits of output data.
 
-~~**TODO** how to explain this?
-While range coding itself is also unintuitive, I tried to express it as best as I could in an online visualization for Badder Apple, seen here. You can see how each bit in and each bit out are used.~~
+![VPX Coding Portion of demo](https://github.com/user-attachments/assets/6b48eb03-068c-4a27-892e-0fdbf96eef53)
 
-Whenever an unlikely path is taken, for instance, if a 0 is very unlikely, but is selected none the less, it can take several bits to encode that 0.  But when a likely path is taken, you can get bit after bit out without it consuming even one bit.
+The general idea is for every bit coming in, the decoder considers the `range` of possibilities left in the current value that's been decoded.  And it determines a `split` based on the probability of the outcome being a 0 or a 1 and that `range`. It also keeps track of a `value` sort of like a cursor.  If the current `value` is >= the `split` then the bit is a `1` otherwise it's a `0`.  If it is a `1` then the new `value` and `range` update from that `split`.  Then, based on the `range` new data gets shifted into `value` to keep feeding the system.
 
-If you are curious to use vpx coding yourself for a project, for instance if you have a situation where you have a series of symbols, or numbers you want to express, or really, anything that can boil down to a bitstream of 0's and 1's, where you know how likely the next bit is to be a 0 or 1 is, you can use my project [vpxcoding](https://github.com/cnlohr/vpxcoding), that has an encoder, and a decoder.  And, the decoder is a header-only C library that works well for microcontrollers.  It's a little bit heavier than huffman to decode, but not by much!  To efficiently decode VPX you need a log2 table, which takes up 256 bytes (could be RAM or ROM).  And for a decoding context, it only takes a 33-byte structure in RAM.
+In the image above, you can see the split, where gradually, the value is drained down because the split is so predominantly 1, and just before the second bit read, because the probability of it being a 1 is so much lower, it significantly reduces the porportion of value to range.
+
+To speed things up, vpx coder keeps 24 (or 56 if 64-bit) bits worth of immediate to pull from, when this is drained, it reads another 3 (or 7) bytes from the buffer and refills it.
+
+Whenever an unlikely path is taken, for instance, if a 0 is very unlikely, but is selected none the less, it can take several bits to encode that 0.  But when a likely path is taken, you can get bit after bit out without it consuming even one bit. You just have to know the chance on both the encoder and decoder so each side can make sense of the bitstream.
+
+If you are curious to use vpx coding yourself for a project, for instance if you have a situation where you have a series of symbols, or numbers you want to express, or really, anything that can boil down to a bitstream of 0's and 1's, where you know how likely the next bit is to be a 0 or 1 is, you can use my project [vpxcoding](https://github.com/cnlohr/vpxcoding), that has an encoder, and a decoder.  And, the decoder is a header-only C library that works well for microcontrollers.  It's a little bit heavier than huffman to decode, but not by much!  To efficiently decode VPX you need a log2 table, which takes up 256 bytes (could be RAM or ROM), and only 364 bytes of x86 code to decode.  And for a decoding context, it only takes a 33-byte structure in RAM.
+
+You can see an example application below:
+```c
+#include <stdlib.h>
+#include <stdio.h>
+
+#define VPXCODING_READER
+#define VPXCODING_WRITER
+#define VPXCODING_NOTABLE
+#include "vpxcoding.h"
+
+
+#define NELEM 1000000
+
+int data_to_compress[NELEM];
+uint8_t compressed_data[NELEM];
+
+// Stored as individual 1's and 0's for clarity.
+uint8_t compressed_bitstream[NELEM*16];
+
+int main()
+{
+	int i, j, k;
+
+	// Generate a string of 0's and 1's, but mostly 0's
+	for( i = 0; i < NELEM; i++ )
+		data_to_compress[i] = ((rand()%12)==0) ? 1 : 0;
+
+	int probability_of_0 = 256 - (int)( 1.0 * 255.0 / 12.0 );
+
+	vpx_writer w;
+	vpx_start_encode( &w, compressed_data, sizeof(compressed_data) );
+	for( i = 0; i < NELEM; i++ )
+		vpx_write( &w, data_to_compress[i], probability_of_0 );
+	vpx_stop_encode( &w );
+
+	int encode_length = w.pos;
+	printf( "Compressed size: %d\n", encode_length );
+
+	vpx_reader r;
+	vpx_reader_init( &r, compressed_data, encode_length, 0, 0 );
+	for( i = 0; i < NELEM; i++ )
+		if( data_to_compress[i] != vpx_read( &r, probability_of_0 ) )
+			printf( "Compression failed\n" );
+	// No need to cleanup.
+
+	printf( "Done\n" );
+
+	return 0;
+}
+```
+
+The one thing that's critical to remember here for later is that you have to figure out what the probability of each bit bing a 0 is, and, you have to make sure both the encoder and decoder know what that is so they can encode and decode properly.
+
+We can graze theoretical limits with VPX coding, but there's still far more entropy that can be removed and compression that can be realized!  We must press on!
 
 ## LZSS/LZ77
 
-[LZSS](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Storer%E2%80%93Szymanski), Lempel–Ziv–Storer–Szymanski compression is a type of compression where it's goal is to find repeated segments of output data, and, instead of needing to re-encode that segment constantly, it can simply reference the earlier string, and with a length, simply repeat it in the current location.
+Like RLE encoding mentioned earlier, [LZSS](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Storer%E2%80%93Szymanski), Lempel–Ziv–Storer–Szymanski compression operates on whole symbols and is a type of compression where its goal is to find repeated segments of output data, and, instead of needing to re-encode that segment constantly, it can simply reference the earlier string, and with a length, simply repeat it in the current location.
+
+![First 6 bars of my version of bad apple](https://github.com/user-attachments/assets/301533b0-5cee-4dbe-9438-0e49576cccb8)
+
+Here's an example, using the first 6 bars of my version of the bad apple MIDI (rendered by rosegarden).  You can notice within the first 2 bars, there's a common section, so we only need to encode the first 7 notes, then we can reference the first 3 notes.  And then render the last note.
+
+Then next, we can realize the next two bars are the same so we can say "just repeat the beginning, and keep going."  One clever trick of LZSS is that it is allowed to reference bytes that haven't been emitted yet, because it can read from references as it is writing new data! (This property is maintained by my later reverse-LZSS)
 
 This is a common technique used in an enormous number of compression schemes to compress data because it is so effective. One of the major assumptions LZSS makes is that you have lots of memory, and can be tricky to implement.
-
-TODO: Some how make a diagram or something explaining this.
 
 ## Heatshrink
 
@@ -498,7 +562,6 @@ The key innovation that really kicked this project into high gear was the aforem
 <IMG SRC=https://github.com/user-attachments/assets/593ef5a3-15a1-4c89-bf95-ad5de7d06474 WIDTH=50%>
 </P>
 
-
 **TODO** How did Onslaught select the symbols?
 
 Originally, I started with an incredibly laborous mechanism where I would create a large corpus of glyphs, then, try to find out which ones looked most similar to other glyphs.  Starting with a corpus of 100,000 glyphs or so and winnowing this back, trying to make the tiles in the stream match the glyphs and keeping track of how many times each glyph was used, culling the least used glyphs, iteratively, back and forth many times.  This process was time consuming and the output was pretty rough.  The following is one run I was able to get the size down to 75kB with, with 260 glyphs.
@@ -507,11 +570,23 @@ Originally, I started with an incredibly laborous mechanism where I would create
 <IMG SRC=https://github.com/user-attachments/assets/49444434-3b9b-4b25-a9f3-07782b9a481d WIDTH=50%>
 </P>
 
-*TODO* But I knew I could do better.
+**TODO**: Mention trick about uint64_t.
 
+## K-Means
 
+## Glyph classifications
 
-## 
+## Run Length Probability Tables
+
+## De-Blocking Filter
+
+# Machine Learning
+
+**TODO** ef42
+
+# The ch32v006 implementation
+
+# The web viewer demo
 
 # Setup and Running
 
