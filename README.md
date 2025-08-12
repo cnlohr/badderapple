@@ -574,9 +574,17 @@ Originally, I started with an incredibly laborous mechanism where I would create
 <IMG SRC=https://github.com/user-attachments/assets/49444434-3b9b-4b25-a9f3-07782b9a481d WIDTH=50%>
 </P>
 
-**TODO**: Mention trick about uint64_t.
+You might be thinking this process would be terribly slow.  And it certainly wasn't fast.  Because it had to check through 300,000 tiles for larger tilesets for every single tile of input.  There was a trick.
+
+At this time, I thought I might try to keep everything black and white and use spatial dithering to provide a grey feel.  There was a neat trick I found.  
+
+I could represent all the tiles as `uint64_t` numbers.  As in each bit in the 8x8 image was a bit in a number.  Then to see if tiles were identical, I could simply compare the `uint64_t`'s.  To determine how similar two tiles were, for instance if I wanted to find a "best match" I could just take two `uint64_t`'s and `xor` them together, then do a [popcount](https://github.com/hcs0/Hackers-Delight/blob/master/pop.c.txt) (or count number of 1's) to get the number of pixels that differed. 
 
 ## K-Means
+
+I became frustrated by the difficulty.  How to generate glyphs.  My original attempt was poor.  Both becasuse it took so long, but the quality of the glyphs was poor, and, it had no hope of moving quickly.
+
+**TODO** Show refinement.
 
 ## Glyph classifications
 
