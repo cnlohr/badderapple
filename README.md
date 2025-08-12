@@ -15,7 +15,7 @@ Memory region         Used Size  Region Size  %age Used
 
 This is the story of badder apple.
 
-If you are interested in the web viewer of the bitstream explaining what every bit means (the image below) you can click [here TODO LINK]()
+If you are interested in the web viewer of the bitstream explaining what every bit means (the image below) you can click [here](https://cnvr.io/dump/badderapple.html)
 
 ![Web Viewer](https://github.com/user-attachments/assets/b2d90eb1-04f1-4302-8ea7-99580beca663)
 
