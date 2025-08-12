@@ -15,7 +15,11 @@ Memory region         Used Size  Region Size  %age Used
 
 This is the story of badder apple.
 
-If you are interested in the specific [setup and running](#setup-and-running) instructions or [previous and future work](#previous-and-future-work), feel free to click there.
+If you are interested in the web viewer of the bitstream explaining what every bit means (the image below) you can click [here TODO LINK]()
+
+![Web Viewer](https://github.com/user-attachments/assets/b2d90eb1-04f1-4302-8ea7-99580beca663)
+
+If you're interested in how to do [setup and running](#setup-and-running) instructions or [previous and future work](#previous-and-future-work), feel free to click there.
 
 ## History
 
