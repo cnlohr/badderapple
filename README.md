@@ -623,11 +623,15 @@ Three colors is still better than two!
 
 One thing you'll notice when looking at the preview output of random frames (see 2nd image from the top, on the left) is that the edges between tiles are very evident and ugly.  Well, there's one last trick here before we start trying to really squeeze things down.
 
+**TODO** Show the actual filter, like what pixels are effected.
+
 I pulled this trick from H.264, which has a "deblocking filter" which blurs the outputs between the edges of the macroblocks.  This really helped seal the deal, and produced what I expected to be my final output. It was blurry. There were no stars, flashy motion was goopy, there were no peach blossoms, everything looked kinda lumpy, it wasn't perfect, but it would do ... for now.
 
 <P ALIGN=CENTER>
 <IMG SRC=https://github.com/user-attachments/assets/d655cea7-16b1-482a-b62c-d1bc99004db9 WIDTH=50%>
 </P>
+
+Despite all of its flaws, it completely blew my mind that just bluring the one pixel border around each block together would make it that difficult to see the edges of the tiles!
 
 That was until my friend Evan thought "I think I can do better" -- "Better than k-means?!" I exclaimed. Pushing his glasses back, as though to indicate he meant business.  "Yes."
 
@@ -647,13 +651,36 @@ The underlying data we need to compress is only two files.
 
 The first was the "stream" it was just a list of what glyph to put into which tile of the video.  The second was the tiles (or glyphs) that we computed above.
 
-Let's first compress our glyphs. You can see the web demo doing this when it first starts, everything to the left of the start on the scrubber (the bottom circle) is it decompressing the glyph table that will be used.
+## Compressing the glyphs
+
+Let's first compress our glyphs. You can see the web demo doing this when it first starts, everything to the left of the start on the scrubber (the bottom circle) is it decompressing the glyph table that will be used.  You can also watch as each bit is pulled off the input stream, one at a time using vpx coding, to output to two bits per pixel.
 
 ![the glyphs](https://github.com/user-attachments/assets/70e1d704-b60a-4743-b634-8399be22045f)
 
+While it's wonderful to say we can just take an input stream and VPX decompress the stream, the truth of the matter is much stickier.  Remember that pesky fact that to compress or decompress a stream, you have to know what the probability of each bit being a 1 or a 0 is.
 
 
 ## Glyph classifications
+
+
+**TODO** This sectino
+
+```
+Classes: (Theoretical Space)
+  0:  3646: 19177 bits (5.259743 bits per symbol) 0
+  1:  3323: 18333 bits (5.516914 bits per symbol) 1
+  2:  6493: 39627 bits (6.103096 bits per symbol) 2 13 30 55 56 60 64 74 83 95 102 103 119 135 141 154 164 165 171 183 188 191 198 201 204 219 220 239 241 246 248 254
+  3:  4250: 23207 bits (5.460380 bits per symbol) 3 20 25 57 93 111 126 134 138 139 143 167 194 197 199 215 221 228 233 245 247
+  4:  5014: 27885 bits (5.561340 bits per symbol) 4 33 45 61 62 87 88 89 98 108 114 116 124 130 144 174 193 196 203 211 229 231 235 236
+  5:  5592: 32465 bits (5.805695 bits per symbol) 5 14 19 29 34 44 46 59 67 80 92 115 129 131 133 142 152 166 181 189 206 210 214
+  6:  5130: 28666 bits (5.587907 bits per symbol) 6 18 22 27 36 39 47 65 81 107 118 137 146 149 157 170 182 185 190 200 208 240
+  7:  4742: 25170 bits (5.307907 bits per symbol) 7 15 16 23 51 63 66 68 77 86 104 109 127 132 173 186 192 209 213
+  8:  4798: 28245 bits (5.886834 bits per symbol) 8 28 32 58 71 90 97 101 112 117 145 159 160 162 169 175 187 195 207 216 218 223 224 225 249
+  9:  3285: 19768 bits (6.017756 bits per symbol) 9 43 54 70 125 128 147 153 177 180 202 212 222 230 238 243 244 250 253
+ 10:  4376: 27324 bits (6.244118 bits per symbol) 10 21 26 31 38 40 41 75 84 85 100 122 163 172 178 217 232 234 237 255
+ 11:  5695: 34687 bits (6.090759 bits per symbol) 11 24 50 72 73 76 78 79 91 99 105 110 113 120 123 136 140 150 151 155 156 158 161 168 179 226 227 251 252
+ 12:  4870: 28799 bits (5.913510 bits per symbol) 12 17 35 37 42 48 49 52 53 69 82 94 96 106 121 148 176 184 205 242
+```
 
 ## Run Length Probability Tables
 
