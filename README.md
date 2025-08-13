@@ -1,6 +1,6 @@
 # badder apple
 
-What started as my shot at bad apple on an ESP8266 ended in the biggest spiral into my longest running project. The final outcome from this project was all 6570 frames, at 64x48 pixels, with sound and code for playback in 64.5kB, running on a ch32v006.
+What started as my shot at bad apple on an ESP8266 ended in the biggest spiral into my longest running project. The final outcome from this project was all 6570 frames, at 64x48 pixels, with sound and code for playback in 64.5kB, running on a 10-cent ch32v006. This is the story of bad*der* apple.
 
 <P ALIGN=CENTER>
 <IMG SRC=https://github.com/user-attachments/assets/5c77bf51-2895-4764-a540-fee0bc53da5a WIDTH=50%>
@@ -12,8 +12,6 @@ Memory region         Used Size  Region Size  %age Used
       BOOTLOADER:        3280 B       3328 B     98.56%
              RAM:        6400 B         8 KB     78.12%
 ```
-
-This is the story of badder apple.
 
 If you are interested in the web viewer of the bitstream explaining what every bit means (the image below) you can click [here](https://cnvr.io/dump/badderapple.html)
 
@@ -282,7 +280,7 @@ While range coding itself is also unintuitive, I tried to express it as best as 
 
 ![VPX Coding Portion of demo](https://github.com/user-attachments/assets/6b48eb03-068c-4a27-892e-0fdbf96eef53)
 
-The general idea is for every bit coming in, the decoder considers the `range` of possibilities left in the current value that's been decoded.  And it determines a `split` based on the probability of the outcome being a 0 or a 1 and that `range`. It also keeps track of a `value` sort of like a cursor.  If the current `value` is >= the `split` then the bit is a `1` otherwise it's a `0`.  If it is a `1` then the new `value` and `range` update from that `split`.  Then, based on the `range` new data gets shifted into `value` to keep feeding the system.
+The general idea is for every bit coming in, the decoder considers the `range` of possibilities left in the current value that's been decoded.  And it determines a `split` based on the probability of the outcome being a 0 or a 1 and that `range`. It also keeps track of a `value` sort of like a cursor.  If the current `value` is >= the `split` then the bit is a `1` otherwise it's a `0`.  If it is a `1` then the new `value` and `range` update from that `split`.  Then, if the `range` is now less than 1/2 the possible range, new data gets shifted into `value` to keep feeding the system.
 
 In the image above, you can see the split, where gradually, the value is drained down because the split is so predominantly 1, and just before the second bit read, because the probability of it being a 1 is so much lower, it significantly reduces the porportion of value to range.
 
@@ -447,6 +445,8 @@ The idea is that each bit in the stream either indicates a literal note is being
 
 You can see what this looks like in practice, when you see a sustained hop-up in the scrubber, you can click in and watch as not just notes are pulled off but reference.  Where it first reads the number of 0's for how-far-back-to-jump, its content as a number then the length-of-that-jump's 0's, and the content, to get the information to backtrack.
 
+The small cursors that scan from left to right show how many notes remain within the current stack location, and how far (number-of-bits-wise) the track is done playing.
+
 ![Reverse LZSS Backtrack](https://github.com/user-attachments/assets/b4f2a4d6-df65-4afb-9f7d-9c185df17192)
 
 Because we are only storing a stack, we only need to save the current location and number of notes remaining, so with 18 as the deepest we can go, our state size is only 72 bytes!
@@ -580,21 +580,66 @@ At this time, I thought I might try to keep everything black and white and use s
 
 I could represent all the tiles as `uint64_t` numbers.  As in each bit in the 8x8 image was a bit in a number.  Then to see if tiles were identical, I could simply compare the `uint64_t`'s.  To determine how similar two tiles were, for instance if I wanted to find a "best match" I could just take two `uint64_t`'s and `xor` them together, then do a [popcount](https://github.com/hcs0/Hackers-Delight/blob/master/pop.c.txt) (or count number of 1's) to get the number of pixels that differed. 
 
+You can see the final tiles output.  It's able to find a couple really key tiles, like black, white, half black, half white, and various shapes, but, then it kind of loses its mind going into tiles that are barely used at all.
+
+<P ALIGN=CENTER>
+<IMG SRC=https://github.com/user-attachments/assets/2e38a22f-12b5-4b2e-8c84-0a9fb218bb70 WIDTH=50%>
+</P>
+
+This process was really clunky, and left me frustrated, spending a lot of time nursing it along.  In addition, this has no facility to support greyscale, and that is something I would later find to be critical.
+
 ## K-Means
 
-I became frustrated by the difficulty.  How to generate glyphs.  My original attempt was poor.  Both becasuse it took so long, but the quality of the glyphs was poor, and, it had no hope of moving quickly.
+Frustrated, I was visiting my brother in early 2024, and I started explaining my problem and both him and his wife were like "why didn't k-means work?" and I proceeded to explain the problem "why didn't k-means work?" then when I was done they asked "You didn't try k-means, did you?"
 
-**TODO** Show refinement.
+...no
 
-## Glyph classifications
+They spent about 20 minutes convincing me, I'd argue "but I have 64 dimensions, one for each pixel" they pointed out that has no issue at all.  After various other defensive arguments for something that was a clear lack of knowledge on my part. I decided to give it a shot.
 
-## Run Length Probability Tables
+K-means is performed by randomly distributing a series of points (or classes) over your data space, then:
+
+1. For each point of your data, find the closest class.
+2. For each point in a class, find its centroid.
+3. Move the class center to that new centroid.
+4. Repeat back to step 1 until you're happy.  
+
+<P ALIGN=CENTER>
+<IMG SRC=https://upload.wikimedia.org/wikipedia/commons/e/ea/K-means_convergence.gif WIDTH=50%>
+
+(Credit and license from Wikipedia source <A HREF=https://commons.wikimedia.org/wiki/File:K-means_convergence.gif>here</A>.  (C) Chire, GNU Free Documentation License
+</P>
+
+I did have some experience with K-means before, and it was like the above image, not a 64-dimension output. But it was shockingly straightforward. I just did exactly the same thing, but I started with completely random noise for my tiles.  I'd get rid of the least used tiles, slowly cutting back and refining my tileset, and iterating on the k-means approach until only the total number of tiles I wanted remained.  I could keep going but this provides the point.
+
+<P ALIGN=CENTER>
+<IMG SRC=https://github.com/user-attachments/assets/fd0854d9-fa0c-4256-bd90-4642020e2225 WIDTH=50%>
+</P>
+
+Another happy outcome is this produces. Greyscale! Which totally came in useful later when I realized I could temporally dither my display.  Though it only gives me black, grey, and white.  
+
+Three colors is still better than two!
 
 ## De-Blocking Filter
+
+One thing you'll notice when looking at the preview output of random frames (see 2nd image from the top, on the left) is that the edges between tiles are very evident and ugly.  Well, there's one last trick here before we start trying to really squeeze things down.
+
+I pulled this trick from H.264, which has a "deblocking filter" which blurs the outputs between the edges of the macroblocks.  This really helped seal the deal, and produced what I expected to be my final output.  It lacked nuiance. There were no stars, flashy motion was goopy, there were no peach blossoms, everything looked kinda lumpy, it wasn't perfect, but it would do ... for now.
+
+<P ALIGN=CENTER>
+<IMG SRC=https://github.com/user-attachments/assets/d655cea7-16b1-482a-b62c-d1bc99004db9 WIDTH=50%>
+</P>
+
+That was until my friend Evan thought "I think I can do better" -- "Better than k-means?!" I exclaimed. Pushing his glasses back, as though to indicate he meant business.  "Yes."
+
+I was not ready for what lay ahead.
 
 # Machine Learning
 
 **TODO** ef42
+
+## Glyph classifications
+
+## Run Length Probability Tables
 
 # The ch32v006 implementation
 
