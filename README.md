@@ -1,5 +1,7 @@
 # badder apple
 
+# This writeup is incomplete, please do not share it on social media yet.
+
 What started as my shot at bad apple on an ESP8266 ended in the biggest spiral into my longest running project. The final outcome from this project was all 6570 frames, at 64x48 pixels, with sound and code for playback in 64.5kB, running on a 10-cent ch32v006. This is the story of bad*der* apple.
 
 <P ALIGN=CENTER>
@@ -611,9 +613,7 @@ K-means is performed by randomly distributing a series of points (or classes) ov
 
 I did have some experience with K-means before, and it was like the above image, not a 64-dimension output. But it was shockingly straightforward. I just did exactly the same thing, but I started with completely random noise for my tiles.  I'd get rid of the least used tiles, slowly cutting back and refining my tileset, and iterating on the k-means approach until only the total number of tiles I wanted remained.  I could keep going but this provides the point.
 
-<P ALIGN=CENTER>
-<IMG SRC=https://github.com/user-attachments/assets/fd0854d9-fa0c-4256-bd90-4642020e2225 WIDTH=50%>
-</P>
+![Progressive K-Means Tiles](https://github.com/user-attachments/assets/fd0854d9-fa0c-4256-bd90-4642020e2225)
 
 Another happy outcome is this produces. Greyscale! Which totally came in useful later when I realized I could temporally dither my display.  Though it only gives me black, grey, and white.  
 
@@ -623,7 +623,7 @@ Three colors is still better than two!
 
 One thing you'll notice when looking at the preview output of random frames (see 2nd image from the top, on the left) is that the edges between tiles are very evident and ugly.  Well, there's one last trick here before we start trying to really squeeze things down.
 
-I pulled this trick from H.264, which has a "deblocking filter" which blurs the outputs between the edges of the macroblocks.  This really helped seal the deal, and produced what I expected to be my final output.  It lacked nuiance. There were no stars, flashy motion was goopy, there were no peach blossoms, everything looked kinda lumpy, it wasn't perfect, but it would do ... for now.
+I pulled this trick from H.264, which has a "deblocking filter" which blurs the outputs between the edges of the macroblocks.  This really helped seal the deal, and produced what I expected to be my final output. It was blurry. There were no stars, flashy motion was goopy, there were no peach blossoms, everything looked kinda lumpy, it wasn't perfect, but it would do ... for now.
 
 <P ALIGN=CENTER>
 <IMG SRC=https://github.com/user-attachments/assets/d655cea7-16b1-482a-b62c-d1bc99004db9 WIDTH=50%>
@@ -636,6 +636,22 @@ I was not ready for what lay ahead.
 # Machine Learning
 
 **TODO** ef42
+
+# Actually compressing this monstrosity
+
+While I spent months iterating on this, I'm only going to focus on the final solution.  Just know that while my first attempt was 80kB, it took all this extra work to get the final output to something that could fit on a ch32v006.
+
+The underlying data we need to compress is only two files. 
+
+![the two files](https://github.com/user-attachments/assets/e1ae4a73-202d-4cd8-bc4d-987f92d75e13)
+
+The first was the "stream" it was just a list of what glyph to put into which tile of the video.  The second was the tiles (or glyphs) that we computed above.
+
+Let's first compress our glyphs. You can see the web demo doing this when it first starts, everything to the left of the start on the scrubber (the bottom circle) is it decompressing the glyph table that will be used.
+
+![the glyphs](https://github.com/user-attachments/assets/70e1d704-b60a-4743-b634-8399be22045f)
+
+
 
 ## Glyph classifications
 
