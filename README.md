@@ -82,6 +82,9 @@ Symbol Compression: Using Huffman coding, or VPX coding to compress symbols.
 
 Pattern Matching: You can reference earler parts of the decoded (or encoded) stream to encode repeated segments by reference instead of needing to re-encode entire sections. Systems like [LZSS](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Storer%E2%80%93Szymanski) are used in regular compression algorithms to find, and reference these earlier parts of the stream. 
 
+
+**TODO** Show each coding technique, where it is used, and which coding techniques make sense to be used together and which ones do not
+
 ## Minimizing Entropy
 
 There are a lot of different ways to encode information, before compression.  This is illustrated by the chart below.  I took the bad apple song and represented the data in a variety of ways.  While all the ways convey the same information and can theoretically be compressed to similar levels, by representing information in binary, there are typically massive gains, and by simplifying the representation, it can be compressed greatly.  This is why you shouldn't necessarily encode everything as JSON, slap zstd or gzip ontop of it and call it good.
@@ -264,6 +267,8 @@ We don't use arithmatic coding, but it is an important mention because it is wha
 
 There are many online resources to help explain arithmatic coding, and I am not an expert.
 
+**TODO** Actually make this section on arithmatic coding.
+**TODO** This portion is repetitive.  Just let it live below.
 But there's one special case of arithmatic coding called [range coding](https://en.wikipedia.org/wiki/Range_coding).  This is a simplification of the general ideal field of arithmatic coding, with an implementation being VPX Coding.
 
 All you need to know for range coding is the percentage chance that a given symbol would be a 0 or a 1.
@@ -509,6 +514,8 @@ There's an issue, all of the good ones in this list these are state of the art a
 
 Note: these tests were generated with `make sizecomp` the code for several of these tests is in the `attic/` folder.
 
+**TODO** We should include an image of the decoded audio blocks, to reiterate that it is notes, not samples.
+
 ### Observations
 
 1. For small payloads, it looks like gzip outperforms zstd, in spite of zstd having 40 years to improve over it. This is not a fluke, and has been true for many of my test song datasets.
@@ -517,6 +524,10 @@ Note: these tests were generated with `make sizecomp` the code for several of th
 4. Finding a way to express your data more concisely absolutely obliterates any compression algorithms you can throw at your problem. Don't settle for a binary representation, like bson.
 
 ### More Observations
+
+
+**TODO** Clean this section up.
+
 
 Note, when not using lzss, the uptick in size because to use VPX, you have to have a probability table, and huffman tables can be used in lower compression arenas to more effectivity.
 
@@ -696,6 +707,8 @@ Let's first compress our glyphs. You can see the web demo doing this when it fir
 ![the glyphs](https://github.com/user-attachments/assets/70e1d704-b60a-4743-b634-8399be22045f)
 
 While it's wonderful to say we can just take an input stream and VPX decompress the stream, the truth of the matter is much stickier.  Remember that pesky fact that to compress or decompress a stream, you have to know what the probability of each bit being a 1 or a 0 is.
+
+**TODO** Explain why we can't have 4 greyscale levels
 
 We start by encoding our greyscale as **0**, **1**, or **3**.  This is somewhat arbitrary, and it could be other ways, but, it was just a convention I picked.  So the greyscale value of **2** does not exist.
 
