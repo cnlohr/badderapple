@@ -615,6 +615,8 @@ K-means is performed by randomly distributing a series of points (or classes) ov
 
 <P ALIGN=CENTER>
 <IMG SRC=https://upload.wikimedia.org/wikipedia/commons/e/ea/K-means_convergence.gif WIDTH=50%>
+</P>
+<P ALIGN=CENTER>
 (Credit and license from Wikipedia source <A HREF=https://commons.wikimedia.org/wiki/File:K-means_convergence.gif>here</A>.  (C) Chire, GNU Free Documentation License)
 </P>
 
