@@ -647,7 +647,7 @@ This buffer is then used for the horizontal-line blurring which does the same th
 <IMG SRC=https://github.com/user-attachments/assets/64e2d526-784f-4060-9e9c-568d111055bb WIDTH=70%>
 </P>
 
-Note that P means the "previous" cell, T means "this" cell, and N means "next" cell. T and N may be interchangable and could be different on different implementations.
+Note that P means the "previous" cell, T means "this" cell, and N means "next" cell. T and N may be interchangable and could be different on different implementations. If you are against a boarder, reflect the N back around to be equal to P, instead of wrapping to the other side of the image.  Doing this instead of not blurring lets the next technique do some really need things with the edges of blocks.
 
 The transfer functiton, based on P, T and N were inspired by `output = (P+N)/2 + T - 0.5`, in that I wanted to most weight towards the current cell but take input from the left and right cells. But really, there was some push and shove, and we landed on the following table.
 
