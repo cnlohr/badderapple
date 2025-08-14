@@ -710,8 +710,8 @@ And, the chance of the next bit being a `0` or `1` changes by how long the curre
 ```c
 // For glyph pixel data
 BADATA_DECORATOR uint8_t ba_vpx_glyph_probability_run_0_or_1[2][MAXPIXELRUNTOSTORE] = {
-	{  217, 214, 211, 211, 212, 219, 228, 238, 246,}, // If you have a run of 0's
-	{    0,  26,  38,  39,  36,  31,  22,  11,   6,}  // If you have a run of 1's
+	{  217, 214, 211, 211, 212, 219, 228, 238, 246,}, // If you have a run of 0's, ※ chance next bit will be 0
+	{    0,  26,  38,  39,  36,  31,  22,  11,   6,}  // If you have a run of 1's, ※ chance next bit will be 0
 };
 ```
 
