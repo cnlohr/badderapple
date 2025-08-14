@@ -27,6 +27,8 @@ I'm going to put the glossary first because I expcet peopel of all levels to not
 
  ** TODO ** GLOSSARY
 
+Do we even want a glossary?
+
 ## History
 
 Originally, in 2016, I wanted to use the new-at-the-time [ESP8285](https://www.espressif.com/en/pcn-product/esp8285), an [ESP8266](https://www.espressif.com/en/products/socs/esp8266) with integrated flash.  I wanted to make the smallest bad apple.  I wanted to try to dead bug a crystal on the ground plane, and use my [NTSC Broadcast Television from an ESP8266 project](https://github.com/cnlohr/channel3) and make the (physically) smallest bad apple.
@@ -680,7 +682,9 @@ While I spent months iterating on this, I'm only going to focus on the final sol
 
 The underlying data we need to compress is only two files. 
 
+<P ALIGN=CENTER>
 ![the two files](https://github.com/user-attachments/assets/e1ae4a73-202d-4cd8-bc4d-987f92d75e13)
+</P>
 
 The first was the "stream" it was just a list of what glyph to put into which tile of the video.  The second was the tiles (or glyphs) that we computed above.
 
@@ -692,11 +696,31 @@ Let's first compress our glyphs. You can see the web demo doing this when it fir
 
 While it's wonderful to say we can just take an input stream and VPX decompress the stream, the truth of the matter is much stickier.  Remember that pesky fact that to compress or decompress a stream, you have to know what the probability of each bit being a 1 or a 0 is.
 
+We start by encoding our greyscale as **0**, **1**, or **3**.  This is somewhat arbitrary, and it could be other ways, but, it was just a convention I picked.  So the greyscale value of **2** does not exist.
+
+We encode our data MSBit first.  Two bits per pixel.  Because there is no pixel color of **2**, if we see the first bit is a `1` then we know the next bit will be a `0`. Then, if we see the first bit is a `0`, well, there's a chance it could be 210※ chance that the next bit will be a `0`, because there are many more black pixels than grey pixels.
+
+For the rest of this document, I will use the ※ symbol to indicate a ratio, like a per-cent but instead of per-100, it will indicate per-256 chance that a given bit will be a `0` bit as oposed to a `1` bit.
+
+But how do we know the chance of what the next MSBit will be?  Well, by looking at all of our MSBits, we can see a pattern.  that most of the time, if you have a `0`, bit, there's a large chance the next bit will remain a `0`.  And if you have a `1` bit, there's a large chance that bit will remain `1`
+
+And, the chance of the next bit being a `0` or `1` changes by how long the current run of `1`s or `0`s are.  This is sort of like RLE, but instead of giving a definitive count of continuing a run for a period of time, it just processes the bits, one at a time, each one having a certain chance of being `0` or `0`.  And when you get to `MAXPIXELRUNTOSTORE`, just keep it there, since the number changes very little after the 8th pixel, becuase by then it's already wrapped around to the next line.
+
+```
+// For glyph pixel data
+BADATA_DECORATOR uint8_t ba_vpx_glyph_probability_run_0_or_1[2][MAXPIXELRUNTOSTORE] = {
+	{  217, 214, 211, 211, 212, 219, 228, 238, 246,},
+	{    0,  26,  38,  39,  36,  31,  22,  11,   6,}
+};
+```
+
+The process of reading the glyphs is done once, at start, and the glyphs are decoded into RAM.
 
 ## Glyph classifications
 
+With our glyphs decoded into RAM, we can move onto the stream itself.
 
-**TODO** This sectino
+**TODO** This section
 
 ```
 Classes: (Theoretical Space)
