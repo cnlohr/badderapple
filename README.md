@@ -628,8 +628,8 @@ One thing you'll notice when looking at the preview output of random frames (see
 I pulled this trick from H.264, which has a "deblocking filter" which blurs the outputs between the edges of the macroblocks.  This really helped seal the deal, and produced what I expected to be my final output. It was blurry. There were no stars, flashy motion was goopy, there were no peach blossoms, everything looked kinda lumpy, it wasn't perfect, but it would do ... for now.
 
 <P FLOAT=LEFT>
-<IMG SRC=https://github.com/user-attachments/assets/0421d0f6-18b5-4713-bebd-e1ad846a1f10 WIDTH=50%>
-<IMG SRC=https://github.com/user-attachments/assets/d655cea7-16b1-482a-b62c-d1bc99004db9 WIDTH=50%>
+<IMG SRC=https://github.com/user-attachments/assets/0421d0f6-18b5-4713-bebd-e1ad846a1f10 WIDTH=48%>
+<IMG SRC=https://github.com/user-attachments/assets/d655cea7-16b1-482a-b62c-d1bc99004db9 WIDTH=48%>
 </P>
 
 Despite all of its flaws, it completely blew my mind that just bluring the one pixel border around each block together would make it that difficult to see the edges of the tiles!
