@@ -14,6 +14,7 @@
 
 #include "gifenc.c"
 
+#define NO_DEBLOCKING_FILTER 0
 
 void HandleKey( int keycode, int bDown ) { }
 void HandleButton( int x, int y, int button, int bDown ) { }
@@ -453,6 +454,14 @@ void EmitSamples8()
 
 				graphictype * g = ctx.glyphdata[gindex];
 				int sx = 0;
+
+#if NO_DEBLOCKING_FILTER
+				for( sx = 0; sx < 8; sx++ )
+				{
+					uint16_t tg = g[sx];
+					KOut( tg >> (subframe*8) );
+				}
+#else
 				//if( bx > 0 )
 				{
 					graphictype tgnext = g[1];
@@ -475,6 +484,7 @@ void EmitSamples8()
 					graphictype tgnext = (bx<RESX/BLOCKSIZE-1)?ctx.glyphdata[gm[gmi+1]][0] : tgprev;
 					EmitPartial( tgprev, tg, tgnext, subframe );
 				}
+#endif
 				gmi++;
 			}
 		}
@@ -486,6 +496,7 @@ void EmitSamples8()
 	for( x = 0; x < RESX; x++ )
 	{
 		int vi = 0;
+#ifndef NO_DEBLOCKING_FILTER
 		if( ( y & 7 ) == 0 )
 		{
 			vi = PixelBlend( fba[y+1][x], fba[y][x], (y>0)?fba[y-1][x]:fba[y+1][x] );
@@ -495,6 +506,7 @@ void EmitSamples8()
 			vi = PixelBlend( (y < RESY-1)?fba[y+1][x]:fba[y-1][x], fba[y][x], fba[y-1][x] );
 		}
 		else
+#endif
 		{
 			vi = fba[y][x];
 		}
