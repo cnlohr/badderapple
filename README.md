@@ -704,7 +704,7 @@ For the rest of this document, I will use the ※ symbol to indicate a ratio, li
 
 But how do we know the chance of what the next MSBit will be?  Well, by looking at all of our MSBits, we can see a pattern.  that most of the time, if you have a `0`, bit, there's a large chance the next bit will remain a `0`.  And if you have a `1` bit, there's a large chance that bit will remain `1`
 
-And, the chance of the next bit being a `0` or `1` changes by how long the current run of `1`s or `0`s are.  This is sort of like RLE, but instead of giving a definitive count of continuing a run for a period of time, it just processes the bits, one at a time, each one having a certain chance of being `0` or `0`.  And when you get to `MAXPIXELRUNTOSTORE`, just keep it there, since the number changes very little after the 8th pixel, becuase by then it's already wrapped around to the next line.
+And, the chance of the next bit being a `0` or `1` changes by how long the current run of `1`s or `0`s are.  This is sort of like RLE, but instead of giving a definitive count of continuing a run for a period of time, it just processes the bits, one at a time, each one having a certain chance of being `0` or `1`.  And when you get to `MAXPIXELRUNTOSTORE`, just keep it there, since the number changes very little after the 8th pixel, becuase by then it's already wrapped around to the next line.
 
 ```
 // For glyph pixel data
@@ -713,6 +713,8 @@ BADATA_DECORATOR uint8_t ba_vpx_glyph_probability_run_0_or_1[2][MAXPIXELRUNTOSTO
 	{    0,  26,  38,  39,  36,  31,  22,  11,   6,}
 };
 ```
+
+💭 Curious... I wonder if the first bit for white pixels being 0 is a bug.  That would mean if you have a black-to-white pixel transition, there is a near zero chance the next pixel will be a black pixel.
 
 The process of reading the glyphs is done once, at start, and the glyphs are decoded into RAM.
 
