@@ -615,8 +615,7 @@ K-means is performed by randomly distributing a series of points (or classes) ov
 
 <P ALIGN=CENTER>
 <IMG SRC=https://upload.wikimedia.org/wikipedia/commons/e/ea/K-means_convergence.gif WIDTH=50%>
-
-(Credit and license from Wikipedia source <A HREF=https://commons.wikimedia.org/wiki/File:K-means_convergence.gif>here</A>.  (C) Chire, GNU Free Documentation License
+(Credit and license from Wikipedia source <A HREF=https://commons.wikimedia.org/wiki/File:K-means_convergence.gif>here</A>.  (C) Chire, GNU Free Documentation License)
 </P>
 
 I did have some experience with K-means before, and it was like the above image, not a 64-dimension output. But it was shockingly straightforward. I just did exactly the same thing, but I started with completely random noise for my tiles.  I'd get rid of the least used tiles, slowly cutting back and refining my tileset, and iterating on the k-means approach until only the total number of tiles I wanted remained.  I could keep going but this provides the point.
