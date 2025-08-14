@@ -21,6 +21,12 @@ If you are interested in the web viewer of the bitstream explaining what every b
 
 If you're interested in how to do [setup and running](#setup-and-running) instructions or [previous and future work](#previous-and-future-work), feel free to click there.
 
+## Glossary
+
+I'm going to put the glossary first because I expcet peopel of all levels to not be familiar with all of the things here.
+
+ ** TODO ** GLOSSARY
+
 ## History
 
 Originally, in 2016, I wanted to use the new-at-the-time [ESP8285](https://www.espressif.com/en/pcn-product/esp8285), an [ESP8266](https://www.espressif.com/en/products/socs/esp8266) with integrated flash.  I wanted to make the smallest bad apple.  I wanted to try to dead bug a crystal on the ground plane, and use my [NTSC Broadcast Television from an ESP8266 project](https://github.com/cnlohr/channel3) and make the (physically) smallest bad apple.
@@ -623,17 +629,44 @@ Three colors is still better than two!
 
 One thing you'll notice when looking at the preview output of random frames (see 2nd image from the top, on the left) is that the edges between tiles are very evident and ugly.  Well, there's one last trick here before we start trying to really squeeze things down.
 
-**TODO** Show the actual filter, like what pixels are effected.
 
-I pulled this trick from H.264, which has a "deblocking filter" which blurs the outputs between the edges of the macroblocks.  This really helped seal the deal, and produced what I expected to be my final output. It was blurry. There were no stars, flashy motion was goopy, there were no peach blossoms, everything looked kinda lumpy, it wasn't perfect, but it would do ... for now.
+I pulled this trick from H.264, which has a "deblocking filter" which blurs the outputs between the edges of the macroblocks.
 
-<P FLOAT=LEFT>
-<IMG SRC=https://github.com/user-attachments/assets/0421d0f6-18b5-4713-bebd-e1ad846a1f10 WIDTH=49%><IMG SRC=https://github.com/user-attachments/assets/d655cea7-16b1-482a-b62c-d1bc99004db9 WIDTH=49%>
+The technique I used was to first compute the edge blurring across all the vertical lines, you can see the first blur candidates in red.  Then, after the whole image was done, I computed the horizontal blurs, in blue.
+
+For the first blur operation, it bases all of the blocks off the original glyph data, that way, when it computes the left-edge of one cell, it doesn't corrupt the right-edge of the other cell.
+
+It does the blurring for all vertical lines, left and right, first, and writes this data to an intermediate buffer. 
+
+This buffer is then used for the horizontal-line blurring which does the same thing.
+
+<P ALIGN=CENTER>
+<IMG SRC=https://github.com/user-attachments/assets/64e2d526-784f-4060-9e9c-568d111055bb WIDTH=70%>
 </P>
 
-Despite all of its flaws, it completely blew my mind that just bluring the one pixel border around each block together would make it that difficult to see the edges of the tiles!
+Note that P means the "previous" cell, T means "this" cell, and N means "next" cell. T and N may be interchangable and could be different on different implementations.
 
-That was until my friend Evan thought "I think I can do better" -- "Better than k-means?!" I exclaimed. Pushing his glasses back, as though to indicate he meant business.  "Yes."
+The transfer functiton, based on P, T and N were inspired by `output = (P+N)/2 + T - 0.5`, in that I wanted to most weight towards the current cell but take input from the left and right cells. But really, there was some push and shove, and we landed on the following table.
+
+|     | P = 0 | P = 1 | P = 2 | 
+| --- | --- | --- | --- |
+| N = 0 | (0,0,1) | (0,1,2) | (1,1,2) |
+| N = 1 | (0,1,2) | (1,1,2) | (1,2,2) |
+| N = 2 | (1,1,2) | (1,2,2) | (1,2,2) |
+
+Where inside each cell (T=0,T=1,T=2).
+
+Using this kernel, it really helped seal the deal, and produced what I expected to be my final output. It was blurry. There were no stars, flashy motion was goopy, there were no peach blossoms, everything looked kinda lumpy, it wasn't perfect, but it would do ... for now.
+
+
+<P FLOAT=LEFT>
+<IMG SRC=https://github.com/user-attachments/assets/0421d0f6-18b5-4713-bebd-e1ad846a1f10 WIDTH=48%>
+<IMG SRC=https://github.com/user-attachments/assets/d655cea7-16b1-482a-b62c-d1bc99004db9 WIDTH=48%>
+</P>
+
+Despite all of its flaws, it completely blew my mind that just bluring the one pixel border around each block together would make it that difficult to see the edges of the tiles!  Find the blocks on the left, now, note how you have to actually *try* to on the right.
+
+That was until my friend Evan said "I think I can do better" -- "Better than k-means?!" I exclaimed. He pushed his glasses back indicating he meant business. "Yes."
 
 I was not ready for what lay ahead.
 
