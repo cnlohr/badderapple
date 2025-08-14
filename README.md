@@ -706,7 +706,7 @@ But how do we know the chance of what the next MSBit will be?  Well, by looking 
 
 And, the chance of the next bit being a `0` or `1` changes by how long the current run of `1`s or `0`s are.  This is sort of like RLE, but instead of giving a definitive count of continuing a run for a period of time, it just processes the bits, one at a time, each one having a certain chance of being `0` or `1`.  And when you get to `MAXPIXELRUNTOSTORE`, just keep it there, since the number changes very little after the 8th pixel, becuase by then it's already wrapped around to the next line.
 
-```
+```c
 // For glyph pixel data
 BADATA_DECORATOR uint8_t ba_vpx_glyph_probability_run_0_or_1[2][MAXPIXELRUNTOSTORE] = {
 	{  217, 214, 211, 211, 212, 219, 228, 238, 246,},
@@ -720,7 +720,9 @@ The process of reading the glyphs is done once, at start, and the glyphs are dec
 
 ## Glyph classifications
 
-With our glyphs decoded into RAM, we can move onto the stream itself.
+With our glyphs decoded into RAM, we can move onto the stream itself.  One of the things I realized early on was that there is a
+
+**TODO** Post chart of glyph transitions.
 
 **TODO** This section
 
