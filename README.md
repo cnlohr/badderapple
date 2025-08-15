@@ -369,9 +369,9 @@ There is an embedded compression tool called [heatshrink](https://github.com/ato
 
 ## Exponential-Golomb coding
 
-[Exponential-Golomb coding](https://en.wikipedia.org/wiki/Exponential-Golomb_coding) or Golmb encoding is a way of encoding numbers with variable numbers of bits. Much like huffman can, except, in situations where you don't have context, and numbers could be arbitrarily large.
+[Exponential-Golomb coding](https://en.wikipedia.org/wiki/Exponential-Golomb_coding) or Golomb encoding is a way of encoding numbers with variable numbers of bits. Much like huffman can, except, in situations where you don't have context, and numbers could be arbitrarily large.
 
-It's used all over the place in the h.264 and h.265 video specifications to store numbers.  If you see `ue` as a type specifier in the spec, that means that's a golmb encoded number.
+It's used all over the place in the h.264 and h.265 video specifications to store numbers.  If you see `ue` as a type specifier in the spec, that means that's a Golomb encoded number.
 
 ```
  0 -> 1 -> 1
@@ -389,7 +389,7 @@ While this can't pick up on patterns, it does give us a great tool to make refer
 
 You also may note that it has more 0's than 1's, so there's somewhere else it's not optimal.  But overall, it's surprisingly effective.
 
-Some basic code for reading golmb coded is as follows:
+Some basic code for reading Golomb coded is as follows:
 ```c
 	int exp = 0;
 	do
@@ -455,11 +455,13 @@ The small cursors that scan from left to right show how many notes remain within
 
 ![Reverse LZSS Backtrack](https://github.com/user-attachments/assets/b4f2a4d6-df65-4afb-9f7d-9c185df17192)
 
-Because we are only storing a stack, we only need to save the current location and number of notes remaining, so with 18 as the deepest we can go, our state size is only 72 bytes!
+The way we can create backreferences can be varied.  In our case, we use Golomb-exponential coding.  Once for the run-length to go back and play.  As well as another Golomb-exponential coded variable for how far to look back.
 
-Another point of optimization is that we store each note/callback with an extra bit noting if it's a note or a callback, and that could probably be shrunk.
+Because it doesn't make sense to reference very small references, and it doesn't make sense to back-reference very small run-lengths, we can define minimums for both of these numbers. That way, to encode say 4 run length, if our minimum run length is 4, we only have to encode the number 0, which takes less bits to encode.
 
-**TODO** Put actual code, show the run length max
+💭I am finding suspicious patterns surrounding minimum run length / minium callback distance.  Should look into that.
+
+Be sure to see the example below!
 
 # Song
 
@@ -507,7 +509,24 @@ There's an issue, all of the good ones in this list these are state of the art a
 
 Note: these tests were generated with `make sizecomp` the code for several of these tests is in the `attic/` folder.
 
-**TODO** We should include an image of the decoded audio blocks, to reiterate that it is notes, not samples.
+Because we are only storing a stack, we only need to save the current location and number of notes remaining, so with 18 as the deepest we can go, our state size is only 72 bytes!
+
+Every note contains 3 pieces of information:
+ * The note pitch (between 47 and 80), starting at note A110 + (2 notes, so B# in that octave)
+ * The length of the note length (How long the note should play)
+ * The note run (or time until another note should be read)
+
+the Note Pitch is stored in one huffman tree, and, length+run is stored in a separate huffman tree.
+
+As described above, backreferences are stored as two different Golomb-Exponential coded values, the first, how many notes to read from the back reference, and second, the distance to look back.  For each of these, add on the minimums.
+
+Times are in 1/16th notes (or 1/8 notes depending on meter definition).
+
+When reading a thing (we don't know what it is yet) if the next bit is a 0, it's a note.  If it's a 1, then it's a backreference.
+
+<P ALIGN=CENTER>
+![Song Bitstream Example](https://github.com/user-attachments/assets/0277a214-2177-40ea-9ed1-30c37e11382a)
+</P>
 
 ### Observations
 
