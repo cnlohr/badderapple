@@ -21,14 +21,6 @@ If you are interested in the web viewer of the bitstream explaining what every b
 
 If you're interested in how to do [setup and running](#setup-and-running) instructions or [previous and future work](#previous-and-future-work), feel free to click there.
 
-## Glossary
-
-I'm going to put the glossary first because I expcet peopel of all levels to not be familiar with all of the things here.
-
- ** TODO ** GLOSSARY
-
-Do we even want a glossary?
-
 ## History
 
 Originally, in 2016, I wanted to use the new-at-the-time [ESP8285](https://www.espressif.com/en/pcn-product/esp8285), an [ESP8266](https://www.espressif.com/en/products/socs/esp8266) with integrated flash.  I wanted to make the smallest bad apple.  I wanted to try to dead bug a crystal on the ground plane, and use my [NTSC Broadcast Television from an ESP8266 project](https://github.com/cnlohr/channel3) and make the (physically) smallest bad apple.
@@ -82,8 +74,7 @@ Symbol Compression: Using Huffman coding, or VPX coding to compress symbols.
 
 Pattern Matching: You can reference earler parts of the decoded (or encoded) stream to encode repeated segments by reference instead of needing to re-encode entire sections. Systems like [LZSS](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Storer%E2%80%93Szymanski) are used in regular compression algorithms to find, and reference these earlier parts of the stream. 
 
-
-**TODO** Show each coding technique, where it is used, and which coding techniques make sense to be used together and which ones do not
+You can pair symbol compression with pattern matching, but you would not want to apply multiple symbol compression mechanisms together. For instance, it does not make sense to use LZSS and huffman trees, and it does not make sense to use LZSS and RLE.
 
 ## Minimizing Entropy
 
@@ -467,6 +458,8 @@ The small cursors that scan from left to right show how many notes remain within
 Because we are only storing a stack, we only need to save the current location and number of notes remaining, so with 18 as the deepest we can go, our state size is only 72 bytes!
 
 Another point of optimization is that we store each note/callback with an extra bit noting if it's a note or a callback, and that could probably be shrunk.
+
+**TODO** Put actual code, show the run length max
 
 # Song
 
