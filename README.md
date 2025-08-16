@@ -264,7 +264,7 @@ You can imagine if the ratios between the chances for `A`, `B` and `C` were the 
 
 There is nothing that says the chances need to remain fixed for each of your symbols from one stage to the next, they could be all different symbols, but, the critical part is you have to know the chance that a given symbol will be A, B or C at each stage.  The encoder and decoder must agree on that chance.
 
-Raw Arithmatic coding is quite annoying to deal with, because the numbers get very s̸̤̺̲͂͛͑̍̉m̶̹̪͙̔̈͑a̴̰̾͋͒̉̔ļ̸̘̝̯͐̉ļ̷͕̖̬̻́̾͊̌ ̷̮̿a̸̻͋̍͗̃ͅn̴̪̺̒̀̒̆͜ḓ̴̹̣̙̳͉͒ ̸̡̟͚͕͉͓͌̎̿͒̒̈́e̸͎̳̎́̉v̸͓̭̟̯͑̆̌́̂͝i̴̛̭̓̃͒͛̈́l̸͓̞̫͍̜͊͂̈́͋ very fast, but there's a special case of arithmatic coding called [range coding](https://en.wikipedia.org/wiki/Range_coding).  This is a simplification of the general ideal field of arithmatic coding, where you limit everything to two symbols a `0` and a `1`.
+Raw Arithmatic coding is quite annoying to deal with, because the numbers get very s̸̤̺̲͂͛͑̍̉m̶̹̪͙̔̈͑a̴̰̾͋͒̉̔ļ̸̘̝̯͐̉ļ̷͕̖̬̻́̾͊̌ ̷̮̿a̸̻͋̍͗̃ͅn̴̪̺̒̀̒̆͜ḓ̴̹̣̙̳͉͒ ̸̡̟͚͕͉͓͌̎̿͒̒̈́e̸͎̳̎́̉v̸͓̭̟̯͑̆̌́̂͝i̴̛̭̓̃͒͛̈́l̸͓̞̫͍̜͊͂̈́͋ after a few symbols, but there's a special case of arithmatic coding called [range coding](https://en.wikipedia.org/wiki/Range_coding).  This is a simplification of the general ideal field of arithmatic coding, where you limit everything to two symbols a `0` and a `1`.
 
 So instead of tracking many different symbols, and their chances, you only need to track 2.
 
@@ -275,7 +275,7 @@ This really is as optimal as described above. For instance, with `A`, `B` and `C
 While arithmatic coding is particularly difficult to do in practice with bitstreams, there is a different take on it called range coding. This is the coding scheme implementation for range coding used in Google's VP7, VP8, VP9 video encoding engines to encode symbols. It maintains virtually all of the upsides of Arithmatic coding, and to show the effectiveness of range coding, we can compare the compression ratio to something aclled the "Expected Surprisal." Expected surprisal says the chance of getting a random upset given a series of heads/tails where there's a non-50/50 chance for each. The equation for this is:
 
 ```
--p*log2(p)-q*log2(q) where q = 1.0-p
+-p*log₂(p)-q*log₂(q) where q = 1.0-p
 ```
 
 This is the chance for an unexpected outcome.  And what's wild is it's also mathematically the same as the maximum compression ratio for bitstreams.  When we overlay this equation on actual performance of VPX coding bitstreams we get virtually the same performance.
@@ -376,18 +376,28 @@ There is an embedded compression tool called [heatshrink](https://github.com/ato
 It's used all over the place in the h.264 and h.265 video specifications to store numbers.  If you see `ue` as a type specifier in the spec, that means that's a Golomb encoded number.
 
 ```
- 0 -> 1 -> 1
- 1 -> 10 -> 010
- 2 -> 11 -> 011
- 3 -> 100 -> 00100
- 4 -> 101 -> 00101
- 5 -> 110 -> 00110
- 6 -> 111 -> 00111
- 7 -> 1000 -> 0001000
- 8 -> 1001 -> 0001001
+ 0₁₀ -> 1 -> 1
+ 1₁₀ -> 10 -> 010
+ 2₁₀ -> 11 -> 011
+ 3₁₀ -> 100 -> 00100
+ 4₁₀ -> 101 -> 00101
+ 5₁₀ -> 110 -> 00110
+ 6₁₀ -> 111 -> 00111
+ 7₁₀ -> 1000 -> 0001000
+ 8₁₀ -> 1001 -> 0001001
 ```
 
-While this can't pick up on patterns, it does give us a great tool to make references, since most of the time we want to reference something in the near past, and only a few symbols at a time.  This offered a not insignificant benefit over heatshrink for encoding the distance back and length of the run.
+Note that the number of leading 0's indicates how many bits to read.  With each 0, increment the number of bits you will read. As soon as you hit a `1`, start subtracting from that number of bits until it's back at 0.
+
+Because there's no way to naturally represent a 0₁₀, so Golomb coding shifts the read number down by 1.
+
+While this can't have different compression depending on the prevealnce of each symbol, it does mean smaller numbers encode with less bits than bigger numbers.  The amount of bits needed to encode each new symbol is:
+
+```
+no of bits = log₂(n+1)*2+1
+```
+
+This offered a significant benefit over heatshrink for encoding the distance back and length of the run.
 
 You also may note that it has more 0's than 1's, so there's somewhere else it's not optimal.  But overall, it's surprisingly effective.
 
@@ -448,6 +458,8 @@ static inline int BitsForNumber( unsigned number )
 ## Reverse-LZSS
 
 Because we are heavily lacking in the RAM department, I turned LZSS upside-down, and instead of backtracking in the decoded stream, I decided to decode in the original data stream.  This _is_ less effective, because many of the references backwards in time do not align to useful bit boundaries, but overall, it is not that bad.
+
+Instead of references being locations (byte-wise) in the output stream, this gives references, bit-wise in the input stream.
 
 The idea is that each bit in the stream either indicates a literal note is being emitted, or, a refernce to somewhere earlier in the stream is being created. When a reference is created, it pushes the current decode location and number of notes to decode onto a stack, and the encoder begins decoding the incoming bitstream starting at that previous reference.
 
@@ -539,9 +551,7 @@ When reading a thing (we don't know what it is yet) if the next bit is a 0, it's
 
 ### More Observations
 
-
 **TODO** Clean this section up.
-
 
 Note, when not using lzss, the uptick in size because to use VPX, you have to have a probability table, and huffman tables can be used in lower compression arenas to more effectivity.
 
