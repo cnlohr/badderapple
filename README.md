@@ -529,7 +529,7 @@ Times are in 1/16th notes (or 1/8 notes depending on meter definition).
 When reading a thing (we don't know what it is yet) if the next bit is a 0, it's a note.  If it's a 1, then it's a backreference.
 
 <P ALIGN=CENTER>
-![Song Bitstream Example](https://github.com/user-attachments/assets/0277a214-2177-40ea-9ed1-30c37e11382a)
+<IMG SRC=https://github.com/user-attachments/assets/0277a214-2177-40ea-9ed1-30c37e11382a>
 </P>
 
 ### Observations
