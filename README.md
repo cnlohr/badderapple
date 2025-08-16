@@ -256,15 +256,19 @@ Because the huffman tree requires whole bits to decide which way to take in a tr
 
 We don't use arithmatic coding, but it is an important mention because it is what seeded the ground to alert mathematicians that there could be something **better than huffman**. Arithmatic coding is a mechanism to lay out every possible symbol from 0 to 1, with the ratios of how likely each symbol is.  Then, we can, bit-at-a-time partition that space to become more and more narrow. 
 
-There are many online resources to help explain arithmatic coding, and I am not an expert.
+The general idea is you can split your space up into all of the symbols you want to represent. Then, figure out what percentageg chance each symbol is, and then draw a line back through the list of symbols. Each time, shrinking (or expanding) the space from (or to) the next symbol.
 
-**TODO** Actually make this section on arithmatic coding.
-**TODO** This portion is repetitive.  Just let it live below.
-But there's one special case of arithmatic coding called [range coding](https://en.wikipedia.org/wiki/Range_coding).  This is a simplification of the general ideal field of arithmatic coding, with an implementation being VPX Coding.
+Then record the value that makes it so if you traversed the other direction, you would pass "through" each symbol. (See black line below).
+
+![Arithmatic coding](https://github.com/user-attachments/assets/50e75aaf-ab30-49a3-9423-04b060c13248)
+
+You can imagine if the ratios between the chances for A, B and C were the same you could theoretically hit the true limit of entropy with your compression, being no longer held into rigid minimums like huffman where you needed to spend a whole bit on a symbol output minimum.
+
+Raw Arithmatic coding is quite annoying to deal with, because the numbers get very floatey very fast, but there's a special case of arithmatic coding called [range coding](https://en.wikipedia.org/wiki/Range_coding).  This is a simplification of the general ideal field of arithmatic coding, with an implementation being VPX Coding, where you limit everything to two symbols (or outputting one bit at a time) and it defines a way of reading in new data.
 
 All you need to know for range coding is the percentage chance that a given symbol would be a 0 or a 1.
 
-In a stream where most of your data is 0's and few elements are 1's, for instance, you can use less than a bit to represent a 0, and more than a bit to represent a 1.  In probability having a weighted chance of heads or tails (0 or 1) is called Expected Surprisal.  And interestingly, the equation governing this,
+This really is as optimal as described above. In a stream where most of your data is 0's and few elements are 1's, for instance, you can use less than a bit to represent a 0, and more than a bit to represent a 1.  In probability having a weighted chance of heads or tails (0 or 1) is called Expected Surprisal.  And interestingly, the equation governing this,
 
 ```
 -p*log2(p)-q*log2(q) where q = 1.0-p
