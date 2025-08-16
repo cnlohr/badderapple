@@ -507,6 +507,14 @@ Percentages are compared to my custom binary encoding.
 
 There's an issue, all of the good ones in this list these are state of the art algorithms requiring a pretty serious OS to decode.  What if we only wan to run on a microcontroller?
 
+#### Observations
+
+1. For small payloads, it looks like gzip outperforms zstd, in spite of zstd having 40 years to improve over it. This is not a fluke, and has been true for many of my test song datasets.
+2. For larger payloads, bzip2 seems to outperform zstd. In this test, the only place that zstd really shines in the speed by which it can uncompress.
+3. I expected BSON to save space, but it was larger, and compressed worse.  I guess it's only useful for increasing the speed of parsing.
+4. Finding a way to express your data more concisely absolutely obliterates any compression algorithms you can throw at your problem. Don't settle for a binary representation, like bson.
+
+
 ### My algorithms
 
 | Compression | Size |
@@ -515,7 +523,7 @@ There's an issue, all of the good ones in this list these are state of the art a
 | Huffman (1 table) | 1644 (43%) |
 | Huffman (3 table) | 1516 (40%) |
 | VPX (no LZSS) | 1680 (44%) |
-| VPX (entropy LZSS) | **673 (17.6%)** |
+| VPX (reverse LZSS) | **673 (17.6%)** |
 | Huffman (2-table+LZSS) | 704 (18.4%) |
 | Huffman (2 table+reverse LZSS)† | 856 (22.4%) |
 
@@ -542,34 +550,72 @@ When reading a thing (we don't know what it is yet) if the next bit is a 0, it's
 <IMG SRC=https://github.com/user-attachments/assets/0277a214-2177-40ea-9ed1-30c37e11382a>
 </P>
 
-### Observations
-
-1. For small payloads, it looks like gzip outperforms zstd, in spite of zstd having 40 years to improve over it. This is not a fluke, and has been true for many of my test song datasets.
-2. For larger payloads, bzip2 seems to outperform zstd. In this test, the only place that zstd really shines in the speed by which it can uncompress.
-3. I expected BSON to save space, but it was larger, and compressed worse.  I guess it's only useful for increasing the speed of parsing.
-4. Finding a way to express your data more concisely absolutely obliterates any compression algorithms you can throw at your problem. Don't settle for a binary representation, like bson.
-
 ### More Observations
 
-**TODO** Clean this section up.
-
 Note, when not using lzss, the uptick in size because to use VPX, you have to have a probability table, and huffman tables can be used in lower compression arenas to more effectivity.
-
-I decided to do a 1/2 hour experiment, and hook up VPX (with probability trees) with LZSS, (heatshrink-style).  It was down to around 720 bytes... But I then also used entropy coding to encode the run lengths and indexes where I assumed the numbers were smaller, so for small jumps, it would use less bits, and the size went down to 673 bytes!
 
 So, not only is our decoder only about 50 lines of code, significantly simpler than any of the big boy compression algorithms... It can even beat every one of our big boy compressors!
 
 This VPX solution perform VPX coding on the notes, note-lengths, and time between notes.  But it **also** perform vpx coding on the LZSS callbacks.
 
-I decided to go back to huffman, mostly for the sake of the video and visualization! It also gave me a chance to express Exponential-Golomb coding.
+I decided to go back to huffman, mostly for the sake of the video and visualization! It also gave me a chance to express Exponential-Golomb coding.  Huffman is extremely simple to decode, and could have been done without any header libraries.  Even though the vpx code is available by virtue of the video, I wanted to show what it would look like with huffman.
 
-To compare apples-to-relatively-apples, I decided to do a huffman approach, with LZSS backtracking using Exponential-Golomb coding.  It was 704 bytes, just a little less compressed, at 704 bytes.
+To compare apples-to-relatively-apples, I decided to do a huffman approach, with LZSS backtracking using Exponential-Golomb coding.  It was 856 bytes, just a little less compressed, compared to 673 bytes for the VPX + Forward LZSS.
 
-There's one **big issue** with LZSS, it assumes you can refer back to an earlier part of your stream. This is great when you have lots of RAM, but not great if you are strapped for RAM resources.  So, I took a different approach. I'm going to call it reverse LZSS, which assumes you have no decomrpession buffer.  So this would be suitable for systems where RAM is extremely limited.
+Because I was worried about RAM space, I decided to use reveres LZSS instead. Compression using reverse lzss is quite costly, because it simulates emitting the bits the whole way along.  I was happy to give up ~150 bytes of storage in exchange for a massive RAM savings.
 
-Instead of referring back to earlier emitted bytes, we refer back to another part of the bitstream.  From there, the bistream also may refer back to an earlier part of the bistream, with varying lengths, etc.  Compression using reverse lzss is quite costly, because it simulates emitting the bits the whole way along.  I was happy to give up ~150 bytes of storage in exchange for a massive RAM savings.
+### Actual Huffman (2 table+reverse LZSS) implementation
 
-While we do need to remember where we were in our callback-stack, like which bit we were decoding before the last callback and how many notes to go, that works out to a very small amout of RAM.
+The text of the song is as follows:
+
+```c
+#define ESPBADAPPLE_SONG_MINRL 3
+#define ESPBADAPPLE_SONG_OFFSET_MINIMUM 3
+#define ESPBADAPPLE_SONG_MAX_BACK_DEPTH 16
+#define ESPBADAPPLE_SONG_MAX_BACK_DEPTH 16
+#define ESPBADAPPLE_SONG_HIGHEST_NOTE 33
+#define ESPBADAPPLE_SONG_LOWEST_NOTE 0
+#define ESPBADAPPLE_SONG_LENGTH 1910
+
+BAS_DECORATOR uint16_t espbadapple_song_huffnote[30] = {
+	0x0001, 0x0102, 0x02a1, 0x0203, 0x0304, 0x0405, 0x0506, 0x0693, 0x0607, 0x9007, 0x848b, 0x9506,
+	0x9789, 0x0592, 0x8305, 0x8206, 0x8791, 0x0305, 0x058e, 0x8098, 0x049a, 0x9604, 0x8a9c, 0x0485,
+	0x028c, 0x9b81, 0x8f9d, 0x9e94, 0x9f00, 0x88a0, };
+
+BAS_DECORATOR uint16_t espbadapple_song_hufflen[20] = {
+	0x0088, 0x0001, 0x8afa, 0x0098, 0x0001, 0x0102, 0x0203, 0xfc80, 0xb8f8, 0x9c8c, 0x0100, 0x0203,
+	0x0300, 0x04fa, 0xf99f, 0xfcba, 0x0200, 0xdad8, 0x9abf, 0xe2e0, };
+
+BAS_DECORATOR uint32_t espbadapple_song_data[] = {
+	0x3b2f43b2, 0x2f43b2f4, 0x1d13143b, 0x2027c78a, 0x858764c1, 0x05438c0a, 0x30ec9c5e, 0x2fa1d97e,
+	0xa3a00908, 0x647948c1, 0xca941987, 0x1d92a1bb, 0x0a9c1926, 0x0e7630e3, 0x34106f63, 0x324c3837,
+	0x330e29d8, 0xc3730628, 0xea61bbd4, 0xcc3a641b, 0x4ef30ebb, 0x628330d9, 0x64986c37, 0x1000c130,
+	0xd0660ecd, 0xc930761b, 0x730e24c0, 0x461c1bb0, 0x30e1fbb1, 0xb30e0d76, 0x70c97028, 0xe06fbb18,
+	0x8398706f, 0xcc3724c1, 0xc370dea1, 0xdc7ef528, 0x1b94f530, 0xe877a866, 0x43bbc930, 0x1dde1987,
+	0x17624c36, 0x28802b65, 0xddb00ac1, 0x6ef30e89, 0xd3bcc3a2, 0xc7ef41d8, 0x0e3a80ce, 0xa5d83823,
+	0xec52be01, 0xd7c80326, 0x9461c1a7, 0x65878345, 0x3e1a9500, 0x0550730e, 0x18382018, 0x11d5006c,
+	0xc325ea1c, 0xea50730d, 0xb2d0064d, 0x24c37283, 0xa1c13d43, 0xef2448c3, 0xbc324683, 0x261d283b,
+	0x0649de19, 0xc1e181b0, 0x00902918, 0x01912510, 0x8033228c, 0xd8d09d21, 0x80326f41, 0x30dc2cb1,
+	0x08bef50d, 0x53eed200, 0x34c3a16f, 0x1874fbbc, 0x0e8fdde5, 0x30e94ef3, 0x801b079f, 0x383bb08f,
+	0x803ec08c, 0x261c090d, 0x000a940d, 0x602be621, 0x1661d3e0, 0x02102c1e, 0x82c3cbe8, 0x0bc7a7de,
+	0xc3081166, 0x070b801d, 0x435c2031, 0x60f39187, 0x5c8c38c2, 0x299fc00e, 0x0015f30e, 0xf8012a72,
+	0x6182c3c5, 0x4c264009, 0x7ef4ff73, 0x7a6b51dc, 0x397a16ff, 0xfee6bcaf, 0xde9afde9, 0x561bc53f,
+	0xb89cee62, 0x3bcb89ac, 0x2ff7a737, 0xaf1e9f6b, 0x6796e5b4, 0x32f49500, 0x01f0d95e, 0x95e37abf,
+	0xcde9a834, 0xe197139d, 0x79713561, 0x41596f07, 0x06f2403c, 0x7e4e6b94, 0x735f93e1, 0xb0f0fdcb,
+	0xc53fde9a, 0xee60565b, 0xbd6cb89c, 0x8403ad5a, 0x06f4c001, 0x87a00024, 0x5730767c, 0x5bb35987,
+	0xdc898b6d, 0x15df1305, 0xeb9862f4, 0xdb46ecd6, 0x05dac064, 0x6ec8c313, 0x2257a260, 0x7a0d4868,
+	0x03729851, 0xe618bb23, 0x2ef412ba, 0xacc1b476, 0x201ad661, 0xdb6addb8, 0x0b5a0010, 0x00d3521a,
+	0x7c034305, 0xdc0db558, 0x80289aac, 0x4c0a41d3, 0x8ac10032, 0x426184c0, 0x2117c260, 0xdd235980,
+	0x748c0115, 0xd7304131, 0x0d865007, 0x12bda513, 0x8bbda61b, 0x14401c9d, 0x76d0ad56, 0x25886100,
+	0x202cb200, 0xb6f600d3, 0x7a260da3, 0x6bc02925, 0x8014da3b, 0xedf00bb1, 0x22adc88a, 0xe9000934,
+	0xb986b312, 0xda3b7222, 0x806a5034, 0x9a1156e4, 0xe4620050, 0x1e27d400, 0x0147e280, 0x10072158,
+	0x30880157, 0x8029fa01, 0x17eb3063, 0xc01bc300, 0x944c2a34, 0x45a0857d, 0x04c304af, 0x54a54a85,
+	0x54282d4a, 0x8a52a52a, 0x94a94a94, 0x2a52a522, 0x000014a5,  };
+```
+
+The approach is:
+
+**TODO** MERGE WITH OTHER "pull one bit off blah blah blah
 
 ## Testing
 
