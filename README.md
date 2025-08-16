@@ -694,6 +694,8 @@ Assuming a little endian system.
 
 # Video
 
+You might want to take a break, nap or go to bed.  It was nice wearing the arm floaties but we're about to jump into the deep end.
+
 ## Glyphs
 
 The key innovation that really kicked this project into high gear was the aforementioned [Onslaught - Bad Apple 64 - C64 Demo](https://www.youtube.com/watch?v=OsDy-4L6-tQ). Instead of trying to cleverly encode every pixel, or every other pixel such as the case with [Timendus's bad apple](https://github.com/Timendus/chip-8-bad-apple), we can encode the data as "glyphs" (or just 8x8 groups of pixels)  Sort of how people in the 1970's would use [PETSCII](https://en.wikipedia.org/wiki/PETSCII) to draw something like ascii art, but with symbols that were specifically selected to aid in drawing.  Then each frame is stitched together with these tiles.  Instead of needing to keep track of all 64x48 (3072) pixels, we only need to keep track of 6x8 (48) tiles.
@@ -849,11 +851,17 @@ The process of reading the glyphs is done once, at start, and the glyphs are dec
 
 ## Glyph classifications
 
-With our glyphs decoded into RAM, we can move onto the stream itself.  One of the things I realized early on was that there is a
+With our glyphs decoded into RAM, we can move onto the stream itself.  One of the things I realized early on was that there is a strong relationship between the current glyph that is in a tile, and what the next glyph in that tile will be.  For instance, you can never go from one cell into itself. 
 
-**TODO** Post chart of glyph transitions.
+This graph below shows each transition from one tile ID to another, and it shows the count of how frequently that transition has happend within the song.
 
-**TODO** This section
+![Tile Transition Graph](https://github.com/user-attachments/assets/2a30a233-0e05-4b8b-a444-b2aecca109f1)
+
+If you zoom out, it looks really pretty.
+
+![Zoomed out transition graph](https://github.com/user-attachments/assets/b71c4f91-3243-4ae3-b0ba-d4114912d2e1)
+
+So, I wrote an algorithm to place each tile into a "class."  Then when trying to figure out which cell is next, instead of assuming all cells are the same, we can use the chance of moving to another cell based on which class we're in.
 
 ```
 Classes: (Theoretical Space)
@@ -871,6 +879,8 @@ Classes: (Theoretical Space)
  11:  5695: 34687 bits (6.090759 bits per symbol) 11 24 50 72 73 76 78 79 91 99 105 110 113 120 123 136 140 150 151 155 156 158 161 168 179 226 227 251 252
  12:  4870: 28799 bits (5.913510 bits per symbol) 12 17 35 37 42 48 49 52 53 69 82 94 96 106 121 148 176 184 205 242
 ```
+
+
 
 ## Run Length Probability Tables
 
