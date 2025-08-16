@@ -859,7 +859,7 @@ This graph below shows each transition from one tile ID to another, and it shows
 
 If you zoom out, it looks really pretty.
 
-![Zoomed out transition graph](https://github.com/user-attachments/assets/b71c4f91-3243-4ae3-b0ba-d4114912d2e1)
+![Zoomed out transition graph](https://github.com/user-attachments/assets/11d94f29-5c0f-48c5-8ecc-34841fd8bd67)
 
 So, I wrote an algorithm to place each tile into a "class."  Then when trying to figure out which cell is next, instead of assuming all cells are the same, we can use the chance of moving to another cell based on which class we're in.
 
