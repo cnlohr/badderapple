@@ -107,9 +107,7 @@ Just looking at the gzip compression only.
 | Original Ordering, gzip -9    | 146191 (46.4%) | **94440 (29.9%)** | 
 | Reordered, gzip -9            | **119046 (37.7%)** | 114779 (36.4%) |
 
-I have no explaination for this... 
-
-Well, what I can say is at least with *my* compression algorithms, the left-to-right, top-to-bottom, frame-at-a-time ordering provides the most compression by a reasonable clip.
+💭I have no explaination for this... Well, what I can say is at least with *my* compression algorithms, the left-to-right, top-to-bottom, frame-at-a-time ordering provides the most compression by a reasonable clip.
 
 I have to stress that both the original data and reordered data expresses the **exact** same data, it is just stored in `[frame][y][x]` verses `[y][x][frame]`.
 
@@ -207,7 +205,7 @@ So, to encode our original stream, `ddddbddddcddcdddddcdddddaddddccc`, we could 
 
 But admittedly, you do need to store the tree somehow. For small amounts of data like 32 bytes, it's likely this would eat any of the possible savings.  But for larger data sets, the size of the tree is miniscule compared to the data.
 
-Huffman coding can be very fast and extremely to decode, since you just need to encode a tree... and it's provably optimal.  In that for fixedindiviual symbols, you can mathematically prove that it the most compressed you can make a data stream.  And for most of my life, I thought that's where the story stopped.  The thing is... It turns out there's a different theoretical limit.  I hadn't learned about until my friend Lyuma brought to my attention arithematic coding. Which could approach this other theoretical limit.
+Huffman coding can be very fast and extremely simple to decode, since you just need to encode a tree... and it's provably optimal.  In that for fixedindiviual symbols, you can mathematically prove that it the most compressed you can make a data stream.  And for most of my life, I thought that's where the story stopped.  The thing is... It turns out there's a different theoretical limit.  I hadn't learned about until my friend Lyuma brought to my attention arithematic coding. Which could approach this other theoretical limit.
 
 In the companion simulator for badder apple, you can see the huffman trees that are used for decoding all the notes, and their lengths, and time to next note in the song. Anywhere there's an uptick in the scrub bar, you can click on it then watch as the huffman tree is navigated.  Starting at the center of the tree, each bit is read from the input stream and if it's a 1 it goes down the white edge, if it's a 0 it goes down the black edge.  Once a leaf node is detected, the traversal stops.
 
@@ -262,31 +260,31 @@ Then record the value that makes it so if you traversed the other direction, you
 
 ![Arithmatic coding](https://github.com/user-attachments/assets/50e75aaf-ab30-49a3-9423-04b060c13248)
 
-You can imagine if the ratios between the chances for A, B and C were the same you could theoretically hit the true limit of entropy with your compression, being no longer held into rigid minimums like huffman where you needed to spend a whole bit on a symbol output minimum.
+You can imagine if the ratios between the chances for `A`, `B` and `C` were the same you could theoretically hit the true limit of entropy with your compression, being no longer held into rigid minimums like huffman where you needed to spend a whole bit on a symbol output minimum.
 
-Raw Arithmatic coding is quite annoying to deal with, because the numbers get very floatey very fast, but there's a special case of arithmatic coding called [range coding](https://en.wikipedia.org/wiki/Range_coding).  This is a simplification of the general ideal field of arithmatic coding, with an implementation being VPX Coding, where you limit everything to two symbols (or outputting one bit at a time) and it defines a way of reading in new data.
+There is nothing that says the chances need to remain fixed for each of your symbols from one stage to the next, they could be all different symbols, but, the critical part is you have to know the chance that a given symbol will be A, B or C at each stage.  The encoder and decoder must agree on that chance.
 
-All you need to know for range coding is the percentage chance that a given symbol would be a 0 or a 1.
+Raw Arithmatic coding is quite annoying to deal with, because the numbers get very s̸̤̺̲͂͛͑̍̉m̶̹̪͙̔̈͑a̴̰̾͋͒̉̔ļ̸̘̝̯͐̉ļ̷͕̖̬̻́̾͊̌ ̷̮̿a̸̻͋̍͗̃ͅn̴̪̺̒̀̒̆͜ḓ̴̹̣̙̳͉͒ ̸̡̟͚͕͉͓͌̎̿͒̒̈́e̸͎̳̎́̉v̸͓̭̟̯͑̆̌́̂͝i̴̛̭̓̃͒͛̈́l̸͓̞̫͍̜͊͂̈́͋ very fast, but there's a special case of arithmatic coding called [range coding](https://en.wikipedia.org/wiki/Range_coding).  This is a simplification of the general ideal field of arithmatic coding, where you limit everything to two symbols a `0` and a `1`.
 
-This really is as optimal as described above. In a stream where most of your data is 0's and few elements are 1's, for instance, you can use less than a bit to represent a 0, and more than a bit to represent a 1.  In probability having a weighted chance of heads or tails (0 or 1) is called Expected Surprisal.  And interestingly, the equation governing this,
+So instead of tracking many different symbols, and their chances, you only need to track 2.
+
+This really is as optimal as described above. For instance, with `A`, `B` and `C`, if you map them to `00`, `01`, and `10`, there's no `11`.  So you can figure out the percentage of (`A` or `B` vs `C`) and if you get a `1` for the first bit, you know it's a 100% chance the next bit will be a `0` since there is no `11`.
+
+## VPX (range) Coding
+
+While arithmatic coding is particularly difficult to do in practice with bitstreams, there is a different take on it called range coding. This is the coding scheme implementation for range coding used in Google's VP7, VP8, VP9 video encoding engines to encode symbols. It maintains virtually all of the upsides of Arithmatic coding, and to show the effectiveness of range coding, we can compare the compression ratio to something aclled the "Expected Surprisal." Expected surprisal says the chance of getting a random upset given a series of heads/tails where there's a non-50/50 chance for each. The equation for this is:
 
 ```
 -p*log2(p)-q*log2(q) where q = 1.0-p
 ```
 
-is almost the same as the real-world compression performance of the belowmentioned VPX coding!
+This is the chance for an unexpected outcome.  And what's wild is it's also mathematically the same as the maximum compression ratio for bitstreams.  When we overlay this equation on actual performance of VPX coding bitstreams we get virtually the same performance.
 
 ![Optimal Compression Ratio](https://github.com/user-attachments/assets/02b9d48f-497c-4633-87b8-42a0e345aeaa)
 
-## VPX (range) Coding
+VPX coding just exposes the ability to read/write 1 and 0 bits given a % chance of each.
 
-While arithmatic coding is particularly difficult to do in practice with bitstreams, there is a different take on it called range coding. This is the coding scheme used in Google's VP7, VP8, VP9 video encoding engines to encode symbols.
-
-VPX Coding, specifically, or Range Coding, generally, splits each symbol into an individual bitstream.  But for each bit, you must know how likely it is that the next bit will be a `0` or a `1`.  Like arithmatic coding, you treat it like a pie chart, where the more likely an outcome is, the more of the ratio it can take up, and thus the fewer bits that are needed to encode that data.
-
-Because VPX coding can use less than one bit per symbol (if you treat 0 and 1 each as two possible symbols) it matters less that you use symbols.  Instead you can just use bytes, or words.  For instance, if there are 137 different symbols, you could encode that with 8-bits, and if you get into a situation where for instance you could have either tile 127 or 255, because there is no tile 255, you know with complete certainty that the tile will be 127, and thus that last bit can be encoded with almost no entropy.  Admittedly not no entropy, so don't go crazy wasting bits, but it's still very efficient.
-
-While range coding itself is also unintuitive, I tried to express it as best as I could in the visualization for Badder Apple, seen here. You can see how each bit in and each bit out are used.  In the image below you can see the squares indicate reading bits in, the X's indicate getting bits out. So you can see here it only took 3 bits to encode 8 bits of output data.
+I worked in the [web tool](https://cnvr.io/dump/badderapple.html) to vizualize how each bit in and each bit out are used.  In the image below you can see the squares indicate reading bits in, the X's indicate getting bits out. So you can see here it only took 3 bits to encode 8 bits of output data.
 
 ![VPX Coding Portion of demo](https://github.com/user-attachments/assets/6b48eb03-068c-4a27-892e-0fdbf96eef53)
 
