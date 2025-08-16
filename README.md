@@ -922,6 +922,9 @@ uint8_t ba_vpx_probs_by_tile_run_continuous[USE_TILE_CLASSES][RUNCODES_CONTINUOU
 
 The more accurately we can nail down the chance of a given bit being a 1 or a 0, the better compression we can have.  So if we find some cells where there's 0 chance that there's a break in the continuation, we can spend very little data on that check.
 
+
+**TODO** Just redo this whole dang section.
+
 As soon as we get a break
 
 
@@ -935,6 +938,14 @@ ProbabilityTreeGenerateProbabilities
 **TODO** PICKUP HERE
 
 # The ch32v006 implementation
+
+## General Setup
+
+## De-Blocking Filter
+
+### Vertical De-Blocking Filter
+
+### Horizontal D-Blocking Filter
 
 # The web viewer demo
 
