@@ -475,8 +475,6 @@ Because it doesn't make sense to reference very small references, and it doesn't
 
 💭I am finding suspicious patterns surrounding minimum run length / minium callback distance.  Should look into that.
 
-Be sure to see the example below!
-
 # Song
 
 With all of the ground compression schemes laid, we can now move into the first challenge in the compression.  The song.
@@ -533,6 +531,22 @@ Note: these tests were generated with `make sizecomp` the code for several of th
 
 Because we are only storing a stack, we only need to save the current location and number of notes remaining, so with 18 as the deepest we can go, our state size is only 72 bytes!
 
+### More Observations
+
+Note, when not using lzss, the uptick in size because to use VPX, you have to have a probability table, and huffman tables can be used in lower compression arenas to more effectivity.
+
+So, not only is our decoder only about 50 lines of code, significantly simpler than any of the big boy compression algorithms... It can even beat every one of our big boy compressors!
+
+This VPX solution perform VPX coding on the notes, note-lengths, and time between notes.  But it **also** perform vpx coding on the LZSS callbacks.
+
+I decided to go back to huffman, mostly for the sake of the video and visualization! It also gave me a chance to express Exponential-Golomb coding.  Huffman is extremely simple to decode, and could have been done without any header libraries.  Even though the vpx code is available by virtue of the video, I wanted to show what it would look like with huffman.
+
+To compare apples-to-relatively-apples, I decided to do a huffman approach, with LZSS backtracking using Exponential-Golomb coding.  It was 856 bytes, just a little less compressed, compared to 673 bytes for the VPX + Forward LZSS.
+
+Because I was worried about RAM space, I decided to use reveres LZSS instead. Compression using reverse lzss is quite costly, because it simulates emitting the bits the whole way along.  I was happy to give up ~150 bytes of storage in exchange for a massive RAM savings.
+
+### Actual Huffman (2 table+reverse LZSS) implementation
+
 Every note contains 3 pieces of information:
  * The note pitch (between 47 and 80), starting at note A110 + (2 notes, so B# in that octave)
  * The length of the note length (How long the note should play)
@@ -549,22 +563,6 @@ When reading a thing (we don't know what it is yet) if the next bit is a 0, it's
 <P ALIGN=CENTER>
 <IMG SRC=https://github.com/user-attachments/assets/0277a214-2177-40ea-9ed1-30c37e11382a>
 </P>
-
-### More Observations
-
-Note, when not using lzss, the uptick in size because to use VPX, you have to have a probability table, and huffman tables can be used in lower compression arenas to more effectivity.
-
-So, not only is our decoder only about 50 lines of code, significantly simpler than any of the big boy compression algorithms... It can even beat every one of our big boy compressors!
-
-This VPX solution perform VPX coding on the notes, note-lengths, and time between notes.  But it **also** perform vpx coding on the LZSS callbacks.
-
-I decided to go back to huffman, mostly for the sake of the video and visualization! It also gave me a chance to express Exponential-Golomb coding.  Huffman is extremely simple to decode, and could have been done without any header libraries.  Even though the vpx code is available by virtue of the video, I wanted to show what it would look like with huffman.
-
-To compare apples-to-relatively-apples, I decided to do a huffman approach, with LZSS backtracking using Exponential-Golomb coding.  It was 856 bytes, just a little less compressed, compared to 673 bytes for the VPX + Forward LZSS.
-
-Because I was worried about RAM space, I decided to use reveres LZSS instead. Compression using reverse lzss is quite costly, because it simulates emitting the bits the whole way along.  I was happy to give up ~150 bytes of storage in exchange for a massive RAM savings.
-
-### Actual Huffman (2 table+reverse LZSS) implementation
 
 The text of the song is as follows:
 
@@ -613,9 +611,54 @@ BAS_DECORATOR uint32_t espbadapple_song_data[] = {
 	0x54282d4a, 0x8a52a52a, 0x94a94a94, 0x2a52a522, 0x000014a5,  };
 ```
 
-The approach is:
+As mentioned above, we pull off one bit to tell if we are doing a callback or an actual note.  If it is an actual note, then we have to do our huffman tree decoding.
 
-**TODO** MERGE WITH OTHER "pull one bit off blah blah blah
+You can see the definition of two of our huffman trees. Let's look at
+
+```c
+BAS_DECORATOR uint16_t espbadapple_song_huffnote[30] = {
+	0x0001, // If 1 bit, [0x00+1] Move forward 1 entry.  If 0 bit, [0x01+1] move forward 2 entries.
+	0x0102, // If 1 bit, [0x01+1] Move forward 2 entries.  If 0 bit, [0x02+1] move forward 3 entries.
+	0x02a1, // If 1 bit, [0x02+1] Move forward 3 entries.  If 0 bit, [0xa1] 0x80 | 33 (emit note 33)
+	0x0203, // If 1 bit, [0x02+1] Move forward 3 entries.  If 0 bit, [0x03+1] move forward 4 entries.
+	0x0304, // If 1 bit, [0x03+1] Move forward 4 entries.  If 0 bit, [0x04+1] move forward 5 entries.
+	0x0405, // If 1 bit, [0x04+1] Move forward 5 entries.  If 0 bit, [0x05+1] move forward 6 entries.
+	0x0506, // If 1 bit, [0x05+1] Move forward 6 entries.  If 0 bit, [0x06+1] move forward 7 entries.
+	0x0693, // If 1 bit, [0x06+1] Move forward 7 entries.  If 0 bit, [0x93] 0x80 | 10 (emit note 13)
+	0x0607, // If 1 bit, [0x06+1] Move forward 7 entries.  If 0 bit, [0x06+1] move forward 8 entries.
+	0x9007, // If 1 bit, [0x90] 0x80 | 16 (emit note 16).  If 0 bit, [0x07+1] move forward 8 entries.
+...
+};
+```
+
+The general idea is when reading a note, start at the first element in the table, then follow the most significant byte if you see a 1, or the least significant byte if you have a 0.  If the most significant bit is 0x80, then you have a terminal, and you can read the literal value out.
+
+You can imagine just how small, fast and simple it is to read some bits!
+
+```c
+uint8_t PullHuffmanByte()
+{
+	int ofs = 0;
+	do
+	{
+		uint16_t he = htree[ofs];
+		int bit = ReadNextBit();
+
+		// Select top or bottom byte
+		he>>=bit*8;
+
+		// Check if it's terminal
+		if( he & 0x80 )
+			return he & 0x7f;
+
+		// Mask off top bits and update new search place.
+		he &= 0xff;
+		ofs = he + 1 + ofs;
+	} while( 1 );
+}
+```
+
+That's about it for decoding the huffman coded data with reverse LZSS.
 
 ## Testing
 
@@ -634,6 +677,8 @@ ffmpeg -y -f f32le -ar 48000 -ac 1 -i ../song/track-float-48000.dat <video data>
 The .h file is used with the playback system by being compiled in.
 
 ### Interprets `BadApple-mod.mid` and outputs `fmraw.dat` using `midiexport`
+
+If you want to play with your own compression you can use this tooling, just take note of the following.
 
 Midiexport reads in the .mid file and converts the notes into a series of note hits that has both the note to hit, the length of time the note should play (in 16th notes) and how many 16th notes between the playing of this note and the start of the next note.
 
