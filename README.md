@@ -296,7 +296,7 @@ To speed things up, vpx coder keeps 24 (or 56 if 64-bit) bits worth of immediate
 
 Whenever an unlikely path is taken, for instance, if a 0 is very unlikely, but is selected none the less, it can take several bits to encode that 0.  But when a likely path is taken, you can get bit after bit out without it consuming even one bit. You just have to know the chance on both the encoder and decoder so each side can make sense of the bitstream.
 
-If you are curious to use vpx coding yourself for a project, for instance if you have a situation where you have a series of symbols, or numbers you want to express, or really, anything that can boil down to a bitstream of 0's and 1's, where you know how likely the next bit is to be a 0 or 1 is, you can use my project [vpxcoding](https://github.com/cnlohr/vpxcoding), that has an encoder, and a decoder.  And, the decoder is a header-only C library that works well for microcontrollers.  It's a little bit heavier than huffman to decode, but not by much!  To efficiently decode VPX you need a log2 table, which takes up 256 bytes (could be RAM or ROM), and only 364 bytes of x86 code to decode.  And for a decoding context, it only takes a 33-byte structure in RAM.
+If you are curious to use vpx coding yourself for a project, for instance if you have a situation where you have a series of symbols, or numbers you want to express, or really, anything that can boil down to a bitstream of 0's and 1's, where you know how likely the next bit is to be a 0 or 1 is, you can use my project [vpxcoding](https://github.com/cnlohr/vpxcoding), that has an encoder, and a decoder.  And, the decoder is a header-only C library that works well for microcontrollers.  It's a little bit heavier than huffman to decode, but not by much!  To efficiently decode VPX you need a log₂ table, which takes up 256 bytes (could be RAM or ROM), and only 364 bytes of x86 code to decode.  And for a decoding context, it only takes a 33-byte structure in RAM.
 
 You can see an example application below:
 ```c
@@ -849,6 +849,7 @@ BADATA_DECORATOR uint8_t ba_vpx_glyph_probability_run_0_or_1[2][MAXPIXELRUNTOSTO
 
 The process of reading the glyphs is done once, at start, and the glyphs are decoded into RAM.
 
+
 ## Glyph classifications
 
 With our glyphs decoded into RAM, we can move onto the stream itself.  One of the things I realized early on was that there is a strong relationship between the current glyph that is in a tile, and what the next glyph in that tile will be.  For instance, you can never go from one cell into itself. 
@@ -880,9 +881,58 @@ Classes: (Theoretical Space)
  12:  4870: 28799 bits (5.913510 bits per symbol) 12 17 35 37 42 48 49 52 53 69 82 94 96 106 121 148 176 184 205 242
 ```
 
+If we are moving _from_ symbol 0, then, we would be in class 0.  From Class 0, we can compute the probability of going to each new cell.
+
+Because we have less tahn 16 classes, we can encode each one as a hex digit, and store it in `ba_exportbinclass` each tile gets on nibble in that table for the class ID.
+
+```c
+BADATA_DECORATOR uint8_t ba_exportbinclass[128] = {
+	0x10, 0x32, 0x54, 0x76, 0x98, 0xba, 0xbc, 0x6c, 0x3a, 0x9c, 0xba, 0x65, 0x32, 0xaa, 0x2b, 0x3b,
+	0x66, 0x95, 0x49, 0xaa, 0x29, 0x29, 0x37, 0x43, 0x76, 0x82, 0xb7, 0xaa, 0xaa, 0x95, 0xa6, 0x55,
+	0xa9, 0xaa, 0x2c, 0xa2, 0x5b, 0x3b, 0x52, 0xba, 0xb7, 0x77, 0xbb, 0x6a, 0xac, 0xa6, 0x72, 0x65,
+	0x6b, 0x27, 0x55, 0xa2, 0xb8, 0x43, 0xc5, 0x85, 0xa4, 0x46, 0x95, 0x32, 0x46, 0x93, 0xc2, 0x67,
+	0x55, 0x67, 0xba, 0xb8, 0x52, 0x42, 0xb6, 0xba, 0xa4, 0x9c, 0xba, 0x27, 0xb4, 0x63, 0x55, 0x5b,
+	0x92, 0xa2, 0x37, 0xbb, 0xa3, 0x9a, 0x56, 0x58, 0x8a, 0x59, 0x99, 0x23, 0x75, 0xa2, 0x62, 0x2b,
+	0x37, 0x67, 0x5a, 0xa2, 0x87, 0x2b, 0xc8, 0xb9, 0xa7, 0x48, 0x7a, 0x63, 0x89, 0xba, 0x8a, 0x73,
+	0x72, 0x28, 0xa2, 0x6b, 0x5b, 0xb7, 0xb6, 0x8b, 0x64, 0x82, 0x22, 0x4b, 0x5a, 0x79, 0x88, 0x08,
+};
+```
+## Continue or Update Cell
+
+Once we have our glyphs decoded, we can move onto encoding the stream. We can start streaming. For each frame we start at the top-left, and raster-style scan to the bottom right.  Once we're done, we can wait 1/30th of a second and do it all over again.
+
+<P ALIGN=CENTER>
+<IMG SRC=https://github.com/user-attachments/assets/f7b0e27a-e925-4704-a004-d759ce9c1683 WIDTH=50%>
+</P>
+
+For each cell, we pull one bit from the VPX stream, if it's a `1` then, we don't do anything and move on, if it's a `0` then we have to decode a glyph (See below).
+
+In order to determine the ※ chance of a given cell being a "break" in the continuation by getting a 0 bit, we store the probability table by class primarily and the length of time since the last cell transition (You can see this as the small number in the visualizer tool)
+
+```c
+uint8_t ba_vpx_probs_by_tile_run_continuous[USE_TILE_CLASSES][RUNCODES_CONTINUOUS] = {
+	// --> Time since last cell transition. ※ that the continue but will be a `0` (and will have to change).
+	{  33, 27, 23, 20, 17, 17, 17, 15, 14, 16, 14, 11,  8, 10, 10, 10, 10,  7,  8,  8, 11, 10,  8, 10,  6,  9, 10,  7,  6,  8,  5,  6,  6,  5,  2,  6,  4,  5,  6,  5,  4,  4,  3,  4,  3,  1,  5,  4,  3,  6,  5,  2,  4,  2,  3,  4,  9, 11,  9,  4,  5,  5,  6,  7,  5,  9,  3,  3,  2,  7,  4,  5,  0,  1,  3,  4,  2,  5,  3,  4,  2,  5,  4,  3,  1,  3,  2,  5,  3,  7,  6,  3,  2,  5,  3,  4,  6,  6,  1,  7, 10,  5,  8,  8,  5, 10,  5,  3,  6,  4,  0,  5,  0,  1,  7,  8,  6,  3,  3,  3,  0,  1,  8,  3,  1,  3,  3,  4,},
+	{  22, 15, 14, 15, 16, 13, 13, 14, 12, 10, 13, 11,  8,  8, 10,  9,  6,  8,  7,  7,  5,  8,  7,  6,  8,  5, 11,  8,  5,  6,  6,  5,  6,  5,  4,  6,  6,  5,  4,  7,  8,  5,  6,  4,  4,  7,  5,  4,  5,  4,  5,  2,  1,  3,  2,  2,  3,  3,  3,  3,  2,  2,  6,  3,  2,  3,  3,  3,  3,  3,  3,  3,  1,  8,  7,  3,  0,  3,  5,  9,  4,  4,  3,  4, 11,  7,  6,  1,  4,  3,  4,  2,  2,  6,  1,  1,  5,  4,  7,  6,  2,  4,  6,  1,  3,  5,  3,  3,  2,  2,  1,  1,  2,  2,  4,  1,  1,  1,  4,  2,  0,  1,  1,  3,  4,  1,  4,  3,},
+	{ 141,110, 78, 52, 47, 40, 30, 28, 16, 18, 21, 14, 15, 11, 16, 10,  6, 13, 12,  7, 13,  4,  4,  8,  3,  6,  7,  7,  5,  2,  6,  6,  0,  6,  2,  2,  0,  0,  5,  2,  0,  0,  0,  0,  2,  2,  3,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  3,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  4,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  4,  0,  0,  0,  0,  5,  5,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  4,},
+	{ 145,109, 83, 65, 44, 54, 30, 26, 40, 29, 26, 15, 20, 24, 13, 25,  7, 18, 14, 15, 16, 14, 11,  7,  8,  0,  8,  4,  9,  0,  4,  0,  9, 10, 27, 12,  0, 13,  7,  0,  0,  0,  0,  0,  0, 15,  0,  0,  0,  0,  0,  8,  0,  0,  0,  0,  0,  0,  0, 21, 11,  0,  0,  0, 12,  0,  0,  0,  0,  0,  0,  0,  0, 14,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,},
+	...
+	n classes
+```
+
+The more accurately we can nail down the chance of a given bit being a 1 or a 0, the better compression we can have.  So if we find some cells where there's 0 chance that there's a break in the continuation, we can spend very little data on that check.
+
+As soon as we get a break
 
 
-## Run Length Probability Tables
+Now, we can start encoding/decoding a "next glyph" from where we are.
+
+
+We start encoding the "which cell are we moving to" by converting that into binary, and sending it most-significant-bit-first, then for each bit, we know the probability of that bit being a 0 TODO TODO
+
+ProbabilityTreeGenerateProbabilities
+
+**TODO** PICKUP HERE
 
 # The ch32v006 implementation
 
