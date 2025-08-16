@@ -711,7 +711,7 @@ While I spent months iterating on this, I'm only going to focus on the final sol
 The underlying data we need to compress is only two files. 
 
 <P ALIGN=CENTER>
-![the two files](https://github.com/user-attachments/assets/e1ae4a73-202d-4cd8-bc4d-987f92d75e13)
+<IMG SRC=https://github.com/user-attachments/assets/e1ae4a73-202d-4cd8-bc4d-987f92d75e13>
 </P>
 
 The first was the "stream" it was just a list of what glyph to put into which tile of the video.  The second was the tiles (or glyphs) that we computed above.
