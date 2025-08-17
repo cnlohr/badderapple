@@ -862,7 +862,7 @@ This graph below shows each transition from one tile ID to another, and it shows
 
 ![Tile Transition Graph](https://github.com/user-attachments/assets/71ebed6c-c7cc-4a1f-96f7-ca77a530d485)
 
-If you zoom out, it looks really pretty.
+If you zoom out, it looks really pretty (or you can click to zoom in)
 
 ![Zoomed out transition graph](https://github.com/user-attachments/assets/5ac8e515-f76d-4351-859b-f294d8db20a5)
 
