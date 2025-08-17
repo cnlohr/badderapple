@@ -100,11 +100,11 @@ In an example datastream I am using 256 tile, I can represent tile IDs as uint8_
 | Reordered, gzip -9            | 119046 (37.7%) | 114779 (36.4%) |
 | Reordered, zstd -9            | **110001 (34.9%)** | **110119 (34.9%)** |
 
-![Graph of above data](https://github.com/user-attachments/assets/59e55fea-b12e-4e2a-a438-cb9166cd98a3)
+![Graph of above data](https://github.com/user-attachments/assets/e4a361b2-5c5a-4af5-9dac-41b762b9a3d1)
 
-💭This is not the result I expected.  Why does this happen?  Why would the size of each tile being encoded change how effective gzip / zstd can compress the stream at a high level.
+Either way we look at this, this is going to be a sad uphill batter.  We are going to have to get down to about 61kB in order to fit the tile data, startup code and song.  If gzip and zstd can only get it down to 92kB this is going to be rough.
 
-Either way we look at this, this is going to be a sad uphill batter.  We are going to have to get down to about 61kB in order to fit the tile data, startup code and song.  If gzip can only get it down to 92kB this is going to be painful.
+Wait ... 💭This is not the result I expected.  Why does this happen?  Why would the size of each tile being encoded (in 32-bit or 8-bit) change how effective gzip / zstd can compress the stream at a high level.
 
 Just looking at the gzip compression only.
 
@@ -356,6 +356,15 @@ int main()
 ```
 
 The one thing that's critical to remember here for later is that you have to figure out what the probability of each bit bing a 0 is, and, you have to make sure both the encoder and decoder know what that is so they can encode and decode properly.
+
+The way that [vpxcoding](https://github.com/cnlohr/vpxcoding) represents that chance is the chance from 0 to 255 that the next symbol will be a 0. To denote this in this document, we will use ※.
+
+| Symbol | ※ |
+| --- | --- |
+| `1` is definitely next bit | 0 |
+| 50/50 chance for `0` or `1` next | 128 |
+| `0` is definitely next bit | 255 |
+
 
 We can graze theoretical limits with VPX coding, but there's still far more entropy that can be removed and compression that can be realized!  We must press on!
 
@@ -935,30 +944,164 @@ The more accurately we can nail down the chance of a given bit being a `1` or a 
 
 Nothing changes as long as we're getting the "keep going" `1`s.  But as soon as we get a `0` we have to start decoding a glyph ID.
 
-We encode glyph IDs in binary, 8 bits, most-significant-bit-first. 
+We encode glyph IDs in binary, 8 bits, most-significant-bit-first. To determine the chance of a `1` or a `0` in the first bit, we simply compare the sum of possible tiles where the msb would be `1` to the number where it would be `0` and write that ※ into the first cell.
 
+Then we move onto the next bit, and only include tiles which match our most signiificant bit.  And we repeat until we get to a leaf cell.
 
-**TODO** Just redo this whole dang section.
+To store these ※s in a table, we can store the tree of these values in a breadth-first array representation of the tree.
 
-As soon as we get a break in the
+<P ALIGN=CENTER>
+![breadth-first array](https://github.com/user-attachments/assets/1b1b5062-6d4c-4466-94f1-ae529cb8ed03)
+<BR>[credit](https://en.wikipedia.org/wiki/Binary_tree#/media/File:Binary_tree_in_array.svg)
+</P>
 
+To produce this tree, we can generate all the frequencies for all of our elements, and let `ProbabilityTreeGenerateProbabilities` generate the `probabilities` table.
 
-Now, we can start encoding/decoding a "next glyph" from where we are.
+```c
+void ProbabilityTreeGenerateProbabilities( uint8_t * probabilities, unsigned nr_probabilities, const float * frequencies, unsigned elements, unsigned needed_bits );
+```
 
+This will generate a table that can be used both by `ProbabilityTreeWriteSym` as well as `ProbabilityTreeReadSym` to compress and decompress symbols respectively.
 
-We start encoding the "which cell are we moving to" by converting that into binary, and sending it most-significant-bit-first, then for each bit, we know the probability of that bit being a 0 TODO TODO
+An example table is as follows, note that there are a lot of cells which are either 0 or 255.  That means there are few or no possible combinations where a cell moving from this class will transition into that particular cell (or branch of cells) and thus you don't have to spend any data on it.
 
-ProbabilityTreeGenerateProbabilities
+```c
+BADATA_DECORATOR uint8_t ba_chancetable_glyph_dual[BY_CLASS][255] = {
+	...
+{	188, 171, 158, 221, 247, 181, 246, 252, 171, 255, 248,   0, 117, 105, 255, 237,
+	148,  68, 233, 139,  34, 188,   0,   0, 255, 251,   0, 229, 253,   0,   0, 128,
+	102, 255, 139, 130, 251, 240,   2, 144, 128,   0, 171,   3,   0,   0,  85, 252,
+	  4, 255, 103, 199, 253, 202, 128, 197,  17,  28,  17,  90,   0,  93, 116,  56,
+	255, 124,  55, 190, 208, 246, 255, 171,  99,   0,  93, 233,   0,   0, 239,  85,
+	255, 128, 112,  20,  16, 255,  34,   0,   0,   0, 221, 252,  99,  64,   0,   0,
+	255, 101, 139, 160,   9, 255, 255,  30,   0,  45,  31,  18, 255, 255, 254, 254,
+	  0, 137,  65,  14, 255, 246, 251, 245,  85,   5, 255,   0,   0, 236, 253, 238,
+	117, 124, 169, 233, 221,   5, 171, 255,  32,   0, 195, 114,  64,   0,  85,  77,
+	 85,   0, 193, 209, 252, 248, 255, 255, 201,   0, 102,  25, 255, 228,   0,   0,
+	 17, 178,  53, 128,   0,   0, 255, 189,  30, 128,  19, 217,   0,   0,   0,   0,
+	185,  29, 116, 255,  51,   0, 171, 128,   0, 235,  59, 255,   0, 183, 205, 255,
+	145, 160, 116, 146, 190,   0,  15, 210, 244, 114, 144,  88,   0,   0, 214, 146,
+	  0, 165, 160,   0,   0,   4,  20, 255,   7,  46, 231, 255, 255,  85,  51,  25,
+	213, 110,  50, 221,  54,  85, 165,  17, 128,  94,  14,   0,  24, 188, 163,  20,
+	145, 145,  90,   0, 186,  19,   0, 149, 122,  46, 255, 228, 128,   0, 214,},
+...
+};
+```
 
-**TODO** PICKUP HERE
+From there, we just have to start decoding!  All of the data to decode is stored in this one array.
+
+```c
+BADATA_DECORATOR uint8_t ba_video_payload[XXX TODO] = { ... };
+```
+
+Using this cocofony of compression schemes, we can come to a final compression of XXX TODO
 
 ## Hero Frame
 
-(Show editor)
+Just one thing remains.  A hero frame.  There's one scene that I anticipate and really love.  But, it didn't come through from the stram geneartion from Evan's ML approach.
+
+![hero frame](https://github.com/user-attachments/assets/c5515fbb-3838-4af6-b259-d43aaed235db)
+
+And I wanted to make sure that would come through on the compressed video.  So, I created an editor that lets me manually edit tiles, and where they go within the stream.  Just doodling on a small face made it work out quite nicely in spite of being right on a frame boundary.
+
+**TODO** Screenshot of editor
+
+With that, I had the final stream.  Everything looked like it would fit.  Just needed one more thing, to move it to the ch32v006.
 
 # The ch32v006 implementation
 
+## Hardware
+
+The hardware consists of a board that has:
+1. A CH32V006, 48MHz, RISC-V WCH Microcontroller $0.13/ea.
+2. A 24MHz Crystal (cause why not)
+3. A USB Connector wired up so that you can use a USB-Audio adapter and provide power to the system.
+4. 2 Red LEDs (for the apple catch scene)
+5. 2 Diodes to allow for the microcontroller to charge pump the display.
+6. A connector for a Ronboe RB6448TSWHG04 64x48 OLED Display.
+7. A voltage regulator.
+
+All packed within 2.6cm² or less than 1/2 in².
+
+![PCB](https://github.com/user-attachments/assets/d9231633-3a52-4d71-af62-cd7f8e32ae14)
+
+![Schematic](https://github.com/user-attachments/assets/020d73d0-cb6d-4a96-a98c-fef5f731ae74)
+
+**TODO** Assembly images
+
 ## General Setup
+
+For the firmware, I used ![ch32fun](https://github.com/cnlohr/ch32fun), I pulled out all the stops and configured with:
+
+```c
+#define FUNCONF_NO_ISR 1
+#define FUNCONF_OVERRIDE_VECTOR_AND_START 1
+#define FUNCONF_TINYVECTOR 1
+#define FUNCONF_SYSTICK_USE_HCLK 1
+#define FUNCONF_USE_HSE 1
+#define FUNCONF_USE_PLL 1
+```
+
+This means, I was starting with literally nothing, startup code wise.  I didn't initially do this, but I did end up here as I kept having to shave off bits anywhere I could for a while. There's also a few other niceities.
+
+1. We aren't using ISRs.
+2. We have no .data section.  (No variables come initialized, all are default-initialized to 0.)
+
+So, our startup function could be itty bitty.
+
+```c
+void handle_reset( void )
+{
+	asm volatile( "\n\
+.option push\n\
+.option norelax\n\
+	la gp, __global_pointer$\n\
+.option pop\n\
+	la sp, _eusrstack\n"
+".option arch, +zicsr\n"
+	// Setup the interrupt vector, processor status and INTSYSCR.
+"	li a0, 0x1880\n\
+	csrw mstatus, a0\n"
+	: : : "a0", "a3", "memory");
+
+	// Careful: Use registers to prevent overwriting of self-data.
+	// This clears out BSS.
+asm volatile(
+"	la a0, _sbss\n\
+	la a1, _ebss\n\
+	li a2, 0\n\
+	bge a0, a1, 2f\n\
+1:	sw a2, 0(a0)\n\
+	addi a0, a0, 4\n\
+	blt a0, a1, 1b\n\
+2:"
+	// This loads DATA from FLASH to RAM ---- BUT --- We don't use the .data section here.
+/*
+"	la a0, _data_lma\n\
+	la a1, _data_vma\n\
+	la a2, _edata\n\
+1:	beq a1, a2, 2f\n\
+	lw a3, 0(a0)\n\
+	sw a3, 0(a1)\n\
+	addi a0, a0, 4\n\
+	addi a1, a1, 4\n\
+	bne a1, a2, 1b\n\
+2:\n"*/
+: : : "a0", "a1", "a2", "a3", "memory"
+);
+
+#if defined( FUNCONF_SYSTICK_USE_HCLK ) && FUNCONF_SYSTICK_USE_HCLK
+	SysTick->CTLR = 5;
+#else
+	SysTick->CTLR = 1;
+#endif
+
+	// Because no ISRs, we can jump straight to main!
+	main();
+}
+```
+
+This made the overhead for our firmware very, very small.  So we could focus on getting all of the business to play bad apple down to the 3328 byte bootloader.
 
 ## De-Blocking Filter
 
