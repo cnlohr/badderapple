@@ -457,9 +457,6 @@ uint16_t pixelmap[64*6];
 					pprev = ((kpre>>14)&2) | ((kpre>>7)&1);
 				}
 				pnext = ((pvo>>8)&2) | ((pvo>>1)&1);
-
-				//pprev = pnext;
-
 				pthis = (((pvo>>7)&2) | ((pvo>>0)&1))<<1;
 
 				int pol = (potable[pnext+pprev*4]>>pthis)&3;

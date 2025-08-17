@@ -100,9 +100,9 @@ In an example datastream I am using 256 tile, I can represent tile IDs as uint8_
 | Reordered, gzip -9            | 119046 (37.7%) | 114779 (36.4%) |
 | Reordered, zstd -9            | **110001 (34.9%)** | **110119 (34.9%)** |
 
-![Graph of above data](https://github.com/user-attachments/assets/e4a361b2-5c5a-4af5-9dac-41b762b9a3d1)
+![Graph of above data](https://github.com/user-attachments/assets/9f585f9e-1d5a-452d-9a36-c395d2a70e0f)
 
-Either way we look at this, this is going to be a sad uphill batter.  We are going to have to get down to about 61kB in order to fit the tile data, startup code and song.  If gzip and zstd can only get it down to 92kB this is going to be rough.
+Either way we look at this, this is going to be a sad uphill batter.  We are going to have to get down to about 53-54kB in order to fit the tile data, startup code and song.  If gzip and zstd can only get it down to 92kB this is going to be rough.
 
 Wait ... 💭This is not the result I expected.  Why does this happen?  Why would the size of each tile being encoded (in 32-bit or 8-bit) change how effective gzip / zstd can compress the stream at a high level.
 
@@ -991,10 +991,26 @@ BADATA_DECORATOR uint8_t ba_chancetable_glyph_dual[BY_CLASS][255] = {
 From there, we just have to start decoding!  All of the data to decode is stored in this one array.
 
 ```c
-BADATA_DECORATOR uint8_t ba_video_payload[XXX TODO] = { ... };
+BADATA_DECORATOR uint8_t ba_video_payload[54492] = { ... };
 ```
 
-Using this cocofony of compression schemes, we can come to a final compression of XXX TODO
+Using this cocofony of compression schemes, the video portion of the compression (from `vpxtext`) comes down to:
+
+```
+      Glyphs:    256
+ Num Changes:  50412
+      Stream: 294984 bits / bytes: 36873 (5.851 bits per glyph change, 5.850 theoretical)
+         Run: 140952 bits / bytes: 17619
+
+    Combined: 435936 bits / bytes: 54492
+ +Tile Class:   1024 bits / bytes:   128
+ + Tile Prob:  26520 bits / bytes:  3315
+ +  Run Prob:  13312 bits / bytes:  1664
+ +COMPGlyphs:  20072 bits / bytes:  2509
+   Sound    :   5384 bits / bytes:   673
+
+ Total:  62781 Bytes (502248 bits) (75.626 bits/frame VO) (6570 frames)
+```
 
 ## Hero Frame
 
@@ -1004,7 +1020,7 @@ Just one thing remains.  A hero frame.  There's one scene that I anticipate and 
 
 And I wanted to make sure that would come through on the compressed video.  So, I created an editor that lets me manually edit tiles, and where they go within the stream.  Just doodling on a small face made it work out quite nicely in spite of being right on a frame boundary.
 
-**TODO** Screenshot of editor
+![hero editor](https://github.com/user-attachments/assets/e957d886-2b60-4c94-be18-eb0ade524a3b)
 
 With that, I had the final stream.  Everything looked like it would fit.  Just needed one more thing, to move it to the ch32v006.
 
@@ -1149,6 +1165,10 @@ void EmitEdge( graphictype tgprev, graphictype tg, graphictype tgnext )
 {
 	// This should only need +2 regs (or 3 depending on how the optimizer slices it)
 	// (so all should fit in working reg space)
+
+	// pixel data is stored 8-pixels-at-a-time. The MSB for each pixel is
+	// the top byte, and the LSB for each pixel is the bottom byte.
+
 	graphictype A = tgprev >> 8;
 	graphictype B = tgprev;      // implied & 0xff
 	graphictype C = tgnext >> 8;
@@ -1159,7 +1179,7 @@ void EmitEdge( graphictype tgprev, graphictype tg, graphictype tgnext )
 	int tghi = (D&E)|(B&E)|(B&C&F)|(A&D&F);     // 8 bits worth of MSBs
 	int tglo = E|C|A|(D&F)|(B&F)|(B&D);       // 8 bits worth of LSBs
 
-	PMEmit( (tghi << 8) | tglo );
+	PMEmit( (tghi << 8) | tglo ); // Write to intermediate framebuffer.
 }
 ```
 
@@ -1170,11 +1190,58 @@ And I do mean it would have been simpler if we had some simple sane color blendi
 	int tglo = G|E|(F&H);       // 8 bits worth of MSB|LSB of this+(next+prev+1)/2-1
 ```
 
+The idea is that the horizontal filter is run by reading the given tile data from memory, applying the vertical filter and writing to an intermedia framebuffer.
+
 ### Horizontal D-Blocking Filter
 
-For the blur across the horizontal lines, 
+On scanout is where we compute our horizontal deblocking filter.  Because our OLED Display has a weird scanout **TODO diagram of scanout** -- we will perform the blur on the first and last pixel of every output group-of-8 pixels,
 
-TODO
+```
+	for( i = 0; i < sizeof(pixelmap)/2; i++ )
+	{
+		if( pvx == 64 ) { pvx = 0; pvy++; }
+		int pvo = pmo[i];
+		uint16_t pvr = pvo & 0x7e7e;
+
+		int pprev, pnext, pthis;
+
+		if( i < 64 )
+			pprev = ((pvo>>8)&2) | ((pvo>>1)&1);
+		else
+		{
+			int kpre = pmo[i-64];
+			pprev = ((kpre>>14)&2) | ((kpre>>7)&1);
+		}
+		pnext = ((pvo>>8)&2) | ((pvo>>1)&1);
+		pthis = (((pvo>>7)&2) | ((pvo>>0)&1))<<1;
+
+		int pol = (potable[pnext+pprev*4]>>pthis)&3; // <<<<<<<<<<<<<<<<<<<<<<<<<<
+		pvr |= (pol & 1) | (pol&2)<<7;
+
+		if( i >= 256 )
+			pnext = ((pvo>>13)&2) | ((pvo>>6)&1);
+		else
+		{
+			int knext = pmo[i+64];
+			pnext = ((knext>>7)&2) | (knext &1);
+		}
+		pprev = ((pvo>>13)&2) | ((pvo>>6)&1);
+		pthis = (((pvo>>14)&2) | ((pvo>>7)&1))<<1;
+
+		pol = (potable[pnext+pprev*4]>>pthis)&3; // <<<<<<<<<<<<<<<<<<<<<<<<<<
+		pvr |= (pol & 1)<<7 | (pol&2)<<14;
+
+		//pixelbase[pmp] = pvo;
+		uint16_t po = pvr;
+
+		if( subframe != 1 ) // Set this to &1 for 50/50 grey.
+			ssd1306_mini_i2c_sendbyte( po>>8 );
+		else
+			ssd1306_mini_i2c_sendbyte( po );
+		}
+```
+
+TODO write up potable
 
 # The web viewer demo
 
