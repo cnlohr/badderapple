@@ -660,6 +660,10 @@ uint8_t PullHuffmanByte()
 
 That's about it for decoding the huffman coded data with reverse LZSS.
 
+## Synthesizing
+
+**TODO** Explain 
+
 ## Testing
 
 To produce the audio file for use with ffmpeg, `track-float-48000.dat`, as well as producing `badapple_song.h` in the `playback/` folder, you can use the following command:
@@ -856,11 +860,11 @@ With our glyphs decoded into RAM, we can move onto the stream itself.  One of th
 
 This graph below shows each transition from one tile ID to another, and it shows the count of how frequently that transition has happend within the song.
 
-![Tile Transition Graph](https://github.com/user-attachments/assets/2a30a233-0e05-4b8b-a444-b2aecca109f1)
+![Tile Transition Graph](https://github.com/user-attachments/assets/71ebed6c-c7cc-4a1f-96f7-ca77a530d485)
 
 If you zoom out, it looks really pretty.
 
-![Zoomed out transition graph](https://github.com/user-attachments/assets/11d94f29-5c0f-48c5-8ecc-34841fd8bd67)
+![Zoomed out transition graph](https://github.com/user-attachments/assets/5ac8e515-f76d-4351-859b-f294d8db20a5)
 
 So, I wrote an algorithm to place each tile into a "class."  Then when trying to figure out which cell is next, instead of assuming all cells are the same, we can use the chance of moving to another cell based on which class we're in.
 
