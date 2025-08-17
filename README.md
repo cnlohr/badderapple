@@ -918,14 +918,19 @@ uint8_t ba_vpx_probs_by_tile_run_continuous[USE_TILE_CLASSES][RUNCODES_CONTINUOU
 	{ 145,109, 83, 65, 44, 54, 30, 26, 40, 29, 26, 15, 20, 24, 13, 25,  7, 18, 14, 15, 16, 14, 11,  7,  8,  0,  8,  4,  9,  0,  4,  0,  9, 10, 27, 12,  0, 13,  7,  0,  0,  0,  0,  0,  0, 15,  0,  0,  0,  0,  0,  8,  0,  0,  0,  0,  0,  0,  0, 21, 11,  0,  0,  0, 12,  0,  0,  0,  0,  0,  0,  0,  0, 14,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,},
 	...
 	n classes
+};
 ```
 
-The more accurately we can nail down the chance of a given bit being a 1 or a 0, the better compression we can have.  So if we find some cells where there's 0 chance that there's a break in the continuation, we can spend very little data on that check.
+The more accurately we can nail down the chance of a given bit being a `1` or a `0`, the better compression we can have.  So if we find some cells where there's 0 chance that there's a break in the continuation, we can spend very little data on that check.
+
+Nothing changes as long as we're getting the "keep going" `1`s.  But as soon as we get a `0` we have to start decoding a glyph ID.
+
+We encode glyph IDs in binary, 8 bits, most-significant-bit-first. 
 
 
 **TODO** Just redo this whole dang section.
 
-As soon as we get a break
+As soon as we get a break in the
 
 
 Now, we can start encoding/decoding a "next glyph" from where we are.
@@ -936,6 +941,10 @@ We start encoding the "which cell are we moving to" by converting that into bina
 ProbabilityTreeGenerateProbabilities
 
 **TODO** PICKUP HERE
+
+## Hero Frame
+
+(Show editor)
 
 # The ch32v006 implementation
 
