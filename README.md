@@ -1192,11 +1192,33 @@ And I do mean it would have been simpler if we had some simple sane color blendi
 
 The idea is that the horizontal filter is run by reading the given tile data from memory, applying the vertical filter and writing to an intermedia framebuffer.
 
+So yes, in a manner of sense you could turn the ch32v006 into a SIMD processor.  This is sort of 8 SIMD, but you could process up to 32-bits worth at once!
+
 ### Horizontal D-Blocking Filter
 
-On scanout is where we compute our horizontal deblocking filter.  Because our OLED Display has a weird scanout **TODO diagram of scanout** -- we will perform the blur on the first and last pixel of every output group-of-8 pixels,
+On scanout is where we compute our horizontal deblocking filter.  Because our OLED Display has a weird scanout, we will perform the blur on the first and last pixel of every output group-of-8 pixels.
 
+![OLED Scanout order](https://github.com/user-attachments/assets/2a333626-b95e-429d-a9ea-765c9f5f1a41)
+
+The scan order for the OLED display goes in rows of 8 pixels at a time, from left to right for all 6 superrows.  In outputting each new byte worth of pixels, we select the first and last pixel to do the blur on while copying all of the others.
+
+To speed up the process for determining how "bright" a given pixel should be, we built a LUT (because this [couldn't be a cnlohr project unless it had more LUTs](https://www.youtube.com/watch?v=LnqqvVp_UZg)). Where the X axis along the LUT is the "prev" cell, the Y axis is the "next" cell, and within each byte, you can shift it down by 2* the current brightness to get the intended value.
+
+```c
+
+// This table contains the information about how to blend one pixel at a time.
+// You can index into it via X->prev, Y->next, >>(2*this)
+static const uint8_t potable[16] = {
+	0x50, 0xf4, 0xf5, 0xf5,
+	0xf4, 0xf5, 0xfd, 0xfd,
+	0xf5, 0xfd, 0xfd, 0xfd,
+	0xf5, 0xfd, 0xfd, 0xfd,
+};
 ```
+
+And then we have the final scanout code.
+
+```c
 	for( i = 0; i < sizeof(pixelmap)/2; i++ )
 	{
 		if( pvx == 64 ) { pvx = 0; pvy++; }
@@ -1241,9 +1263,113 @@ On scanout is where we compute our horizontal deblocking filter.  Because our OL
 		}
 ```
 
-TODO write up potable
+## Firmware (Final notes)
+
+While there was a lot of push and shove to get the overall size small enough eventually I was able to do so, and then continue to push, because nothing is ever in the last place I look! The final size output (at least as of the moment of writing this) is:
+
+```
+Memory region         Used Size  Region Size  %age Used
+           FLASH:       62976 B        62 KB     99.19%
+      BOOTLOADER:        3280 B       3328 B     98.56%
+             RAM:        6400 B         8 KB     78.12%
+```
 
 # The web viewer demo
+
+The [web viewer](https://cnvr.io/dump/badderapple.html) was a whole nother rabbit hole. 
+
+I wanted some tool initially, on Desktop to debug through the output stream and understand where there may be errors and where something may not have decoded correctly.  So, it started largely as a debugging tool. And from there into a demonstration tool, and from there into the web viewer we have today.
+
+Originally, I started with a decoder, available in the [playback/](playback/) folder, originally designed as a basic tester to make sure I wasn't just making up unintelligable bitstreams.  This morphed into the [playback/interactive/](playback/interactive/) viewer.  I wrote it in [rawdraw](https://github.com/cnlohr/rawdraw), a single-file-header multi-platform graphics system because I had a sneaking suspicion I was going to want to deploy this more places than deskop, and I hate waste.
+
+![interactive viewer](https://github.com/user-attachments/assets/fa59b807-60f9-443a-a8a7-3eb186e0dead)
+
+This was my first time using the [Clay UI Layout Library for C](https://github.com/nicbarker/clay) but thankfully I was not the first to use it with rawdraw, since it now has support for [glScissors](https://registry.khronos.org/OpenGL-Refpages/gl4/html/glScissor.xhtml).  
+
+The general setup for Clay is to define a Clay layout.  Once Clay has started setting things up, you can use `CLAY()` macros to build a series of laid out elements within a window.  You tell it what you need and where roughly, and Clay will determine the width/height X and Y of all of the individual elemetns and 
+
+```c
+	CNFGClearFrame();
+	Clay_SetPointerState((Clay_Vector2) { mousePositionX, mousePositionY }, isMouseDown);
+	Clay_BeginLayout();
+
+	int padding = 4;
+	int paddingChild = 4;
+
+	LayoutStart();
+	{
+		CLAY({ .id = CLAY_ID("OuterContainer"), .layout = { .layoutDirection = CLAY_TOP_TO_BOTTOM, .sizing = {CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0)}, .padding = CLAY_PADDING_ALL(padding), .childGap = paddingChild }, .backgroundColor = COLOR_BACKGROUND })
+		{
+
+			CLAY({
+				.id = CLAY_ID("Top Bar"),
+				.layout = { .layoutDirection = CLAY_LEFT_TO_RIGHT, .sizing = { .height = CLAY_SIZING_FIT(), .width = CLAY_SIZING_GROW(0) }, .padding = CLAY_PADDING_ALL(padding), .childGap = paddingChild },
+				.backgroundColor = COLOR_PADGREY
+			})
+			{
+				CLAY({ .layout = { .childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER}, .sizing = { .width = CLAY_SIZING_FIT(32), .height = CLAY_SIZING_FIT() }, .padding = CLAY_PADDING_ALL(padding), .childGap = paddingChild }, .backgroundColor = ClayButton() } )
+				if( AudioEnabled )
+					CLAY_TEXT(CLAY_STRING("\x04"), CLAY_TEXT_CONFIG({ .textAlignment = CLAY_TEXT_ALIGN_CENTER, .fontSize = 16, .textColor = {255, 255, 255, 255} }));
+				else
+					CLAY_TEXT(CLAY_STRING("\x0e"), CLAY_TEXT_CONFIG({ .textAlignment = CLAY_TEXT_ALIGN_CENTER, .fontSize = 16, .textColor = {255, 255, 255, 255} }));
+
+				int ToggleAudio();
+				int ToggleFullscreen();
+				int IsFullscreen();
+
+				if( btnClicked ) { AudioEnabled = ToggleAudio(); }
+
+				CLAY({ .layout = { .childAlignment = { CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_CENTER}, .sizing = { .width = CLAY_SIZING_FIT(32), .height = CLAY_SIZING_FIT() }, .padding = CLAY_PADDING_ALL(padding), .childGap = paddingChild }, .backgroundColor = ClayButton() } )
+				if( IsFullscreen() )
+					CLAY_TEXT(CLAY_STRING( "\x1f" ), CLAY_TEXT_CONFIG({ .textAlignment = CLAY_TEXT_ALIGN_CENTER, .fontSize = 16, .textColor = {255, 255, 255, 255} }));
+				else
+					CLAY_TEXT(CLAY_STRING( "\x12" ), CLAY_TEXT_CONFIG({ .textAlignment = CLAY_TEXT_ALIGN_CENTER, .fontSize = 16, .textColor = {255, 255, 255, 255} }));
+				if( btnClicked ) { ToggleFullscreen(); }
+		...
+```
+
+One of the really fun things about Clay is that you can write code within the layout.  So this means you can conditionally emit more CLAY elements.  So the scene can be dynamic, dependent on what is visible, or where the user is scrubbing within the song.
+
+This was really helpful, because I could write code in [interactive.c](playback/interactive/interactive.c) to handle visualizing all of the various details going on about the song, and its decompression.
+
+To monitor bit-at-a-time, I added some macros that are no-ops on the embedded platform, like CHECKPOINT.  This would notify the interactive tool to take a sort of snapshot of everything, so when the user scrubs around using the scrubbing bars, they can see 
+
+### Porting to WASM
+
+Rawdraw has a mechanism to target WASM, without any extra engines like Emscripten, so when it builds out WASM targets, they contain only a WASM blob with the code, and enough javascript to load the WASM blob and give it access to a WebGL context.  For instance, the example rawdraw WASM project here is only 19kB uncompressed, and goes to around 10kB after regular gzip HTTP compression.
+
+![rawdraw example app](https://github.com/user-attachments/assets/5f1e6d86-26dc-4f8f-8263-07fea3bd901d).
+
+WASM does not have any kind of libc natively, though there are projects that seek to address it, all I had to do was drop in some headers into [weblibc_headers](playback/interactive/web/weblibc_headers) with some bog-standard functions, most of who's implementation was from ch32fun.  Within the interactive playback tool, I did use some floating point functions, so, for those I just provided a header, and did the math in Javascript.
+
+The WASM build process is defined by rawdraw, but it just boils down to:
+
+
+```sh
+# Compile the WASM blob
+clang -I.. -DEMU -I../.. -I../../../common -I../../../vpxtest -Iweblibc_headers -DWASM -DASYNCIFY=1 -I. -Wno-string-compare -O4 -g -I../common -DRESX=64 -DRESY=48 -DBLOCKSIZE=8 -DFRAMECT=6570 -DTARGET_GLYPH_COUNT=256 -I../common -DRESX=64 -DRESY=48 -DBLOCKSIZE=8 -DFRAMECT=6570 -DTARGET_GLYPH_COUNT=256 -DWASM -nostdlib --target=wasm32 -flto -Oz -Wl,--lto-O3 -Wl,--no-entry -Wl,--allow-undefined -matomics -Wl,--initial-memory=1073741824,--max-memory=1073741824 -mbulk-memory -Wl,--import-memory -Wl,--export=__heap_base,--export=__data_end,--export=asyncify_struct ../interactive.c -o main.wasm
+
+# Asyncify lets us "call back" into the WASM code.
+wasm-opt --asyncify  main.wasm -o main.wasm
+
+cat main.wasm | gzip -9 | dd bs=1 skip=10 | head -c -8 | base64 | sed -e "$ ! {/./s/$/ \\\\/}" > blob_b64;
+
+# Paste the WASM blob into the HTML file.
+./subst template.js -s -f BLOB blob_b64 -o mid.js
+
+# This squeezes the javascript or "uglifies" it
+terser --module --compress -d RAWDRAW_USE_LOOP_FUNCTION=false -d RAWDRAW_NEED_BLITTER=true mid.js -o opt.js
+
+# Paste everything together and output badderapple.html
+./subst template.ht -s -f JAVASCRIPT_DATA opt.js -o badderapple.html
+```
+🗭WASM actually has a [critical flaw](https://github.com/WebAssembly/design/issues/796), in that it doesn't have any `goto` opcode.  This means that we have to use asyncify to make it so we can have a call that can call out to JavaScript and allow the screen to flip.  If it had a `goto` opcode, WASM code could be reentrant and allow code to sort of "wait" or support threads called back from Javascript.  As it stands, you have to use asyncify, which adds additional if() branches everywhere there is code that could be entered back into which can have a significant overhead.
+
+Regardless, with this system, we can quickly iterate and output reasonably sized .html files that contain everything all-in-one.
+
+Don't let BIG WASM tell you what to do. Your hello world WASM project with some OpenGL graphis doesn't need to be 13 megabytes!
+
+![downloaded web version](https://github.com/user-attachments/assets/cf0fa2aa-40cc-4a33-a546-888535d3efc3)
 
 # Setup and Running
 
