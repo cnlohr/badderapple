@@ -86,6 +86,8 @@ There are a lot of different ways to encode information, before compression.  Th
 | gzip -9      | 12001 (314%) | 11458 (300%) | 10590 (277%) | 13720 (359%) | 1329 (34%) | 682 (17.8%) |
 | zstd -9      | 10052 (263%) | 9480 (248%) | 8877 (232%) | 12182 (319%)  | 1332 (35%) | 724 (19.0%) |
 
+![Graph of above table](https://github.com/user-attachments/assets/ffe9bd12-6028-4c8c-86af-d76ef2695ae3)
+
 Originally, I used a scheme of where I would encode each tile one at a time through the length of the video.  And I would compress it as `[ run-length | symbol-to-switch-to ]` before another tile would change.  I then tried doing exactly the same, but, scanned left-to-right and top-top-bottom, and looked for changes over time.  I was using exactly the same binary representation for both. And the binary data takes exactly the same amount of data to encode each way. YET! Across the board, it was a serious win to represent the data the other way.
 
 In an example datastream I am using 256 tile, I can represent tile IDs as uint8_t's, so the stream can be represented as 64/8 * 48/8 * 6570 (Frames) = 315360 bytes.
@@ -734,7 +736,7 @@ This process was really clunky, and left me frustrated, spending a lot of time n
 
 Frustrated, I was visiting my brother in early 2024, and I started explaining my problem and both him and his wife were like "why didn't k-means work?" and I proceeded to explain the problem "why didn't k-means work?" then when I was done they asked "You didn't try k-means, did you?"
 
-...no
+...no?
 
 They spent about 20 minutes convincing me, I'd argue "but I have 64 dimensions, one for each pixel" they pointed out that has no issue at all.  After various other defensive arguments for something that was a clear lack of knowledge on my part. I decided to give it a shot.
 
@@ -829,7 +831,7 @@ Let's first compress our glyphs. You can see the web demo doing this when it fir
 
 While it's wonderful to say we can just take an input stream and VPX decompress the stream, the truth of the matter is much stickier.  Remember that pesky fact that to compress or decompress a stream, you have to know what the probability of each bit being a 1 or a 0 is.
 
-**TODO** Explain why we can't have 4 greyscale levels
+**TODO** Explain why we can't have 4 greyscale levels **TODO** Slow-mo-video of successive frames.
 
 We start by encoding our greyscale as **0**, **1**, or **3**.  This is somewhat arbitrary, and it could be other ways, but, it was just a convention I picked.  So the greyscale value of **2** does not exist.
 
