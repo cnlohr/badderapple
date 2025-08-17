@@ -135,8 +135,8 @@ void EmitEdge( graphictype tgprev, graphictype tg, graphictype tgnext )
 	//else
 	int tglo = G|E|(F&H);       // 8 bits worth of MSB|LSB of this+(next+prev+1)/2-1
 */
-	int tghi = (D&E)|(B&E)|(B&C&F)|(A&D&F);     // 8 bits worth of MSB of this+(next+prev+1)/2-1 (Assuming values of 0,1,3)
-	int tglo = E|C|A|(D&F)|(B&F)|(B&D);       // 8 bits worth of MSB|LSB of this+(next+prev+1)/2-1
+	int tghi = (D&E)|(B&E)|(B&C&F)|(A&D&F);     // 8 bits worth of MSBs
+	int tglo = E|C|A|(D&F)|(B&F)|(B&D);       // 8 bits worth of LSBs
 
 	//ssd1306_mini_i2c_sendbyte( tg );
 	PMEmit( (tghi << 8) | tglo );

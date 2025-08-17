@@ -1047,6 +1047,8 @@ This means, I was starting with literally nothing, startup code wise.  I didn't 
 1. We aren't using ISRs.
 2. We have no .data section.  (No variables come initialized, all are default-initialized to 0.)
 
+All of this code can be found in [playback/ch32v006_firmware/badappleplay.c](playback/ch32v006_firmware/badappleplay.c).
+
 So, our startup function could be itty bitty.
 
 ```c
@@ -1059,7 +1061,7 @@ void handle_reset( void )
 .option pop\n\
 	la sp, _eusrstack\n"
 ".option arch, +zicsr\n"
-	// Setup the interrupt vector, processor status and INTSYSCR.
+	// No ISR needs setup so just set mstatus.
 "	li a0, 0x1880\n\
 	csrw mstatus, a0\n"
 	: : : "a0", "a3", "memory");
@@ -1103,11 +1105,76 @@ asm volatile(
 
 This made the overhead for our firmware very, very small.  So we could focus on getting all of the business to play bad apple down to the 3328 byte bootloader.
 
+Since we aren't using any of the ch32fun startup code, or systeminit.  Main has to be clever about setting up flash latency and switching over to an external crystal.  Normally you'd do a few more steps, but we can just yolo all this.
+
+```c
+	// This is normally in SystemInit() but pulling out here to keep things tight.
+	FLASH->ACTLR = FLASH_ACTLR_LATENCY_2;  // Can't run flash at full speed.
+
+	#define RCC_CSS 0
+	#define HSEBYP 0
+	#define BASE_CTLR	(((FUNCONF_HSITRIM) << 3) | RCC_HSION | HSEBYP | RCC_CSS)
+	RCC->CTLR = BASE_CTLR | RCC_HSION | RCC_HSEON | RCC_PLLON;  // Turn on HSE + PLL
+	while((RCC->CTLR & RCC_PLLRDY) == 0);                       // Wait till PLL is ready
+	RCC->CFGR0 = RCC_PLLSRC_HSE_Mul2 | RCC_SW_PLL | RCC_HPRE_DIV1; // Select PLL as system clock source
+```
+
+From there, there's a other major topics that need to be performed:
+1. Setup GPIOs
+2. Configure `TIM2` to be audio output via PWM @ 46875 SPS
+3. Configure `DMA1_Channel2` to feed the `TIM2` PWM output.
+4. Configure `TIM1` to charge pump the OLED (because the OLED needs ~7V on its VCC line.
+5. Setup the RB6448TSWHG04 via bit-banged I2C. (We bit bang because it's faster)
+6. Call `ba_play_setup( &ctx );`
+7. Call `ba_audio_setup();`
+
+And we're off to the races. As a reminder, you can see more information in the file, itself. [playback/ch32v006_firmware/badappleplay.c](playback/ch32v006_firmware/badappleplay.c).
+
 ## De-Blocking Filter
 
 ### Vertical De-Blocking Filter
 
+While the processor can operate at about 1.5CPI (Clocks per instruction), because we are running from flash, that's much much lower.  The ch32v006's flash is a good clip slower than the ch32v003's flash, requiring two wait cycles. So, we are speed constrained.  One of the areas which takes a good bit of performance is the de-blocking filter.
+
+I was just thinking... What if we could do vector processing.  What if we could operate on 8 pixels at a time?  Wouldn't that be cool?  No, the ch32v006 doesn't have vector processing... or does it?
+
+One of the things they teach you in computer engineering is how to build circuits out of logic gates, and how you can use K-maps.  I used [32x8.com](http://www.32x8.com) to generate my computation for the [msb](http://www.32x8.com/sop6_____A-B-C-D-E-F_____m_7-15-19-23-29-31-51-53-55-61-63_____d_2-6-8-9-10-11-14-18-22-24-25-26-27-30-32-33-34-35-36-37-38-39-40-41-42-43-44-45-46-47-50-54-56-57-58-59-62_____option-0_____899781960074855695700) and [lsb](http://www.32x8.com/sop6_____A-B-C-D-E-F_____m_3-5-7-12-13-15-17-19-20-21-23-28-29-31-48-49-51-52-53-55-60-61-63_____d_2-6-8-9-10-11-14-18-22-24-25-26-27-30-32-33-34-35-36-37-38-39-40-41-42-43-44-45-46-47-50-54-56-57-58-59-62_____option-0_____999781976475857595733) for the table outlined in **TODO** Section reference.
+
+![32x8 logic image](https://github.com/user-attachments/assets/f3299121-734c-42d9-b5b4-330f38764803)
+
+With this in-hand I decided to operate on groups of 8 pixels simultaneously.  It would have been much easier, faster and simpler if we had used a sane mathematical equation, but, this was still a big gain.  We didn't have to do all the bit logic to disassemble each pixel out fo the blending pixels, and we are able to compute both bits of all 8 pixels on each vertical blur at once.
+
+```c
+void EmitEdge( graphictype tgprev, graphictype tg, graphictype tgnext )
+{
+	// This should only need +2 regs (or 3 depending on how the optimizer slices it)
+	// (so all should fit in working reg space)
+	graphictype A = tgprev >> 8;
+	graphictype B = tgprev;      // implied & 0xff
+	graphictype C = tgnext >> 8;
+	graphictype D = tgnext;      // implied & 0xff
+	graphictype E = tg >> 8;
+	graphictype F = tg;          // implied & 0xff
+
+	int tghi = (D&E)|(B&E)|(B&C&F)|(A&D&F);     // 8 bits worth of MSBs
+	int tglo = E|C|A|(D&F)|(B&F)|(B&D);       // 8 bits worth of LSBs
+
+	PMEmit( (tghi << 8) | tglo );
+}
+```
+
+And I do mean it would have been simpler if we had some simple sane color blending.
+
+```c
+	int tghi = (F&G)|(E&H);     // 8 bits worth of MSB of this+(next+prev+1)/2-1
+	int tglo = G|E|(F&H);       // 8 bits worth of MSB|LSB of this+(next+prev+1)/2-1
+```
+
 ### Horizontal D-Blocking Filter
+
+For the blur across the horizontal lines, 
+
+TODO
 
 # The web viewer demo
 
