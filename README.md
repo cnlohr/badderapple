@@ -1336,7 +1336,7 @@ To monitor bit-at-a-time, I added some macros that are no-ops on the embedded pl
 
 ### Porting to WASM
 
-Rawdraw has a mechanism to target WASM, without any extra engines like Emscripten, so when it builds out WASM targets, they contain only a WASM blob with the code, and enough javascript to load the WASM blob and give it access to a WebGL context.  For instance, the example rawdraw WASM project here is only 19kB uncompressed, and goes to around 10kB after regular gzip HTTP compression.
+Rawdraw has a mechanism to target WASM, without any extra engines like Emscripten, so when it builds out WASM targets, they contain only a WASM blob with the code, and enough javascript to load the WASM blob and give it access to a WebGL context.  For instance, the example rawdraw WASM project here is only 19kB uncompressed, and goes to around 10kB after regular gzip HTTP compression... And typically is up and rendering within about one frame of page load, so it's sometimes possible to prevent even the loading flash.
 
 ![rawdraw example app](https://github.com/user-attachments/assets/5f1e6d86-26dc-4f8f-8263-07fea3bd901d).
 
@@ -1363,11 +1363,11 @@ terser --module --compress -d RAWDRAW_USE_LOOP_FUNCTION=false -d RAWDRAW_NEED_BL
 # Paste everything together and output badderapple.html
 ./subst template.ht -s -f JAVASCRIPT_DATA opt.js -o badderapple.html
 ```
-🗭WASM actually has a [critical flaw](https://github.com/WebAssembly/design/issues/796), in that it doesn't have any `goto` opcode.  This means that we have to use asyncify to make it so we can have a call that can call out to JavaScript and allow the screen to flip.  If it had a `goto` opcode, WASM code could be reentrant and allow code to sort of "wait" or support threads called back from Javascript.  As it stands, you have to use asyncify, which adds additional if() branches everywhere there is code that could be entered back into which can have a significant overhead.
+🗭WASM has a [critical flaw](https://github.com/WebAssembly/design/issues/796) that isn't even addressed in WASM2, in that it doesn't have any `goto` opcode.  This means that we have to use asyncify to make it so we can have a call that can call out to JavaScript and allow the screen to flip.  If it had a `goto` opcode, WASM code could be reentrant and allow code to sort of "wait" or support threads called back from Javascript.  As it stands, you have to use asyncify, which adds additional if() branches everywhere there is code that could be entered back into which can have a significant overhead.
 
 Regardless, with this system, we can quickly iterate and output reasonably sized .html files that contain everything all-in-one.
 
-Don't let BIG WASM tell you what to do. Your hello world WASM project with some OpenGL graphis doesn't need to be 13 megabytes!
+Don't let BIG WASM tell you what to do. Your hello world WASM project with some OpenGL graphis doesn't need to be 13 megabytes and take hundreds of milliseconds to load.
 
 ![downloaded web version](https://github.com/user-attachments/assets/cf0fa2aa-40cc-4a33-a546-888535d3efc3)
 
