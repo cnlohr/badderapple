@@ -100,7 +100,11 @@ In an example datastream I am using 256 tile, I can represent tile IDs as uint8_
 | Reordered, gzip -9            | 119046 (37.7%) | 114779 (36.4%) |
 | Reordered, zstd -9            | **110001 (34.9%)** | **110119 (34.9%)** |
 
-Editing note: What? This is not the result I expected.  Why does this happen?  Why would the size of each tile being encoded change how effective gzip / zstd can compress the stream at a high level.
+![Graph of above data](https://github.com/user-attachments/assets/59e55fea-b12e-4e2a-a438-cb9166cd98a3)
+
+💭This is not the result I expected.  Why does this happen?  Why would the size of each tile being encoded change how effective gzip / zstd can compress the stream at a high level.
+
+Either way we look at this, this is going to be a sad uphill batter.  We are going to have to get down to about 61kB in order to fit the tile data, startup code and song.  If gzip can only get it down to 92kB this is going to be painful.
 
 Just looking at the gzip compression only.
 
