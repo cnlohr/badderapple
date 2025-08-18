@@ -821,8 +821,56 @@ That was until my friend Evan said "I think I can do better" -- "Better than k-m
 I was not ready for what lay ahead.
 
 # Machine Learning
+Up until now, this has mostly followed Charles' general approach to projects like this - efficient compute, small memory footprint, quick iterations. 
 
-**TODO** ef42
+I've got a GPU. What if we didn't care about any of that, and just threw a massive amount of compute at the problem instead? 
+
+## Image Quality Metrics & Tiny Frames
+
+Charles' K-means approach is based on a mean-absolute-error metric; for a given pair of images, he's computing the "distance" between them as the mean of absolute values of per-pixel differences. This is also known as a "L1 loss," and it's a good, [embarrasingly-parallel](https://en.wikipedia.org/wiki/Embarrassingly_parallel), quick-to-compute choice for a distance metric. 
+
+The trouble is that this, and other per-pixel metrics (e.g. [PSNR](https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio)), don't really align with how humans see differences between images. We tend to care more about the structure and semantic content of images, versus specific pixel values. There's other more-complex metrics that try to take human perception into account by looking at edge contrast and colors ([SSIM](https://en.wikipedia.org/wiki/Structural_similarity_index_measure), [FLIP](https://developer.nvidia.com/blog/flip-a-difference-evaluator-for-alternating-images/)) - but these also tend to be reconstruction metrics, meant to compare between images of comparable resolutions. For a project like this one, where we're comparing a 64x48 3-color pixel-sprite rendering against a proper video, these losses are dominated by how we resample and quantize the images; even good resampling tends to lose a lot of important details. 
+
+![Data Loss from Resampling and Quantizing](https://github.com/user-attachments/assets/65f0e7ef-8d88-4fa2-9212-2eba609e9903)
+
+In the end, what we really want is to make something that's visually recognizeable as Bad Apple, even if that means taking some pixel-art-y artistic liberties. It would be nice if this frame had some stars in the background, for example, even if they'd never show up under any sane re-sampling method. 
+
+For tasks like this, machine-learning-based semantic difference metrics, like [LPIPS](https://richzhang.github.io/PerceptualSimilarity/), tend to be a better fit.
+
+## Learned Perceptual Similarity Metrics
+
+The general idea with [LPIPS - "Learned Perceptual Image Patch Similarity"](https://richzhang.github.io/PerceptualSimilarity/) - is:
+ * Take a neural network, pre-trained on an image recognition task with a big dataset;
+ * Run your images through this network;
+ * Pluck out intermediate values from the network at different layers, and compare _these_, instead of anything directly from the original image.
+
+![LPIPS Diagram](https://github.com/user-attachments/assets/31e63848-1080-4bce-b0c2-495fa87f43db)
+
+The intuition here is that the deeper you go in networks like these, the more these intermediate numbers tend to represent higher-level semantic concepts. As a useful distance metric, this checks all the boxes: it's zero if the images are the same, bigger if they're different, and symmetric (A vs B == B vs A), and you can propagate derivatives through it for optimization. The authors found that, compared to other metrics, LPIPS ranks differences between images much more like humans do - and that this seems to be an emergent property of many other vision models.
+
+For a quick example: Here's a picture of my dog, corrupted in two ways: a single-pixel shift down and right, and a big blur over her face.
+ * L1 loss says the shifted image is more different than the blurred one, even though a human would hardly see the difference.
+ * LPIPS dislikes the blur more - better aligned with human perception.
+
+![LPIPS vs L1](https://github.com/user-attachments/assets/7f0f764b-ce25-4f5d-b3d9-8275ee491381)
+
+So: Now that we have a more human-like distance metric, all we have to do is formulate the entire problem of assembling a video from tiles, in a way that lets us optimize tiles & placement to minimize semantic loss.  
+
+## Differentiable Video Rendering 
+
+(TODO: Describe problem formulation.)
+ * Pytorch autodiff / rendering
+ * Gumbel-Softmax trick for tile choice sampling / optimization
+ * Semantic loss application
+ * Optical flow loss
+ * Learned edge encodings under deblocking filter
+
+## Lossy Compression
+
+(TODO: Describe)
+ * Left-align (equivalent tile replacement)
+ * Semantic evaluation of transition skips for compression
+
 
 # Actually compressing this monstrosity
 
