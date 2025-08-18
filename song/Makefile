@@ -38,6 +38,10 @@ fmraw.dat.jq.json : fmraw.dat.json
 fmcomp-huffman-reverselzss2 : fmcomp-huffman-reverselzss2.c
 	gcc $(CFLAGS) -o $@ $^ -lm
 
+# VPX with forward LZSS
+attic/fmcomp-vpx-with-forward-lzss : attic/fmcomp-vpx-with-forward-lzss.c
+	gcc $(CFLAGS) -o $@ $^ -lm 
+
 ../playback/badapple_song_huffman_reverselzss.h : fmcomp-huffman-reverselzss2 fmraw.dat
 	./fmcomp-huffman-reverselzss2
 
