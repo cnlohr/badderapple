@@ -539,6 +539,10 @@ There's an issue, all of the good ones in this list these are state of the art a
 | VPX (reverse LZSS) | **673 (17.6%)** |
 | Huffman (2-table+LZSS) | 704 (18.4%) |
 | Huffman (2 table+reverse LZSS)† | 856 (22.4%) |
+| gzip -9 (for reference) | 682 |
+| zstd -9 (for reference) | 724 |
+
+TODO: Show VPX (Forward LZSS)
 
 † we used this on the final project.  See rationale below.
 
