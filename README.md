@@ -1315,6 +1315,13 @@ And then we have the final scanout code.
 		}
 ```
 
+## And not quite fast enough...
+
+TODO: Add charts
+
+```c
+```
+
 ## Firmware (Final notes)
 
 While there was a lot of push and shove to get the overall size small enough eventually I was able to do so, and then continue to push, because nothing is ever in the last place I look! The final size output (at least as of the moment of writing this) is:
@@ -1322,7 +1329,7 @@ While there was a lot of push and shove to get the overall size small enough eve
 ```
 Memory region         Used Size  Region Size  %age Used
            FLASH:       62976 B        62 KB     99.19%
-      BOOTLOADER:        3280 B       3328 B     98.56%
+      BOOTLOADER:        3296 B       3328 B     99.04%
              RAM:        6400 B         8 KB     78.12%
 ```
 
