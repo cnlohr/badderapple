@@ -202,10 +202,13 @@ int main()
 	RCC->CTLR = BASE_CTLR | RCC_HSION | RCC_HSEON | RCC_PLLON;  // Turn on HSE + PLL
 	while((RCC->CTLR & RCC_PLLRDY) == 0);                       // Wait till PLL is ready
 	RCC->CFGR0 = RCC_PLLSRC_HSE_Mul2 | RCC_SW_PLL | RCC_HPRE_DIV1; // Select PLL as system clock source
-
+//	SystemInit();
 #endif
 
-//	SystemInit();
+	// By assigning, instead of |='ing it uses less code.
+	RCC->APB1PCENR = RCC_APB1Periph_TIM2;
+	RCC->APB2PCENR = ( RCC_APB2Periph_AFIO | RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD ) | RCC_APB2Periph_TIM1;
+	RCC->AHBPCENR = RCC_AHBPeriph_DMA1 | RCC_AHBPeriph_SRAM;
 
 	funGpioInitAll();
 
@@ -235,9 +238,6 @@ int main()
 
 	// Setup PD3/PD4 as TIM2_CH1/TIM2_CH2 as output
 	// TIM2_RM=111 (Full)
-	RCC->APB1PCENR |= RCC_APB1Periph_TIM2;
-	RCC->APB2PCENR |= RCC_APB2Periph_TIM1;
-	RCC->AHBPCENR |= RCC_AHBPeriph_DMA1;
 
 	AFIO->PCFR1 = AFIO_PCFR1_TIM2_RM_0 | AFIO_PCFR1_TIM2_RM_1 | AFIO_PCFR1_TIM2_RM_2;
 
@@ -295,14 +295,10 @@ int main()
 	TIM1->CH3CVR = 16;
 	TIM1->CH4CVR = 16;
 
-// Debug pin
-//	funPinMode( PD6, GPIO_CFGLR_OUT_PP );
-
-	// Red LEDs
-//	funDigitalWrite( PD7, 1 );
-	//funPinMode( PD7, GPIO_CFGLR_OUT_PP );
-
-	// PD6,D7 = GPIO_CFGLR_OUT_PP, D3, D4 = GPIO_CFGLR_OUT_AF_PP
+	funDigitalWrite( PD7, 1 );
+	// PD6 = Profiling (Debug pin)
+	// PD7 = Red LED lights
+	// PD3, PD4 = GPIO_CFGLR_OUT_AF_PP (Sound)
 	GPIOD->CFGLR = 0x110bb444;
 
 	while(1)
@@ -332,6 +328,8 @@ int main()
 			}
 			ba_play_frame( &ctx );
 			subframe = 0;
+			if( frame == 442 ) funDigitalWrite( PD7, 0 );
+			if( frame == 459 ) funDigitalWrite( PD7, 1 );
 			frame++;
 		}
 		else if( subframe & 1 )
@@ -340,13 +338,9 @@ int main()
 				UpdatePixelMap();
 		}
 
-		funDigitalWrite( PD7, (frame < 442) || (frame > 460) );
-
-		while( (int32_t)(SysTick->CNT - nextFrame) < 0 )
-		{
-		}
-
-		//funDigitalWrite( PD6, 1 );
+		funDigitalWrite( PD6, 1 ); // For time monitoring
+		while( (int32_t)(SysTick->CNT - nextFrame) < 0 ) { }
+		funDigitalWrite( PD6, 0 ); // For time monitoring
 
 		nextFrame += 400000; 
 		// 1600000 is 30Hz
@@ -366,153 +360,83 @@ int main()
 		ssd1306_mini_i2c_sendbyte( SSD1306_I2C_ADDR<<1 );
 		ssd1306_mini_i2c_sendbyte( 0x40 ); // Data
 
-		//funDigitalWrite( PD6, 0 );
+		// New, filtered output. (Poorly documented, impenetrable)
+#if 1
+		int pvx;
+		int pvy;
 
-#if 0
-		if( 0 )
+		int i;
+		uint16_t * pmo = pixelmap;
+		for( i = 0; i < sizeof(pixelmap)/2; i++ )
 		{
-			// Vertically-filtered output (for debug)
-			glyphtype * gm = ctx.curmap;
-			// 2.59ms
-			for( y = 0; y < 6; y++ )
+			if( pvx == 64 ) { pvx = 0; pvy++; }
+			int pvo = pmo[i];
+			uint16_t pvr = pvo & 0x7e7e;
+
+			int pprev, pnext, pthis;
+
+			if( i < 64 )
+				pprev = ((pvo>>8)&2) | ((pvo>>1)&1);
+			else
 			{
-				int x;
-				for( x = 0; x < 64; x++ )
+				int kpre = pmo[i-64];
+				pprev = ((kpre>>14)&2) | ((kpre>>7)&1);
+			}
+			pnext = ((pvo>>8)&2) | ((pvo>>1)&1);
+			pthis = (((pvo>>7)&2) | ((pvo>>0)&1))<<1;
+
+			int pol = (potable[pnext+pprev*4]>>pthis)&3;
+			pvr |= (pol & 1) | (pol&2)<<7;
+
+			if( i >= 256 )
+				pnext = ((pvo>>13)&2) | ((pvo>>6)&1);
+			else
+			{
+				int knext = pmo[i+64];
+				pnext = ((knext>>7)&2) | (knext &1);
+			}
+			pprev = ((pvo>>13)&2) | ((pvo>>6)&1);
+			pthis = (((pvo>>14)&2) | ((pvo>>7)&1))<<1;
+
+			pol = (potable[pnext+pprev*4]>>pthis)&3;
+			pvr |= (pol & 1)<<7 | (pol&2)<<14;
+
+			//pixelbase[pmp] = pvo;
+			uint16_t po = pvr;
+
+			if( subframe != 1 ) // Set this to &1 for 50/50 grey.
+				ssd1306_mini_i2c_sendbyte( po>>8 );
+			else
+				ssd1306_mini_i2c_sendbyte( po );
+		}
+#else
+		// No horizontal filters.
+		glyphtype * gm = ctx.curmap;
+		// 2.59ms
+		for( y = 0; y < 6; y++ )
+		{
+			int x;
+			for( x = 0; x < 8; x++ )
+			{
+				glyphtype gindex = *(gm++);
+				graphictype * g = ctx.glyphdata[gindex];
+				
+				//int go = (subframe & 1)?0xff:0x00;
+				int lg;
+				for( lg = 0; lg< 8; lg ++ )
 				{
-					uint16_t go = pixelmap[64*y+x];
-
-					// Black out first and last pixel. We're writing those in.
-					uint16_t gouse = go & 0x7e7e;
-
-					// Need to blur the first and last pixels.
-					uint16_t gomajor;
-					uint16_t gominor1;
-					uint16_t gominor2;
-
-					gominor1 = ( (go>>1) & 1) | ( ( go>>8 ) & 2 );
-
-					if( y>0 )
-					{
-						gominor2 = pixelmap[64*(y-1)+x];
-						gominor2 = (gominor2 & 1) | ((gominor2>>7)&2);
-					}
-					else
-					{
-						gominor2 = gominor1;
-					}
-
-					uint16_t tmp = potable[gominor2 | gominor1];
-
-					gominor1; (y<6)?(pixelmap[64*(y+1)+x]>>7):(go>>6);
-
-
-					//goprev = (goprev & 1) | ((goprev >> 7)&2);
-					//gonext = (gonext & 1) | ((gonext >> 7)&2);
-
-					if( subframe & 1 )
-						gouse>>=8;
-					ssd1306_mini_i2c_sendbyte( gouse );
-/*
-uint16_t pixelmap[64*6];
-*/
-/*
-					glyphtype gindex = *(gm++);
-					graphictype * g = ctx.glyphdata[gindex];
-					
-					//int go = (subframe & 1)?0xff:0x00;
-					int lg;
-					for( lg = 0; lg< 8; lg ++ )
-					{
-						int go = g[lg];
-						if( (subframe)&1 )
-							go >>= 8;
-						ssd1306_mini_i2c_sendbyte( go );
-					}
-*/
+					int go = g[lg];
+					if( (subframe)&1 )
+						go >>= 8;
+					ssd1306_mini_i2c_sendbyte( go );
 				}
 			}
+			//memset( ssd1306_buffer, n, sizeof( ssd1306_buffer ) );
+			//int k;
+			//for( k = 0; k < sizeof(ssd1306_buffer); k++ ) ssd1306_buffer[k] = frame;
+			//ssd1306_mini_data(ssd1306_buffer, sizeof(ssd1306_buffer));
 		}
-		else 
 #endif
-		if( 1 ) // New, filtered output. (Poorly documented, impenetrable)
-		{
-			int pvx;
-			int pvy;
-
-			int i;
-			uint16_t * pmo = pixelmap;
-			for( i = 0; i < sizeof(pixelmap)/2; i++ )
-			{
-				if( pvx == 64 ) { pvx = 0; pvy++; }
-				int pvo = pmo[i];
-				uint16_t pvr = pvo & 0x7e7e;
-
-				int pprev, pnext, pthis;
-
-				if( i < 64 )
-					pprev = ((pvo>>8)&2) | ((pvo>>1)&1);
-				else
-				{
-					int kpre = pmo[i-64];
-					pprev = ((kpre>>14)&2) | ((kpre>>7)&1);
-				}
-				pnext = ((pvo>>8)&2) | ((pvo>>1)&1);
-				pthis = (((pvo>>7)&2) | ((pvo>>0)&1))<<1;
-
-				int pol = (potable[pnext+pprev*4]>>pthis)&3;
-				pvr |= (pol & 1) | (pol&2)<<7;
-
-				if( i >= 256 )
-					pnext = ((pvo>>13)&2) | ((pvo>>6)&1);
-				else
-				{
-					int knext = pmo[i+64];
-					pnext = ((knext>>7)&2) | (knext &1);
-				}
-				pprev = ((pvo>>13)&2) | ((pvo>>6)&1);
-				pthis = (((pvo>>14)&2) | ((pvo>>7)&1))<<1;
-
-				pol = (potable[pnext+pprev*4]>>pthis)&3;
-				pvr |= (pol & 1)<<7 | (pol&2)<<14;
-
-				//pixelbase[pmp] = pvo;
-				uint16_t po = pvr;
-
-				if( subframe != 1 ) // Set this to &1 for 50/50 grey.
-					ssd1306_mini_i2c_sendbyte( po>>8 );
-				else
-					ssd1306_mini_i2c_sendbyte( po );
-			}
-		}
-		else
-		{
-			glyphtype * gm = ctx.curmap;
-			// 2.59ms
-			for( y = 0; y < 6; y++ )
-			{
-				int x;
-				for( x = 0; x < 8; x++ )
-				{
-					glyphtype gindex = *(gm++);
-					graphictype * g = ctx.glyphdata[gindex];
-					
-					//int go = (subframe & 1)?0xff:0x00;
-					int lg;
-					for( lg = 0; lg< 8; lg ++ )
-					{
-						int go = g[lg];
-						if( (subframe)&1 )
-							go >>= 8;
-						ssd1306_mini_i2c_sendbyte( go );
-					}
-				}
-				//memset( ssd1306_buffer, n, sizeof( ssd1306_buffer ) );
-				//int k;
-				//for( k = 0; k < sizeof(ssd1306_buffer); k++ ) ssd1306_buffer[k] = frame;
-				//ssd1306_mini_data(ssd1306_buffer, sizeof(ssd1306_buffer));
-			}
-		}
-		//funDigitalWrite( PD6, 1 );
 
 		ssd1306_mini_i2c_sendstop();
 
@@ -522,30 +446,12 @@ uint16_t pixelmap[64*6];
 
 		int v = AUDIO_BUFFER_SIZE - DMA1_Channel2->CNTR - 1;
 		if( v < 0 ) v = 0;
-		//PrintHex( out_buffer_data[0] );
-		//outbuffertail += 400;//(F_SPS/120*frame) % AUDIO_BUFFER_SIZE;
-		//if( outbuffertail >= AUDIO_BUFFER_SIZE ) outbuffertail -= AUDIO_BUFFER_SIZE;
+
 		ba_audio_fill_buffer( out_buffer_data, v );
 
-		//funDigitalWrite( PD6, 0 );
 		subframe++;
-		//funDigitalWrite( PD6, 1 );
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -575,8 +481,8 @@ asm volatile(
 	addi a0, a0, 4\n\
 	blt a0, a1, 1b\n\
 2:"
+#if 0
 	// This loads DATA from FLASH to RAM ---- BUT --- We don't use the .data section here.
-/*
 "	la a0, _data_lma\n\
 	la a1, _data_vma\n\
 	la a2, _edata\n\
@@ -586,7 +492,8 @@ asm volatile(
 	addi a0, a0, 4\n\
 	addi a1, a1, 4\n\
 	bne a1, a2, 1b\n\
-2:\n"*/
+2:\n"
+#endif
 : : : "a0", "a1", "a2", "a3", "memory"
 );
 
@@ -596,7 +503,8 @@ asm volatile(
 	SysTick->CTLR = 1;
 #endif
 
-	main();
+	asm volatile( "j main" );
+	//main();
 	// No interrupts, so no need to mret into main.
 
 	// set mepc to be main as the root app.

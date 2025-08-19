@@ -15,23 +15,13 @@ TARGET:=badappleplay
 TARGET_MCU?=CH32V006
 include ../ch32v003fun/ch32fun/ch32fun.mk
 
-bootenable :
-	#$(MINICHLINK)/minichlink -w +a55aff00 option # Enable bootloader, disable RESET
-
-bootdisable:
-	$(MINICHLINK)/minichlink -w +a55adf20 option # Disable bootloader, disable RESET
-
 optionbytes:
 	#$(MINICHLINK)/minichlink -w +a55aff00 option # Enable bootloader, enable RESET
 	#$(MINICHLINK)/minichlink -w +a55aff00 option # Enable bootloader, disable RESET
 	#$(MINICHLINK)/minichlink -w +a55aef10 option # Enable bootloader, enable RESET (Alternate)
 	#$(MINICHLINK)/minichlink -w +a55adf20 option # Disable bootloader, disable RESET
 	#$(MINICHLINK)/minichlink -w +a55acf30 option # Disable bootloader, enable RESET
-
-enablebootloader:
 	$(MINICHLINK)/minichlink -w +a55aff00 option # Enable bootloader, disable RESET
-disablebootloader:
-	$(MINICHLINK)/minichlink -w +a55adf20 option # Disable bootloader, disable RESET
 
 flashdata :
 	$(PREFIX)-objcopy -j .fixedflash -O binary $(TARGET).elf fixedflash.bin

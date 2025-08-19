@@ -47,6 +47,7 @@ static inline void ssd1306_mini_i2c_setup(void)
 #define I2CDELAY_FUNC(x) ADD_N_NOPS(x*1)
 #endif
 
+static int ssd1306_mini_i2c_sendbyte( unsigned char data );// __attribute__((section(".srodata")));
 
 static void ssd1306_mini_i2c_sendstart()
 {
@@ -71,7 +72,8 @@ void ssd1306_mini_i2c_sendstop()
 }
 
 //Return nonzero on failure.
-int ssd1306_mini_i2c_sendbyte( unsigned char data )
+#if 0
+static int ssd1306_mini_i2c_sendbyte( unsigned char data )
 {
 	int i;
 	for( i = 0; i < 8; i++ )
@@ -104,6 +106,39 @@ int ssd1306_mini_i2c_sendbyte( unsigned char data )
 	I2CDELAY_FUNC( 1 * I2CSPEEDBASE );
 	return 0;
 }
+#endif
+
+static int ssd1306_mini_i2c_sendbyte( unsigned char data )
+{
+	//#define SSD1306_I2C_BITBANG_SDA PC1
+	//#define SSD1306_I2C_BITBANG_SCL PC2
+	asm volatile( "\
+		\n\
+		mv  t0, s0\n\
+		mv  t1, s1\n\
+		li  a2, 0x00020000 /* SDA = PC1 */ \n\
+		li  s0, 0x0004 /* SCL = PC2 */ \n\
+		li  s1, 0x00040000 /* SCL = PC2 */ \n\
+		li	a4,8\n\
+		lui	a5,0x40011 /* 0x40011010 = R32_GPIOC_BSHR */ \n\
+1:			srli a3, %[data], 3\n\
+			andi a3, a3, 0x10\n\
+			sra  a3, a2, a3\n\
+			sw	a3,16(a5) /* Set SDA appropriately */ \n\
+			sw  s0,16(a5) /* SCL Hi */ \n\
+			addi a4, a4, -1\n\
+			slli %[data], %[data], 1\n\
+			sw  s1,16(a5) /* SCL Low */ \n\
+			bnez a4, 1b\n\
+		sw  s0,16(a5) /* SCL Hi */ \n\
+		mv  s0, t0\n\
+		sw  s1,16(a5) /* SCL Low */ \n\
+		mv  s1, t1\n\
+		\n\
+		" : : [data]"r"(data) : "a0", "a1", "a2", "a3", "a4", "a5", "t0", "t1", "memory" );
+	return 0;
+}
+
 
 int ssd1306_mini_pkt_send(const uint8_t *data, int sz, int cmd)
 {
