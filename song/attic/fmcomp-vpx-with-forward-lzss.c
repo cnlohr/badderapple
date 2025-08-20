@@ -478,10 +478,10 @@ int main()
 			uint32_t lenAndRun = dtLenAndRun.fullList[i];
 			vpx_write( &writer, 1, chanceRL );
 
-			ProbabilityTreeWriteSym( &writer, GetIndexFromValue( &dtNotes, note ),
+			ProbabilityTreeWriteSym( &writer, GetIndexFromValue( &dtNotesComp, note ),
 				probabilitiesNotes, treeSizeNotes, bitsForNotes );
 
-			ProbabilityTreeWriteSym( &writer, GetIndexFromValue( &dtLenAndRun, lenAndRun ),
+			ProbabilityTreeWriteSym( &writer, GetIndexFromValue( &dtLenAndRunComp, lenAndRun ),
 				probabilitiesLenAndRun, treeSizeLenAndRun, bitsForLenAndRun );
 
 			printf( "Write Note: %d %d\n", note, lenAndRun );
