@@ -150,7 +150,8 @@ void WriteLogshift( vpx_writer * w, int v, int * bctable, int * bctableout )
 		int b = v&1;
 		if (bctable)
 		{
-			int prob = 255 - (bctable[i+1] * 255) / bctable[0];
+			int prob = 
+				255 - (bctable[i+1] * 255) / bctable[0];
 				//128 + (i * 128 / MAX_LSBITS);
 			vpx_write( &writer, b, prob );
 		}
@@ -237,7 +238,7 @@ int main()
 		if( searchStart < 0 ) searchStart = 0;
 		int s;
 		int bestcompcost = 0, bestrl = 0, bestrunstart = 0;
-		for( s = searchStart; s <= i; s++ )
+		for( s = searchStart; s < i; s++ )
 		{
 			int ml;
 			int mlc;
@@ -246,7 +247,7 @@ int main()
 
 			for( 
 				ml = s, mlc = i, rl = 0;
-				ml < i && mlc < numNotes; //&& rl < MaxRL;
+				ml < numNotes && mlc < numNotes; //&& rl < MaxRL;
 				ml++, mlc++, rl++ )
 			{
 				if( completeNoteList[ml] != completeNoteList[mlc] ) break;
@@ -407,14 +408,14 @@ int main()
 		if( searchStart < 0 ) searchStart = 0;
 		int s;
 		int bestrl = 0, bestrunstart = 0;
-		for( s = searchStart; s <= i; s++ )
+		for( s = searchStart; s < i; s++ )
 		{
 			int ml;
 			int mlc;
 			int rl;
 			for( 
 				ml = s, mlc = i, rl = 0;
-				ml < i && mlc < numNotes; // && rl < MaxRL;
+				ml < numNotes && mlc < numNotes; // && rl < MaxRL;
 				ml++, mlc++, rl++ )
 			{
 				if( completeNoteList[ml] != completeNoteList[mlc] ) break;
@@ -456,6 +457,8 @@ int main()
 			WriteLogshift( &writer, offset, bctableoffset, 0 );
 			WriteLogshift( &writer, emit_best_rl, bctablerunlen, 0 );
 
+			printf( "Reference: ofs:%d run:%d\n", offset, emit_best_rl );
+
 			finalRun++;
 
 			//printf( "Emit callback\n" );
@@ -480,6 +483,8 @@ int main()
 
 			ProbabilityTreeWriteSym( &writer, GetIndexFromValue( &dtLenAndRun, lenAndRun ),
 				probabilitiesLenAndRun, treeSizeLenAndRun, bitsForLenAndRun );
+
+			printf( "Write Note: %d %d\n", note, lenAndRun );
 
 			finalNote++;
 		}
