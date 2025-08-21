@@ -934,6 +934,8 @@ If you zoom out, it looks really pretty (or you can click to zoom in)
 
 ![Zoomed out transition graph](https://github.com/user-attachments/assets/5ac8e515-f76d-4351-859b-f294d8db20a5)
 
+💭 There is no reason I can think of for a diagonal symmetry.  While not actually symmetric, there is a sort of quazi-symmetry where tiles can seem "related" to each other. I am not sure why this is, and maybe it could be used to extract more entropy.
+
 So, I wrote an algorithm to place each tile into a "class."  Then when trying to figure out which cell is next, instead of assuming all cells are the same, we can use the chance of moving to another cell based on which class we're in.
 
 ```
