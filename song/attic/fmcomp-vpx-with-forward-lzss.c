@@ -7,9 +7,9 @@
 
 const int MinRL = 1;
 #define OFFSET_MINIMUM 2
-#define COMPCOSTTRADEOFF 7
+#define COMPCOSTTRADEOFF 10
 
-#define MAX_LSBITS 11
+#define MAX_LSBITS 10
 
 #define VPXCODING_READER
 #define VPXCODING_WRITER
@@ -140,6 +140,8 @@ int EmitExpGolomb( int ib )
 	return bitsemit;
 }
 
+
+// Like golomb encoding except purely vpx.
 void WriteLogshift( vpx_writer * w, int v, int * bctable, int * bctableout )
 {
 	if( bctableout ) bctableout[0]++;
@@ -168,7 +170,13 @@ int RLMakesSense( int rl, int ras, int i )
 {
 	int offset = i-ras-rl;
 
-	if( rl > ExpGolombCost(offset)/6 )
+	if( (offset - OFFSET_MINIMUM) >= 1<<MAX_LSBITS )
+	{
+		// Can't fit.
+		return 0;
+	}
+
+	if( rl > ExpGolombCost(offset)/COMPCOSTTRADEOFF )
 	{
 		return 1;
 	}
@@ -224,6 +232,10 @@ int main()
 		numNotes++;
 	}
 
+	for( i = 0; i < dtNotesComp.numUnique; i++ )
+	{
+		AddValue( &dtNotesComp, i );
+	}
 
 	// STAGE 1: DRY RUN.
 	int numComp = 0;
@@ -238,7 +250,7 @@ int main()
 		if( searchStart < 0 ) searchStart = 0;
 		int s;
 		int bestcompcost = 0, bestrl = 0, bestrunstart = 0;
-		for( s = searchStart; s < i; s++ )
+		for( s = searchStart; s < i - OFFSET_MINIMUM; s++ )
 		{
 			int ml;
 			int mlc;
@@ -263,7 +275,7 @@ int main()
 				bestrunstart = s;
 			}
 #endif
-			if( rl > bestrl && RLMakesSense( rl, s, i ) )// && // Make sure it's best
+			if( rl >= bestrl && RLMakesSense( rl, s, i ) )// && // Make sure it's best
 				//s + MinRL + rl + MaxREV >= i )
 			{
 				bestrl = rl;
@@ -292,6 +304,8 @@ int main()
 			// Using 11 bits for both offset and emit_best_rl
 			if( offset >= (1<<MAX_LSBITS) ) { fprintf( stderr, "offset TOO BIG (%d)\n", offset ); }
 			if( emit_best_rl >= (1<<MAX_LSBITS) ) { fprintf( stderr, "emit_best_rl TOO BIG (%d)\n", emit_best_rl ); }
+
+			offset -= OFFSET_MINIMUM;
 
 			WriteLogshift( 0, offset, 0, bctableoffset );
 			WriteLogshift( 0, emit_best_rl, 0, bctablerunlen );
@@ -408,7 +422,7 @@ int main()
 		if( searchStart < 0 ) searchStart = 0;
 		int s;
 		int bestrl = 0, bestrunstart = 0;
-		for( s = searchStart; s < i; s++ )
+		for( s = searchStart; s < i - OFFSET_MINIMUM; s++ )
 		{
 			int ml;
 			int mlc;
@@ -421,7 +435,7 @@ int main()
 				if( completeNoteList[ml] != completeNoteList[mlc] ) break;
 			}
 
-			if( rl > bestrl && RLMakesSense( rl, s, i ) )// && // Make sure it's best
+			if( rl >= bestrl && RLMakesSense( rl, s, i ) )// && // Make sure it's best
 				//s + MinRL + rl + MaxREV >= i )
 			{
 				bestrl = rl;
@@ -453,6 +467,7 @@ int main()
 			if( offset >= (1<<MAX_LSBITS) ) { fprintf( stderr, "offset TOO BIG (%d)\n", offset ); }
 			if( emit_best_rl >= (1<<MAX_LSBITS) ) { fprintf( stderr, "emit_best_rl TOO BIG (%d)\n", emit_best_rl ); }
 
+			offset -= OFFSET_MINIMUM;
 
 			WriteLogshift( &writer, offset, bctableoffset, 0 );
 			WriteLogshift( &writer, emit_best_rl, bctablerunlen, 0 );
@@ -478,7 +493,7 @@ int main()
 			uint32_t lenAndRun = dtLenAndRun.fullList[i];
 			vpx_write( &writer, 1, chanceRL );
 
-			ProbabilityTreeWriteSym( &writer, GetIndexFromValue( &dtNotesComp, note ),
+			ProbabilityTreeWriteSym( &writer, /*GetIndexFromValue( &dtNotesComp, note )*/ note,
 				probabilitiesNotes, treeSizeNotes, bitsForNotes );
 
 			ProbabilityTreeWriteSym( &writer, GetIndexFromValue( &dtLenAndRunComp, lenAndRun ),
@@ -492,11 +507,11 @@ int main()
 
 
 	printf( "bctableoffset: " );
-	for( i = 0; i < MAX_LSBITS+1; i++ )
-		printf( "%d ", bctableoffset[i] );
+	for( i = 0; i < MAX_LSBITS; i++ )
+		printf( "%d ", bctableoffset[i+1] );
 	printf( "\nbctablerunlen: " );
-	for( i = 0; i < MAX_LSBITS+1; i++ )
-		printf( "%d ", bctablerunlen[i] );
+	for( i = 0; i < MAX_LSBITS; i++ )
+		printf( "%d ", bctablerunlen[i+1] );
 	printf( "\n" );
 
 
@@ -506,9 +521,12 @@ int main()
 	uint32_t sum = writer.pos;
 	printf( "Data: %d bytes\n", writer.pos );
 
-	printf( "Notes: %d + %d\n", treeSizeNotes, dtNotesComp.numUnique * 1 );
+	printf( "bctable size: %d\n", MAX_LSBITS*2 );
+	sum += MAX_LSBITS;
+
+	printf( "Notes: %d + ~~%d~~\n", treeSizeNotes, dtNotesComp.numUnique * 1 );
 	sum += treeSizeNotes;
-	sum += dtNotesComp.numUnique * 1;
+//	sum += dtNotesComp.numUnique * 1;
 
 	printf( "LenAndRun: %d + %d\n", treeSizeLenAndRun, dtLenAndRunComp.numUnique * 2 );
 	sum += treeSizeLenAndRun;

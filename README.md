@@ -536,13 +536,14 @@ There's an issue, all of the good ones in this list these are state of the art a
 | Huffman (1 table) | 1644 (43%) |
 | Huffman (3 table) | 1516 (40%) |
 | VPX (no LZSS) | 1680 (44%) |
-| VPX (reverse LZSS) | **673 (17.6%)** |
+| VPX (forward LZSS) | **665 (17.4%)** |
+| VPX (reverse LZSS) | 673 (17.6%) |
 | Huffman (2-table+LZSS) | 704 (18.4%) |
 | Huffman (2 table+reverse LZSS)† | 856 (22.4%) |
 | gzip -9 (for reference) | 682 |
 | zstd -9 (for reference) | 724 |
 
-TODO: Show VPX (Forward LZSS)
+**TODO** Make table?
 
 † we used this on the final project.  See rationale below.
 
@@ -560,7 +561,7 @@ This VPX solution perform VPX coding on the notes, note-lengths, and time betwee
 
 I decided to go back to huffman, mostly for the sake of the video and visualization! It also gave me a chance to express Exponential-Golomb coding.  Huffman is extremely simple to decode, and could have been done without any header libraries.  Even though the vpx code is available by virtue of the video, I wanted to show what it would look like with huffman.
 
-To compare apples-to-relatively-apples, I decided to do a huffman approach, with LZSS backtracking using Exponential-Golomb coding.  It was 856 bytes, just a little less compressed, compared to 673 bytes for the VPX + Forward LZSS.
+To compare apples-to-relatively-apples, I decided to do a huffman approach, with LZSS backtracking using Exponential-Golomb coding.  It was 856 bytes, just a little less compressed, compared to 665 bytes for the VPX + Forward LZSS.
 
 Because I was worried about RAM space, I decided to use reveres LZSS instead. Compression using reverse lzss is quite costly, because it simulates emitting the bits the whole way along.  I was happy to give up ~150 bytes of storage in exchange for a massive RAM savings.
 
