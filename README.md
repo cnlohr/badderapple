@@ -863,18 +863,91 @@ So: Now that we have a more human-like distance metric, all we have to do is for
 
 ## Differentiable Video Rendering 
 
-(TODO: Describe problem formulation.)
- * Pytorch autodiff / rendering
- * Gumbel-Softmax trick for tile choice sampling / optimization
- * Semantic loss application
- * Optical flow loss
+PyTorch is a natural choice here - not only for the neural-network losses, but also because we can use its built-in auto-diff and optimizers. If we can express video data (tiles + sequence data) as parameters, and do the whole job of assembling video using differentiable torch operations, we could directly optimize video data for our objective. 
+
+We could assemble the video out of tiles with some indexing tricks (in Numpy below to illustrate):
+```
+tiles = np.fromfile("path/to/blocks.dat", dtype=np.float32).reshape(-1, 8, 8)  # Addressing: (tile_idx, row, column) -> pixel
+tiles = (tiles * 255).astype(np.uint8)
+
+stream = np.fromfile(stream_path, dtype=np.int32).reshape(-1, 48//8, 64//8)  # Addressing: (frame_idx, tile_row, tile_col) -> tile_idx
+
+# Index into `tiles` using `stream` so that each stream is converted into an array of tiles.
+assembled_tiles = tiles[stream]  # shape (s, h, w, th, tw)
+
+# Rearrange the axes so that tile rows/columns are interleaved with grid rows/columns.
+assembled_tiles = assembled_tiles.transpose(0, 1, 3, 2, 4) #  shape: (s, h, th, w, tw)
+
+# Collapse the h/th and w/tw axes - shape (S, h*th, w*tw). This is the video. 
+assembled_images = assembled_tiles.reshape(stream.shape[0], stream.shape[1] * 8, stream.shape[2] * 8)
+```
+However, this doesn't quite get us there - gradients could flow up into the tiles the index-by-sequence operation isn't differentiable. We'd really like a way for this optimization to swap out or rearrange tiles, if doing so can improve the video. 
+
+For this, we're going to employ something called the Gumbel-Softmax trick. You can find a ![really good explanation of this here](https://sassafras13.github.io/GumbelSoftmax/) - the short version is that this provides a way of sampling from a discrete probability distribution, in a way that is differentiable through to both the samples and the distribution. We can express our sequence parameter as a big list of discrete probability distributions, each representing the _probability_ that a given tile is used in a given spot in a given frame; for training, we _sample_ tiles using these distributions (via the Gumbel-Softmax trick), then use these tiles to assemble frames from a video. Eventually, we expect this distribution to train towards one-hot, with a single tile being the obvious choice for a given spot. This is a bunch of parameters - 6570 frames * (6 * 8) slots/frame * 256 tiles/slot = 80,732,160 numbers to optimize - but for a modern GPU, this ~323MB of parameters is hardly anything to worry about. 
+
+( TBD: Figure - Distributions, assembled images )
+
+Once frames are assembled, we need to model Charles' deblocking filter, which proved to be a bit of a challenge to make efficient in a PyTorch/GPU sense - it's another very discrete operation (inputs quantized to 3 values), without obvious extension to float input or clear derivatives. I ended up with a 3D LUT much like the actual table, mapping (prev, current, next) -> (output value), and performing a trilinear lerp over this based on some strided/masked inputs. 
+
+( TBD: Figures - Visualize trilinear LUT, masks )
+
+With that, we now have rendered frames, differentiable all the way back to the tile/sequence data! Now we need something to optimize against. 
+
+## Dataset & Resolutions
+
+The "dataset" for this solve is just frames from the ground-truth Bad Apple video, marked with frame number. We can render a frame by looking up sequence data for that frame number, assemble it from the tiles, and compare this against a ground-truth frame. So, at training time, we yield random batches of these pairings. 
+
+LPIPS loss is based on an ImageNet-trained VGG16, which had input frames at 224 x 224 px; our Bad Apple video is 64 x 48. VGG16 tends to work best closer to the trained scale, even if other resolutions will _numerically_ work with the convolutional stack. Experimentally, I found that 128 x 96 frames made for a decent trade between perf and comparison quality. Ground-truth frames are re-sampled down to this 128 x 96, and cached on the GPU; at training time, rendered 64 x 48 frames are re-sampled up to match. This also lets us compare our blocky rendered frames against something closer to the original video, with the hope being that finer details might still be "seen" by the semantic loss and represented in tiles. 
+
+( TBD: Rendered and ground truth, at compared resolutions )
+
+## Optical Flow 
+
+There's another component of this which we haven't touched on much, which is _motion_. This is going to be a video, after all - humans tend to notice if motion looks shaky, flicker-y, or otherwise "looks wrong", even if individual paused frames seem fine. Motion also tends to draw our eyes' attention to particular areas of a frame, even if there aren't big bright semantically-interesting things there; for example, falling petals in Bad Apple are only really recognizable as such because they move. 
+
+Bad Apple in general has little in the way of texture - but if masked to edges, it provides a decent signal to a ~[pyramidal Lucas-Kanade optical flow](https://en.wikipedia.org/wiki/Lucas%E2%80%93Kanade_method) estimator. L-K flow also contains only differentiable operations, so as far as Pytorch is concerned, it slots nicely into our current optimization: we compute optical flow fields on (batched sections of) the input video & our rendered video, then add up squared differences between these flow fields as another loss term.  
+
+( TBD: L-K flow fields on ground truth sections ) 
+
+## Optimization Results
+TBD:
+ * Optimization and tuning process, observations
+ * Comparison & progress figures
  * Learned edge encodings under deblocking filter
 
-## Lossy Compression
+## Lossless and Lossy Compression
 
-(TODO: Describe)
- * Left-align (equivalent tile replacement)
- * Semantic evaluation of transition skips for compression
+There's two problems with this result:
+1) It's _huge_ - something about this compresses very poorly; some runs end up over 80kB here, well past the 62kB budget. (Speculative: I bet we've "spread around" information in a way that, while better representing the target, is harder to compress.) 
+3) There's some undesirable small flickering still present in some situations. Individual frames look fine, but it still draws attention in a bad way. (Speculative: Probably due to gumbel-softmax sampling / noisy gradients during the solve. Flow losses should penalize this, but perhaps not strongly enough to force a tile swap?) 
+
+### "Left Align"-ing
+One quirk of the deblocking filter is that, in certain cases / depending on neighboring tiles, you can swap out tiles without changing anything in the image. 
+
+(TBD: Figure - examples) 
+
+From the perspective of the optimizer, this is a don't-care; the image looks the same, so random choices are fine. From a compression standpoint, this isn't great: since lots of tiles can look the same as a blank one, we're fattening out the tails of tile-frequency histograms, which (on average) increases the number of bits needed to represent a given tile. We can also have cases where tiles in the video can change like crazy, for no visual benefit.
+
+What we want is something that has no invisible transitions, and also pushes the distribution of tile frequencies to have a longer tail - moving weight to the left of a sorted histogram. 
+
+So, as a post-processing step, we:
+ * sort tiles by how frequently they're used in the video
+ * try swapping out every tile with more-popular equivalents
+ * check to make sure the result of the de-blocking filter didn't change.
+
+This process is pretty quick; most tiles differ in ways that wouldn't be affected by deblocking, so in total there's only a handful of swaps we actually have to try. We run this process repeatedly until nothing changes.
+
+( TBD: Figure - Tile distributions before and after left-align-ing )
+
+Since there's zero visual impact, all the compression gains here are "free," in that we've not changed any tile intensities! 
+
+### Skip Evaluation
+At this stage, we're able to compress a _bit_ smaller, but we're still blowing our budget. We've also still got this odd flickering happening in some places. 
+
+About all we can do at this stage is start to delete transitions.
+
+(TODO: Semantic evaluation preprocess)
+(TODO: Actual swap deletion and compression evaluation) 
 
 
 # Actually compressing this monstrosity
