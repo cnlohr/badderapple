@@ -1606,10 +1606,10 @@ void DrawVPXDetail( Clay_RenderCommand * render )
 			float upratio = (vpx_pr_use->range) / 256.0;
 			float uprationext = (vpx->range) / 256.0;
 
-			float ratio = 1.0 - ( (vpx_pr_use->value>>24) / rangef ) * upratio;
-			float rationext = 1.0 - ( (vpx->value>>24) / rangenextf ) * uprationext;
-			float ratioo = 1.0 - cp->decode_prob / 256.0 * upratio;
-			float ratioonext = 1.0 - (cpnext?cpnext->decode_prob:0) / 256.0 * uprationext;
+			float ratio =     1.0 - ( (vpx_pr_use->value>>24) / rangef     ) * upratio;
+			float rationext = 1.0 - ( (vpx       ->value>>24) / rangenextf ) * uprationext;
+			float ratioo =    1.0 - cp->decode_prob / 256.0 * upratio;
+			float ratioonext =1.0 - (cpnext?cpnext->decode_prob:0) / 256.0 * uprationext;
 
 			float uprationext_proj = (vpx_pr_use->range-cp->decode_prob + 1) / 256.0;
 
@@ -1646,12 +1646,7 @@ void DrawVPXDetail( Clay_RenderCommand * render )
 				CNFGSetLineWidth(1.0);
 
 				CNFGColor( 0xffffff50 );
-				CNFGTackPoly( (RDPoint[]){
-					{ rx + column_width, bypm + mh * (1.0-upratio) },
-					{ rxnext, bypm + mh * (1.0-uprationext) },
-					{ rxnext, bypm + mh * ratioonext },
-					{ rx + column_width, bypm + mh * ratioo },
-				}, 4 );
+				// This is the bar-graph portion of the diagram.
 				CNFGTackPoly( (RDPoint[]){
 					{ rx, bypm + mh * (1.0-upratio) },
 					{ rx + column_width, bypm + mh * (1.0-upratio) },
@@ -1660,24 +1655,33 @@ void DrawVPXDetail( Clay_RenderCommand * render )
 				}, 4 );
 
 				CNFGTackSegment(
-					rx + column_width, bypm + mh * (1.0-upratio) ,
-					rxnext, bypm + mh * (1.0-uprationext) );
-
-				CNFGTackSegment(
 					rx, bypm + mh * (1.0-upratio),
 					 rx + column_width, bypm + mh * (1.0-upratio) );
 
-				// This turned out to just be confusing
-				if( 0 )
-				if( vpx_pr_use->range- cp->decode_prob != vpx->range )
+				if( compbit == 0 )
 				{
-					CNFGColor( 0xffffff10 );
-					CNFGSetLineWidth(2.0);
-					CNFGTackSegment(
-						rx + column_width, bypm + mh * (1.0-upratio) ,
-						rxnext, bypm + mh * (1.0-uprationext_proj) );
+					// upratio is the starting point for the top part of the expanding polygon.
+					// It is also the midpoint of the next bit.
+					upratio = 1.0-ratioo;
+					ratioo = 1.0;
+					ratioonext = 1.0;
+				}
+				else
+				{
+					ratioonext = 1.0;
 				}
 
+				// This is the expanding polygon
+				CNFGTackPoly( (RDPoint[]){
+					{ rx + column_width, bypm + mh * (1.0-upratio) },
+					{ rxnext, bypm + mh * (1.0-uprationext) },
+					{ rxnext, bypm + mh * ratioonext },
+					{ rx + column_width, bypm + mh * ratioo },
+				}, 4 );
+
+				CNFGTackSegment(
+					rx + column_width, bypm + mh * (1.0-upratio) ,
+					rxnext, bypm + mh * (1.0-uprationext) );
 
 				CNFGColor( 0x00000050 );
 				CNFGTackPoly( (RDPoint[]){
