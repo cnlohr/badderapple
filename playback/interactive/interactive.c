@@ -1539,7 +1539,7 @@ void DrawVPXDetail( Clay_RenderCommand * render )
 	}
 
 
-	int column_width = 12;
+	int column_width = 10;
 	float margin = 2;
 	float bypm = b.y + margin;
 	float mh = b.height - margin*2;
@@ -1671,40 +1671,184 @@ void DrawVPXDetail( Clay_RenderCommand * render )
 					ratioonext = 1.0;
 				}
 
-				// This is the expanding polygon
-				CNFGTackPoly( (RDPoint[]){
-					{ rx + column_width, bypm + mh * (1.0-upratio) },
-					{ rxnext, bypm + mh * (1.0-uprationext) },
-					{ rxnext, bypm + mh * ratioonext },
-					{ rx + column_width, bypm + mh * ratioo },
-				}, 4 );
 
-				CNFGTackSegment(
-					rx + column_width, bypm + mh * (1.0-upratio) ,
-					rxnext, bypm + mh * (1.0-uprationext) );
+				if( gpused == 0 )
+				{
+					// This is the expanding polygon
+					CNFGTackPoly( (RDPoint[]){
+						{ rx + column_width, bypm + mh * (1.0-upratio) },
+						{ rxnext, bypm + mh * (1.0-uprationext) },
+						{ rxnext, bypm + mh * ratioonext },
+						{ rx + column_width, bypm + mh * ratioo },
+					}, 4 );
 
-				CNFGColor( 0x00000050 );
-				CNFGTackPoly( (RDPoint[]){
-					{ rx + column_width, bypm + mh },
-					{ rxnext, bypm + mh },
-					{ rxnext, bypm + mh * ratioonext },
-					{ rx + column_width, bypm + mh * ratioo },
-				}, 4 );
+					CNFGTackSegment(
+						rx + column_width, bypm + mh * (1.0-upratio) ,
+						rxnext, bypm + mh * (1.0-uprationext) );
 
-				CNFGTackPoly( (RDPoint[]){
-					{ rx, bypm + mh },
-					{ rx + column_width, bypm + mh },
-					{ rx + column_width, bypm + mh * ratioo },
-					{ rx, bypm + mh * ratioo }
-				}, 4 );
+					CNFGColor( 0x00000050 );
+					CNFGTackPoly( (RDPoint[]){
+						{ rx + column_width, bypm + mh },
+						{ rxnext, bypm + mh },
+						{ rxnext, bypm + mh * ratioonext },
+						{ rx + column_width, bypm + mh * ratioo },
+					}, 4 );
 
-				CNFGTackSegment(
-					rx + column_width, bypm + mh * ratioo,
-					rxnext, bypm + mh * ratioonext );
+					CNFGTackPoly( (RDPoint[]){
+						{ rx, bypm + mh },
+						{ rx + column_width, bypm + mh },
+						{ rx + column_width, bypm + mh * ratioo },
+						{ rx, bypm + mh * ratioo }
+					}, 4 );
 
-				CNFGTackSegment(
-					rx, bypm + mh * ratioo,
-					 rx + column_width, bypm + mh * ratioo );
+					CNFGTackSegment(
+						rx + column_width, bypm + mh * ratioo,
+						rxnext, bypm + mh * ratioonext );
+
+					CNFGTackSegment(
+						rx, bypm + mh * ratioo,
+						 rx + column_width, bypm + mh * ratioo );
+				}
+
+				if( gpused > 0 )
+				{
+					int hm = 0;
+					float xadvance = (rxnext-rx-column_width) / (float)gpused;
+					float xst = rx + column_width;
+					//float yadvance = ((bypm + mh * rationext) - (bypm + mh * ratio)) / (float)gpused;
+					//float yst = bypm + mh * ratio;
+					float xstprev = xst;
+					float ystprev = bypm + mh * ratio;
+					//yst += yadvance * 0.5;
+					int hmpt = 0;
+					struct checkpoint * cpmon = cp;
+					vpx_reader * bitmon = vpx_pr_use;
+					uint32_t vuse = bitmon->value;
+					int vremain = bitmon->count;
+					//int vrun = vpx_pr_use->value;
+					//int rrun = vpx_pr_use->range;
+					float yst;
+					for( hm = 0; hm < gpused; hm++ )
+					{
+						if( hmpt >= vremain ) {
+							hmpt = 0;
+							bitmon = vpx;
+							cpmon = cpnext;
+							vuse = bitmon->value;
+							vremain = bitmon->count;
+							if( vremain < 0 && cpmon )
+							{
+								vuse = cpmon->vpxcpv;
+								vremain = 24;
+							}
+							//value = vuse;
+						}
+						//DrawFormat( xst, yst, 1, 0xffffffff, "%d / %08x / %d %06x %06x\n", bitmon->count, bitmon->value&0xffffff, cpmon->vpxcheck, cpmon->vpxcpv , vuse&0xffffff );
+//cp->vpxcheck )cp->vpxcpv
+						int bit = (vuse>>23)&1;//(vuse>>(23-hmpt)) & 1;
+						hmpt++;
+
+						vuse = (vuse<<1);
+						value = ((value<<1));
+						range = ((range<<1))&0xff;
+
+						rangef = range + 0.0001;
+						uprationext = range / 256.0;
+						ratioonext = 1.0;//1.0 - (cpnext?cpnext->decode_prob:0) / 256.0 * uprationext;;
+
+						yst = bypm + mh * ( 1.0 - ( (value>>24) / rangef ) * upratio);
+
+						xst += xadvance * ((!hm)?0.5:1);
+
+						CNFGColor( 0xffffff50 );
+						// This is the expanding polygon
+						CNFGTackPoly( (RDPoint[]){
+							{ xstprev, bypm + mh * (1.0-upratio) },
+							{ xst, bypm + mh * (1.0-uprationext) },
+							{ xst, bypm + mh * ratioonext },
+							{ xstprev, bypm + mh * ratioo },
+						}, 4 );
+
+						CNFGTackSegment(
+							xstprev, bypm + mh * (1.0-upratio) ,
+							xst, bypm + mh * (1.0-uprationext) );
+						CNFGTackSegment(
+							xstprev, bypm + mh * ratioo,
+							xst, bypm + mh * ratioonext );
+#if 0
+
+						CNFGColor( 0x00000050 );
+						CNFGTackPoly( (RDPoint[]){
+							{ xstprev + column_width, bypm + mh },
+							{ xst, bypm + mh },
+							{ xst, bypm + mh * ratioonext },
+							{ xstprev + column_width, bypm + mh * ratioo },
+						}, 4 );
+
+						CNFGTackPoly( (RDPoint[]){
+							{ xstprev, bypm + mh },
+							{ xstprev + column_width, bypm + mh },
+							{ xstprev + column_width, bypm + mh * ratioo },
+							{ xstprev, bypm + mh * ratioo }
+						}, 4 );
+
+						CNFGTackSegment(
+							xstprev + column_width, bypm + mh * ratioo,
+							xst, bypm + mh * ratioonext );
+
+						CNFGTackSegment(
+							xstprev, bypm + mh * ratioo,
+							 xstprev + column_width, bypm + mh * ratioo );
+#endif
+
+#if 0
+					// This is the line from down below.
+						//DrawHashAt( xst, yst, column_width / 2-2 );
+						CNFGColor( bit ? 0xf0f0f0c0 : 0x101010c0 );
+						CNFGTackRectangle( 
+							xst - column_width / 2, yst - column_width / 2 ,
+							xst + column_width / 2-2, yst + column_width / 2-2  );
+						CNFGColor( 0xfff0f0c0 );
+						CNFGDrawBox(
+							xst - column_width / 2, yst - column_width / 2 ,
+							xst + column_width / 2-2, yst + column_width / 2-2  );
+
+						CNFGTackSegment(
+							xst, yst,
+							xstprev, ystprev );
+#endif
+
+						upratio = uprationext;
+						ratioo = ratioonext;
+						xstprev = xst;
+						ystprev = yst;
+
+					}
+					xst += xadvance*0.5;
+					yst = bypm + mh * ( 1.0 - ( (value>>24) / rangef ) * upratio);
+
+
+					// Carry-forward the ending.
+					CNFGTackPoly( (RDPoint[]){
+						{ xstprev, bypm + mh * (1.0-upratio) },
+						{ xst, bypm + mh * (1.0-uprationext) },
+						{ xst, bypm + mh * ratioonext },
+						{ xstprev, bypm + mh * ratioo },
+					}, 4 );
+
+					CNFGTackSegment(
+						xstprev, bypm + mh * (1.0-upratio) ,
+						xst, bypm + mh * (1.0-uprationext) );
+					CNFGTackSegment(
+						xstprev, bypm + mh * ratioo,
+						xst, bypm + mh * ratioonext );
+
+				//	CNFGTackSegment(
+				//		xst, yst,
+				//		xstprev, ystprev );
+
+				}
+
 
 			}
 			else
@@ -1721,13 +1865,17 @@ void DrawVPXDetail( Clay_RenderCommand * render )
 					CNFGTackSegment(
 						rx + column_width/2, bypm + mh * ratio,
 						rxnext + column_width/2, bypm + mh * rationext );
-
+				else //Else, draw stub coming out to the edge of the column.
+					CNFGTackSegment(
+						rx+column_width/2, bypm + mh * ratio,
+						rx+column_width, bypm + mh * ratio );
+					
 
 				if( gpused > 0 )
 				{
 					int hm = 0;
-					float xadvance = (rxnext-rx) / (float)gpused;
-					float xst = rx + column_width/2;
+					float xadvance = (rxnext-rx-column_width) / (float)gpused;
+					float xst = rx + column_width;
 					//float yadvance = ((bypm + mh * rationext) - (bypm + mh * ratio)) / (float)gpused;
 					//float yst = bypm + mh * ratio;
 					float xstprev = xst;
@@ -1789,7 +1937,7 @@ void DrawVPXDetail( Clay_RenderCommand * render )
 						ystprev = yst;
 
 					}
-					xst += xadvance*0.5;
+					xst += xadvance*0.5+column_width/2;
 					yst = bypm + mh * ( 1.0 - ( (value>>24) / rangef ) * upratio);
 
 					CNFGTackSegment(
