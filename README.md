@@ -17,7 +17,8 @@ Memory region         Used Size  Region Size  %age Used
 
 If you are interested in the web viewer of the bitstream explaining what every bit means (the image below) you can click [here](https://cnvr.io/dump/badderapple.html)
 
-![Web Viewer](https://github.com/user-attachments/assets/b2d90eb1-04f1-4302-8ea7-99580beca663)
+![Web Viewer](https://github.com/user-attachments/assets/cac9ab4e-9ecf-43d7-9ec4-cad37b45c0f1)
+
 
 If you're interested in how to do [setup and running](#setup-and-running) instructions or [previous and future work](#previous-and-future-work), feel free to click there.
 
@@ -292,7 +293,7 @@ VPX coding just exposes the ability to read/write 1 and 0 bits given a % chance 
 
 I worked in the [web tool](https://cnvr.io/dump/badderapple.html) to vizualize how each bit in and each bit out are used.  In the image below you can see the squares indicate reading bits in, the X's indicate getting bits out. So you can see here it only took 3 bits to encode 8 bits of output data.
 
-![VPX Coding Portion of demo](https://github.com/user-attachments/assets/6b48eb03-068c-4a27-892e-0fdbf96eef53)
+![VPX Coding Portion of demo](https://github.com/user-attachments/assets/248ca291-f478-44ab-8c4e-4db87a6a65b8)
 
 The general idea is for every bit coming in, the decoder considers the `range` of possibilities left in the current value that's been decoded.  And it determines a `split` based on the probability of the outcome being a 0 or a 1 and that `range`. It also keeps track of a `value` sort of like a cursor.  If the current `value` is >= the `split` then the bit is a `1` otherwise it's a `0`.  If it is a `1` then the new `value` and `range` update from that `split`.  Then, if the `range` is now less than 1/2 the possible range, new data gets shifted into `value` to keep feeding the system.
 

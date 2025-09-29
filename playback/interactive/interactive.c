@@ -953,7 +953,7 @@ void DrawVPX( Clay_RenderCommand * render )
 //	printf( "%08x\n", v->value );
 
 	// Skip first 8 bits because they _are_ the range.
-	DrawFormat( fx+b.width/2-8, fy+4, -2, cp->vpxcheck?0x606060ff:0xffffffff, "%3d\x1b%s %3d * %d", v->value>>24, vs + 8, v->range, v->count );
+	DrawFormat( fx+b.width/2-8, fy+4, -2, cp->vpxcheck?0x606060ff:0xffffffff, "%3d\x1b%s %3d / %d bits remain", v->value>>24, vs + 8, v->range, v->count );
 }
 
 void DrawMemoryAndVPX( Clay_RenderCommand * render )
@@ -1519,7 +1519,7 @@ void DrawVPXDetail( Clay_RenderCommand * render )
 	// comparison @ r->value / r->range vs prob
 
 	int kc = 0;
-	const int rrange = 5;
+	const int rrange = 4;
 	int bcount = 0;
 	vpx_reader * vpx_pr = (vpx_reader *)1;
 	struct checkpoint * cpprev = 0;
@@ -1552,7 +1552,7 @@ void DrawVPXDetail( Clay_RenderCommand * render )
 	{
 		vpx_pr = vpx_pr_backup;
 		kc = kcbackup;
-		int dispct = 0;
+		int dispct = -1;
 
 		for( ; dispct < rrange * 2 + 1; kc++ )
 		{
@@ -1591,8 +1591,8 @@ void DrawVPXDetail( Clay_RenderCommand * render )
 
 			if( dispct == rrange )
 			{
-				CNFGColor( 0xf0f0f010 );
-				CNFGTackRectangle( rx-15, b.y, rx + 27, b.y+b.height );
+				CNFGColor( 0xffffffff );
+				CNFGDrawBox( rx, b.y, rx + column_width, b.y+b.height );
 			}
 
 			CNFGColor( 0xf0f0f040 );
@@ -1672,6 +1672,7 @@ void DrawVPXDetail( Clay_RenderCommand * render )
 				}
 
 
+				CNFGColor( 0xffffff30 );
 				if( gpused == 0 )
 				{
 					// This is the expanding polygon
@@ -1760,7 +1761,7 @@ void DrawVPXDetail( Clay_RenderCommand * render )
 
 						xst += xadvance * ((!hm)?0.5:1);
 
-						CNFGColor( 0xffffff50 );
+						CNFGColor( 0xffffff30 );
 						// This is the expanding polygon
 						CNFGTackPoly( (RDPoint[]){
 							{ xstprev, bypm + mh * (1.0-upratio) },
@@ -1775,48 +1776,6 @@ void DrawVPXDetail( Clay_RenderCommand * render )
 						CNFGTackSegment(
 							xstprev, bypm + mh * ratioo,
 							xst, bypm + mh * ratioonext );
-#if 0
-
-						CNFGColor( 0x00000050 );
-						CNFGTackPoly( (RDPoint[]){
-							{ xstprev + column_width, bypm + mh },
-							{ xst, bypm + mh },
-							{ xst, bypm + mh * ratioonext },
-							{ xstprev + column_width, bypm + mh * ratioo },
-						}, 4 );
-
-						CNFGTackPoly( (RDPoint[]){
-							{ xstprev, bypm + mh },
-							{ xstprev + column_width, bypm + mh },
-							{ xstprev + column_width, bypm + mh * ratioo },
-							{ xstprev, bypm + mh * ratioo }
-						}, 4 );
-
-						CNFGTackSegment(
-							xstprev + column_width, bypm + mh * ratioo,
-							xst, bypm + mh * ratioonext );
-
-						CNFGTackSegment(
-							xstprev, bypm + mh * ratioo,
-							 xstprev + column_width, bypm + mh * ratioo );
-#endif
-
-#if 0
-					// This is the line from down below.
-						//DrawHashAt( xst, yst, column_width / 2-2 );
-						CNFGColor( bit ? 0xf0f0f0c0 : 0x101010c0 );
-						CNFGTackRectangle( 
-							xst - column_width / 2, yst - column_width / 2 ,
-							xst + column_width / 2-2, yst + column_width / 2-2  );
-						CNFGColor( 0xfff0f0c0 );
-						CNFGDrawBox(
-							xst - column_width / 2, yst - column_width / 2 ,
-							xst + column_width / 2-2, yst + column_width / 2-2  );
-
-						CNFGTackSegment(
-							xst, yst,
-							xstprev, ystprev );
-#endif
 
 						upratio = uprationext;
 						ratioo = ratioonext;
