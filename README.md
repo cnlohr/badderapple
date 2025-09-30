@@ -696,7 +696,7 @@ With a little more effort and free CPU we could have made the musical instrument
 Next, we want to layer on another "instrument."  Much like the [SID](https://en.wikipedia.org/wiki/MOS_Technology_6581) or [POKEY](https://en.wikipedia.org/wiki/POKEY) chips used for audio synthesis in older systems, we opted to use a LFSR to create the broad-spectrum noise for percussion. LFSRs are particularly easy to construct both in hardware, and software. 
 
 ![LFSR Schematic](https://github.com/user-attachments/assets/7911ebb1-1eb5-4ee5-bd32-9312d216200d)
-<p SIZE="-2" ALIGN="center">LFSR Diagram from here: https://en.wikipedia.org/wiki/Linear-feedback_shift_register#/media/File:LFSR-F16.svg (CC0, KCAuXy4p - Own work)</p>
+<P SIZE=-2 ALIGN=CENTER>LFSR Diagram from here: https://en.wikipedia.org/wiki/Linear-feedback_shift_register#/media/File:LFSR-F16.svg (CC0, KCAuXy4p - Own work)</P>
 
 It can be handled pretty simply in the sound system using the following code in `ba_play_audio.h`. 
 
@@ -853,8 +853,6 @@ The key innovation that really kicked this project into high gear was the aforem
 <IMG SRC=https://github.com/user-attachments/assets/593ef5a3-15a1-4c89-bf95-ad5de7d06474 WIDTH=50%>
 </P>
 
-**TODO** How did Onslaught select the symbols?
-
 Originally, I started with an incredibly laborous mechanism where I would create a large corpus of glyphs, then, try to find out which ones looked most similar to other glyphs.  Starting with a corpus of 100,000 glyphs or so and winnowing this back, trying to make the tiles in the stream match the glyphs and keeping track of how many times each glyph was used, culling the least used glyphs, iteratively, back and forth many times.  This process was time consuming and the output was pretty rough.  The following is one run I was able to get the size down to 75kB with, with 260 glyphs.
 
 <P ALIGN=CENTER>
@@ -874,6 +872,16 @@ You can see the final tiles output.  It's able to find a couple really key tiles
 </P>
 
 This process was really clunky, and left me frustrated, spending a lot of time nursing it along.  In addition, this has no facility to support greyscale, and that is something I would later find to be critical.
+
+### Onslaught (C64 Demo) Approach
+
+I should have asked Onslaught much earlier how they did their approach.  They replied that they used a similar approach to what they used in their [Sabrina](https://www.youtube.com/watch?v=udkTv1nC6W0), [Wilde](https://www.pouet.net/prod.php?which=76420) and [Easybananaflashrama](https://www.pouet.net/prod.php?which=74913) demos, which use a system they call "TileVQ."
+
+While their reply was cryptic, and they did not reply to any follow-up emails, as best as I can understand, they did a two-stage tiling process.  Each section of the video uses groups of 2x2 chars across image, 4 bytes per group, where the individual chars were using VQ (presumably Vector Quantization) to create the pixels for all the individual chars.
+
+Vector Quantization is a general approach to K-means (described below)...  Upon reviewing literateure and their email I was unable to determine any functional difference between their approach and K-means, other than it's possible they used a non-euclidean distance function for their VQ classification.
+
+Either way, if I had sent that email beforehand, it would have saved me a very large amount of time.  I strongly encourage people to reach out to others who are working in a given space for advise before spending copious amounts of time.
 
 ## K-Means
 
