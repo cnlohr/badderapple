@@ -201,6 +201,7 @@ int main()
 	RCC->CTLR = BASE_CTLR | RCC_HSION | RCC_HSEON | RCC_PLLON;  // Turn on HSE + PLL
 	while((RCC->CTLR & RCC_PLLRDY) == 0);                       // Wait till PLL is ready
 	RCC->CFGR0 = RCC_PLLSRC_HSE_Mul2 | RCC_SW_PLL | RCC_HPRE_DIV1; // Select PLL as system clock source
+
 	RCC->CTLR = BASE_CTLR | RCC_HSEON | RCC_PLLON; // Turn off HSI (optional)
 
 	// By assigning, instead of |='ing it uses less code.

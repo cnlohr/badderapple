@@ -2900,16 +2900,6 @@
 		)
 		(uuid "462ea1db-20b7-442d-97de-b0c86080f80a")
 	)
-	(text "Warning:\n OVCC's C2 bypass should operate at 7.9V.\n At 7.9V, C2's capacitance is rated at -80%\n\nWe should consider trying to use a 0603 cap here."
-		(exclude_from_sim no)
-		(at 251.714 21.59 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-		)
-		(uuid "8f4886e8-7f33-4bb5-bf17-4d0a3ae03f71")
-	)
 	(text "alt: C466530 / C5213749"
 		(exclude_from_sim no)
 		(at 232.41 36.83 0)
@@ -3019,6 +3009,12 @@
 		(uuid "6a3b0615-9ebd-4cc8-aec0-244fa42431de")
 	)
 	(junction
+		(at 107.95 130.81)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "8fe72475-0d48-4c0a-b503-961aceadc810")
+	)
+	(junction
 		(at 107.95 120.65)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -3065,6 +3061,16 @@
 			(type default)
 		)
 		(uuid "0d302150-d125-46e3-aa57-e3d49e64ec39")
+	)
+	(wire
+		(pts
+			(xy 107.95 130.81) (xy 107.95 132.08)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0ec98b27-1050-442b-86cc-28bcc5839ad4")
 	)
 	(wire
 		(pts
@@ -3298,7 +3304,7 @@
 	)
 	(wire
 		(pts
-			(xy 107.95 129.54) (xy 107.95 132.08)
+			(xy 107.95 129.54) (xy 107.95 130.81)
 		)
 		(stroke
 			(width 0)
@@ -3318,7 +3324,7 @@
 	)
 	(global_label "SBU"
 		(shape input)
-		(at 129.54 97.79 0)
+		(at 115.57 130.81 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -3326,9 +3332,9 @@
 			)
 			(justify left)
 		)
-		(uuid "02b12790-8c58-44cd-8d5b-c305cea9de97")
+		(uuid "04fbc280-41b9-4ed8-adc4-1e330d994153")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 136.3352 97.79 0)
+			(at 122.3652 130.81 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3362,7 +3368,7 @@
 	)
 	(global_label "VBUS"
 		(shape input)
-		(at 185.42 138.43 0)
+		(at 185.42 106.68 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -3372,7 +3378,7 @@
 		)
 		(uuid "1ab108e3-5f87-400b-a9e6-b80f085129d8")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 193.3038 138.43 0)
+			(at 193.3038 106.68 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3712,28 +3718,6 @@
 			)
 		)
 	)
-	(global_label "SBU"
-		(shape input)
-		(at 107.95 132.08 0)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "8e7d6095-d4ac-4e98-a3c9-94f09e3f513d")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 114.7452 132.08 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-				(hide yes)
-			)
-		)
-	)
 	(global_label "CHARGEPUMP"
 		(shape input)
 		(at 163.83 58.42 270)
@@ -3802,7 +3786,7 @@
 	)
 	(global_label "VBUS"
 		(shape input)
-		(at 144.78 133.35 180)
+		(at 135.89 113.03 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -3812,7 +3796,7 @@
 		)
 		(uuid "a3cacc12-0b1e-48f8-a19c-4e993e015b08")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 137.4683 133.4294 0)
+			(at 128.5783 113.1094 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4198,7 +4182,7 @@
 	)
 	(global_label "VBUS"
 		(shape input)
-		(at 185.42 135.89 0)
+		(at 185.42 104.14 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -4208,7 +4192,7 @@
 		)
 		(uuid "fb41a044-6d4c-4322-803b-9fc1dea129b2")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 193.3038 135.89 0)
+			(at 193.3038 104.14 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4939,6 +4923,84 @@
 		)
 	)
 	(symbol
+		(lib_id "Device:C")
+		(at 111.76 130.81 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "2a56180e-1cc3-4e33-ad22-d8d2b594e7d2")
+		(property "Reference" "C12"
+			(at 109.728 136.144 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "10u6.3v"
+			(at 108.458 134.112 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
+			(at 107.95 131.7752 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 111.76 130.81 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 111.76 130.81 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C15525"
+			(at 111.76 130.81 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "4e7a33b0-366b-40e0-bea2-8071d78e332d")
+		)
+		(pin "2"
+			(uuid "78d2e631-2539-434a-a21a-e0c3a5ca7276")
+		)
+		(instances
+			(project "badapple006"
+				(path "/88f86251-37ea-456e-9a8e-c00115fc8776"
+					(reference "C12")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Device:Crystal_GND24_Small")
 		(at 83.82 25.4 0)
 		(unit 1)
@@ -5022,7 +5084,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 185.42 140.97 0)
+		(at 185.42 109.22 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -5030,7 +5092,7 @@
 		(dnp no)
 		(uuid "39e51a89-218a-4778-959b-88790b0c4081")
 		(property "Reference" "#PWR029"
-			(at 185.42 147.32 0)
+			(at 185.42 115.57 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5039,7 +5101,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 187.96 143.51 0)
+			(at 187.96 111.76 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5047,7 +5109,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 185.42 140.97 0)
+			(at 185.42 109.22 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5056,7 +5118,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 185.42 140.97 0)
+			(at 185.42 109.22 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5065,7 +5127,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 185.42 140.97 0)
+			(at 185.42 109.22 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5546,7 +5608,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 144.78 140.97 0)
+		(at 135.89 120.65 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -5554,7 +5616,7 @@
 		(dnp no)
 		(uuid "59db06bb-b5ff-41a3-84a0-47ae765380c5")
 		(property "Reference" "#PWR019"
-			(at 144.78 147.32 0)
+			(at 135.89 127 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5563,7 +5625,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 147.32 143.51 0)
+			(at 138.43 123.19 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5571,7 +5633,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 144.78 140.97 0)
+			(at 135.89 120.65 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5580,7 +5642,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 144.78 140.97 0)
+			(at 135.89 120.65 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5589,7 +5651,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 144.78 140.97 0)
+			(at 135.89 120.65 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6307,7 +6369,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 170.18 138.43 0)
+		(at 170.18 106.68 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -6315,7 +6377,7 @@
 		(dnp no)
 		(uuid "987d11dc-5180-448d-a219-975089d3ed9f")
 		(property "Reference" "#PWR014"
-			(at 170.18 144.78 0)
+			(at 170.18 113.03 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6324,7 +6386,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 166.37 141.224 0)
+			(at 166.37 109.474 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6332,7 +6394,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 170.18 138.43 0)
+			(at 170.18 106.68 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6341,7 +6403,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 170.18 138.43 0)
+			(at 170.18 106.68 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6350,7 +6412,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 170.18 138.43 0)
+			(at 170.18 106.68 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6442,7 +6504,6 @@
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "9a9bff5c-fa5a-4586-b9eb-14c1112b2059")
 		(property "Reference" "#PWR027"
 			(at 90.17 11.43 0)
@@ -6454,7 +6515,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 90.17 12.7 0)
+			(at 87.884 17.78 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6911,7 +6972,7 @@
 	)
 	(symbol
 		(lib_id "Device:C")
-		(at 144.78 137.16 0)
+		(at 135.89 116.84 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -6919,7 +6980,7 @@
 		(dnp no)
 		(uuid "b3269e87-184a-4047-8b03-5ec8fe026908")
 		(property "Reference" "C6"
-			(at 147.32 135.89 0)
+			(at 138.43 115.57 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6928,7 +6989,7 @@
 			)
 		)
 		(property "Value" "4.7u10v"
-			(at 147.32 138.43 0)
+			(at 138.43 118.11 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6937,7 +6998,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
-			(at 145.7452 140.97 0)
+			(at 136.8552 120.65 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6946,7 +7007,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 144.78 137.16 0)
+			(at 135.89 116.84 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6955,7 +7016,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 144.78 137.16 0)
+			(at 135.89 116.84 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6964,7 +7025,7 @@
 			)
 		)
 		(property "LCSC" "C23733"
-			(at 144.78 137.16 0)
+			(at 135.89 116.84 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7353,7 +7414,7 @@
 	)
 	(symbol
 		(lib_id "cnhardware:RS3236-DFN-LDO")
-		(at 177.8 137.16 0)
+		(at 177.8 105.41 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -7362,7 +7423,7 @@
 		(fields_autoplaced yes)
 		(uuid "bed280e5-7c41-43f5-9e80-1291b4d33750")
 		(property "Reference" "U2"
-			(at 177.8 129.54 0)
+			(at 177.8 97.79 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7370,7 +7431,7 @@
 			)
 		)
 		(property "Value" "RS3236-3.3YUTDN4"
-			(at 177.8 132.08 0)
+			(at 177.8 100.33 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7378,7 +7439,7 @@
 			)
 		)
 		(property "Footprint" "cnhardware:xdfn-reg"
-			(at 177.546 133.35 0)
+			(at 177.546 101.6 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7387,7 +7448,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 177.8 137.16 0)
+			(at 177.8 105.41 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7396,7 +7457,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 177.8 137.16 0)
+			(at 177.8 105.41 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7405,7 +7466,7 @@
 			)
 		)
 		(property "LCSC" "C379350"
-			(at 178.054 133.858 0)
+			(at 178.054 102.108 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8140,7 +8201,7 @@
 	)
 	(symbol
 		(lib_id "power:VDD")
-		(at 170.18 135.89 90)
+		(at 170.18 104.14 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -8149,7 +8210,7 @@
 		(fields_autoplaced yes)
 		(uuid "e34294b9-92f1-4aa1-8f69-916ee7492a32")
 		(property "Reference" "#PWR013"
-			(at 173.99 135.89 0)
+			(at 173.99 104.14 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8158,7 +8219,7 @@
 			)
 		)
 		(property "Value" "VDD"
-			(at 166.37 135.8899 90)
+			(at 166.37 104.1399 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8167,7 +8228,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 170.18 135.89 0)
+			(at 170.18 104.14 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8176,7 +8237,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 170.18 135.89 0)
+			(at 170.18 104.14 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8185,7 +8246,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 170.18 135.89 0)
+			(at 170.18 104.14 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8355,7 +8416,6 @@
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "eaf3a70e-f900-4798-99f3-b880e16addb4")
 		(property "Reference" "#PWR026"
 			(at 76.2 11.43 0)
@@ -8367,7 +8427,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 76.2 12.7 0)
+			(at 73.406 17.526 0)
 			(effects
 				(font
 					(size 1.27 1.27)

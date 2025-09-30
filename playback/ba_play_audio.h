@@ -359,8 +359,12 @@ int ba_audio_fill_buffer( volatile uint8_t * outbuffer, int outbuffertail )
 			sample += player->noisesum;
 #endif
 		}
+		sample >>= (1+8); // Reduce to 8-bit range.
 
-		outbuffer[outbufferhead] = (volatile uint32_t)((sample >> (1+8)));
+		// Run through song once to make sure we don't overflow (somehow we don't, even with 4 notes and noise) (??)
+		//if(((uint32_t)sample)>511) while(1);
+
+		outbuffer[outbufferhead] = (volatile uint32_t)((sample));
 		//asm volatile( "nop" : : [dirty]"r"(sample) : "memory" );
 		outbufferhead = ( outbufferhead + 1 ) & ( AUDIO_BUFFER_SIZE - 1);
 	}

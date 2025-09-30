@@ -807,7 +807,6 @@ player->outbufferhead = outbufferhead;
 
 ## Output
 
-**TODO**
 
 
 ## Testing
