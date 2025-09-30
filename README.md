@@ -1290,11 +1290,11 @@ The hardware consists of a board that has:
 6. A connector for a Ronboe RB6448TSWHG04 64x48 OLED Display.
 7. A voltage regulator.
 
-All packed within 2.6cm² or less than 1/2 in².
+All packed within 2.65cm² or less than 1/2 in².
 
-![PCB](https://github.com/user-attachments/assets/d9231633-3a52-4d71-af62-cd7f8e32ae14)
+![PCB](https://github.com/user-attachments/assets/ab970c76-a0e9-4e2a-8799-50a0367eb256)
 
-![Schematic](https://github.com/user-attachments/assets/020d73d0-cb6d-4a96-a98c-fef5f731ae74)
+![Schematic](https://github.com/user-attachments/assets/400971a1-8e42-41b8-be3e-47e74ab2087c)
 
 **TODO** Assembly images
 
