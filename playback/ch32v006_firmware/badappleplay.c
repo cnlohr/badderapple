@@ -12,7 +12,7 @@
 //      +- 100 Ohm -+
 
 #define F_SPS (48000000/256/2) // Confirmed 256.
-
+#define AUDIO_BUFFER_SIZE 2048
 #define WARNING(x...)
 
 #define BADATA_DECORATOR const __attribute__((section(".fixedflash")))
@@ -192,7 +192,6 @@ void UpdatePixelMap()
 
 int main()
 {
-#if 1
 	// This is normally in SystemInit() but pulling out here to keep things tight.
 	FLASH->ACTLR = FLASH_ACTLR_LATENCY_2;  // Can't run flash at full speed.
 
@@ -202,8 +201,7 @@ int main()
 	RCC->CTLR = BASE_CTLR | RCC_HSION | RCC_HSEON | RCC_PLLON;  // Turn on HSE + PLL
 	while((RCC->CTLR & RCC_PLLRDY) == 0);                       // Wait till PLL is ready
 	RCC->CFGR0 = RCC_PLLSRC_HSE_Mul2 | RCC_SW_PLL | RCC_HPRE_DIV1; // Select PLL as system clock source
-//	SystemInit();
-#endif
+	RCC->CTLR = BASE_CTLR | RCC_HSEON | RCC_PLLON; // Turn off HSI (optional)
 
 	// By assigning, instead of |='ing it uses less code.
 	RCC->APB1PCENR = RCC_APB1Periph_TIM2;
@@ -312,6 +310,9 @@ int main()
 			if( frame == FRAMECT ) asm volatile( "j 0" );
 			if( frame == START_AUDIO_AT_FRAME )
 			{
+
+				ba_audio_fill_buffer( out_buffer_data, sizeof(out_buffer_data)-1 );
+
 				// Start playing music at frame 37.
 				// Triggered off TIM2UP
 				DMA1_Channel2->CNTR = AUDIO_BUFFER_SIZE;
@@ -328,7 +329,7 @@ int main()
 			}
 			ba_play_frame( &ctx );
 			subframe = 0;
-			if( frame == 442 ) funDigitalWrite( PD7, 0 );
+			if( frame == 441 ) funDigitalWrite( PD7, 0 );
 			if( frame == 459 ) funDigitalWrite( PD7, 1 );
 			frame++;
 		}

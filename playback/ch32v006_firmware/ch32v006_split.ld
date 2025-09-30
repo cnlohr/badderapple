@@ -123,9 +123,15 @@ SECTIONS
       PROVIDE( _ebss = .);
     } >RAM AT>BOOTLOADER
 
+	.stackreserve :
+	{
+	    _sstack = .;
+		. = . + 640; /* Stack needs to be at least 512 bytes, let's add a little buffer */
+	} > RAM
+
     PROVIDE( _end = _ebss);
- PROVIDE( end = . );
- PROVIDE( _eusrstack = ORIGIN(RAM) + LENGTH(RAM));
+	PROVIDE( end = . );
+	PROVIDE( _eusrstack = ORIGIN(RAM) + LENGTH(RAM));
 
 /*
 	.padding :

@@ -11,8 +11,8 @@ What started as my shot at bad apple on an ESP8266 ended in the biggest spiral i
 ```
 Memory region         Used Size  Region Size  %age Used
            FLASH:       62976 B        62 KB     99.19%
-      BOOTLOADER:        3280 B       3328 B     98.56%
-             RAM:        6400 B         8 KB     78.12%
+      BOOTLOADER:        3324 B       3328 B     99.88%
+             RAM:        8064 B         8 KB     98.44%
 ```
 
 If you are interested in the web viewer of the bitstream explaining what every bit means (the image below) you can click [here](https://cnvr.io/dump/badderapple.html)
@@ -544,9 +544,7 @@ There's an issue, all of the good ones in this list these are state of the art a
 | gzip -9 (for reference) | 682 |
 | zstd -9 (for reference) | 724 |
 
-**TODO** Make table?
-
-† we used this on the final project.  See rationale below.
+† we used Huffman (2-table+LZSS) on the final project.  See rationale below.
 
 Note: these tests were generated with `make sizecomp` the code for several of these tests is in the `attic/` folder.
 
@@ -683,7 +681,134 @@ That's about it for decoding the huffman coded data with reverse LZSS.
 
 ## Synthesizing
 
-**TODO** Explain 
+Once we have the notes and noise decoded, we need to play.  The synthesizer is made out of [triangle waves](https://en.wikipedia.org/wiki/Triangle_wave) for the main notes and a [LFSR](https://en.wikipedia.org/wiki/Linear-feedback_shift_register) noise for the percussion. 
+
+We really don't have very much CPU to do the audio decoding, so we can't do anything particularly complicated, and we can't use lookup tables to offset the lack of processing because we are so limited on storage.  Wavetables, [FM Synthesis](https://en.wikipedia.org/wiki/Frequency_modulation_synthesis), and other complicated synthesizer systems are infeasible.  
+
+One reason I leaned toward the triangle wave is because it has appealing overtones.  While it doesn't have all the even harmonics of stringed instruments, it does have all the odd harmonics, each harmonic of significantly decreasing value so it doesn't have an angry sound and is more soothing.  Having the odd harmonics helps music written for normal stringed instruments "sound right" when played with the original song since it was authored with the idea of using normal chords and harmonies.
+
+![Triangle Wave Spectrogram with Oscilloscope output](https://github.com/user-attachments/assets/49a9e6d1-fb88-42aa-8890-e024e23a83e1).
+
+There's some artisic decisions here.  While it's not particularly difficult to always start at zero when starting and stopping to avoid a bit of a broad spectrum "pop" when the note starts playing, having that pop gives a nice sense of variety, almost like a "pluck" of a guitar string.  And at the end sometimes things line up to zero cross, and othertimes not.  This helps give the song some variety and sound less robotic.
+
+With a little more effort and free CPU we could have made the musical instrument more interesting, adding attack/deckay/sustain, or more sophisticated harmonics, like interleving the 2nd harmonic over the first harmonic to get all stringed instrument harmonics -- or even considering what the start and end of the note should look like but, this is where I left it.  There is lots of room here for improvement, especially if additional CPU is saved elsewhere in the final product.
+
+Next, we want to layer on another "instrument."  Much like the [SID](https://en.wikipedia.org/wiki/MOS_Technology_6581) or [POKEY](https://en.wikipedia.org/wiki/POKEY) chips used for audio synthesis in older systems, we opted to use a LFSR to create the broad-spectrum noise for percussion. LFSRs are particularly easy to construct both in hardware, and software. 
+
+![LFSR Schematic](https://github.com/user-attachments/assets/7911ebb1-1eb5-4ee5-bd32-9312d216200d)
+<p SIZE="-2" ALIGN="center">LFSR Diagram from here: https://en.wikipedia.org/wiki/Linear-feedback_shift_register#/media/File:LFSR-F16.svg (CC0, KCAuXy4p - Own work)</p>
+
+It can be handled pretty simply in the sound system using the following code in `ba_play_audio.h`. 
+
+```c
+int ntr = player->noisetremain;
+if( ntr > 0 )
+{
+	int l = player->noiselfsr;
+	// Only update LFSR every 4th sample to avoid very high frequency stuff
+	if( ( outbufferhead & 3 ) == 0 )
+	{
+		int bit = ((l >> 0) ^ (l >> 2) ^ (l >> 3) ^ (l >> 5)) & 1u;
+		l = player->noiselfsr = (l>>1) | (bit<<15);
+		player->noisetremain = ntr - 32;
+		if( ntr > 2048 ) ntr = 2048;
+		player->noisesum = (l * ntr)>>14;
+	}
+	sample += player->noisesum;
+}
+```
+
+When you place both the note and the percussion on top of each other, it's a lot like mixing other notes together.
+
+![Triangle wave with percussion and oscilloscope view](https://github.com/user-attachments/assets/eaaba71e-3e93-42e8-9b9e-f5bfe0563aa0)
+
+## CH32V006 implementation
+
+In order to output the audio on the final chip, we use DMA-fed-PWM outputs. 
+
+```c
+volatile uint8_t out_buffer_data[AUDIO_BUFFER_SIZE];
+```
+...
+```c
+AFIO->PCFR1 = AFIO_PCFR1_TIM2_RM_0 | AFIO_PCFR1_TIM2_RM_1 | AFIO_PCFR1_TIM2_RM_2;
+
+TIM2->PSC = 0x0001;
+TIM2->ATRLR = 255; // Confirmed: 255 here = PWM period of 256.
+
+// for channel 1 and 2, let CCxS stay 00 (output), set OCxM to 110 (PWM I)
+// enabling preload causes the new pulse width in compare capture register only to come into effect when UG bit in SWEVGR is set (= initiate update) (auto-clears)
+TIM2->CHCTLR1 = 
+	TIM2_CHCTLR1_OC1M_2 | TIM2_CHCTLR1_OC1M_1 | TIM2_CHCTLR1_OC1PE |
+	TIM2_CHCTLR1_OC2M_2 | TIM2_CHCTLR1_OC2M_1 | TIM2_CHCTLR1_OC2PE;
+
+// Enable Channel outputs, set default state (based on TIM2_DEFAULT)
+TIM2->CCER = TIM2_CCER_CC1E // | (TIM_CC1P & TIM2_DEFAULT);
+           | TIM2_CCER_CC2E;// | (TIM_CC2P & TIM2_DEFAULT);
+
+// initialize counter
+TIM2->SWEVGR = TIM2_SWEVGR_UG | TIM2_SWEVGR_TG;
+TIM2->DMAINTENR = TIM1_DMAINTENR_TDE | TIM1_DMAINTENR_UDE;
+
+// CTLR1: default is up, events generated, edge align
+// enable auto-reload of preload
+TIM2->CTLR1 = TIM2_CTLR1_ARPE | TIM2_CTLR1_CEN;
+
+// Enable TIM2
+
+TIM2->CH1CVR = 128;
+TIM2->CH2CVR = 128; 
+```
+...
+
+```c
+// Be sure to fill the buffer.
+
+DMA1_Channel2->CNTR = AUDIO_BUFFER_SIZE;
+DMA1_Channel2->MADDR = (uint32_t)out_buffer_data;
+DMA1_Channel2->PADDR = (uint32_t)&TIM2->CH2CVR; // This is the output register for out buffer.
+DMA1_Channel2->CFGR = 
+	DMA_CFGR1_DIR |                      // MEM2PERIPHERAL
+	DMA_CFGR1_PL_0 |                     // Med priority.
+	0 |                                  // 8-bit memory
+	DMA_CFGR1_PSIZE_0 |                  // 16-bit peripheral  XXX TRICKY XXX You MUST do this when writing to a timer.
+	DMA_CFGR1_MINC |                     // Increase memory.
+	DMA_CFGR1_CIRC |                     // Circular mode.
+	DMA_CFGR1_EN;                        // Enable
+```
+
+What this sets up is a system that runs the timer at 24MHz (`Fcpu` = 48MHz, `TIM2->PSC` = 2).  And counts up to 256.  This makes our `Fsps` = 93750 samples per second.  By running at a very high frequency, it helps cover up the quality loss being only an 8-bit output, and to cover for the fact that we are not being careful about how we decide the values of the samples in time, so we can use this as a sort of antialiasing by oversampling and letting the system and human ear work together to cover it up.
+
+Once the DMA setup code is called, the DMA system starts reading data out of `out_buffer_data`, one sample at a time once the timer reloads.
+
+We don't use interrupts to do the playback, but instead we can see "where" in out_buffer_data the current sample was read from.  That we we can fill more samples into our buffer.  You can treat `out_buffer_data` like a circular buffer, where we keep track of our "head" and we treat the location in the buffer as a "tail."
+
+```c
+int v = AUDIO_BUFFER_SIZE - DMA1_Channel2->CNTR - 1;
+if( v < 0 ) v = 0; // There is a "race condition" at DMA1_Channel2->CNTR == AUDIO_BUFFER_SIZE
+ba_audio_fill_buffer( out_buffer_data, v );
+```
+...
+```c
+int outbufferhead = player->outbufferhead;
+if( outbufferhead == outbuffertail ) return 1;
+while( outbufferhead != outbuffertail )
+{
+	// Compute "sample"
+
+	outbuffer[outbufferhead] = (volatile uint32_t)((sample >> (1+8)));
+
+	outbufferhead = ( outbufferhead + 1 ) & ( AUDIO_BUFFER_SIZE - 1);
+}
+player->outbufferhead = outbufferhead;
+```
+
+![Circular buffer diagram](https://github.com/user-attachments/assets/df319c05-4ba7-4c7f-b0e2-163007328754)
+
+## Output
+
+**TODO**
+
 
 ## Testing
 
@@ -1614,12 +1739,13 @@ https://tiplanet.org/forum/viewtopic.php?t=24951
 ### Future TODO
  - [x] Perceptual/Semantic Loss Function
  - [x] De-Blocking Filter
- - [ ] Motion Vectors - cannot - is mutually exclusive with 
+ - [ ] Motion Vectors - cannot - is mutually exclusive with our current approach.
  - [x] Reference previous tiles.
  - [x] Add color inversion option for glyphs.  **when implemented, it didn't help.**
  - [x] https://engineering.fb.com/2016/08/31/core-infra/smaller-and-faster-data-compression-with-zstandard/ **compared with audio compression,  It's not that amazing.**
  - [x] https://github.com/webmproject/libvpx/blob/main/vpx_dsp/bitreader.c **winner winner chicken dinner**
  - [x] https://github.com/webmproject/libvpx/blob/main/vpx_dsp/bitwriter.c **winner winner chicken dinner**
+ - [ ] Make a much more interesting musical instrument, adding even harmonics, and using a different attack/deckay/sustain.
 
 ### Other notes
  * I got 15% savings when I broke the "run length" and "glyph ID" fields apart.

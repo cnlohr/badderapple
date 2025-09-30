@@ -89,10 +89,10 @@ struct ba_audio_player_t
 	int sub_t_sample;
 	int outbufferhead;
 	int stackplace;
-	uint16_t noiselfsr;
-	int16_t noisetremain;
-	int     noisesum;
-	uint16_t   playing_freq[NUM_VOICES];
+	uint16_t   noiselfsr;
+	int16_t    noisetremain;
+	int        noisesum;
+	uint16_t   playing_freq[NUM_VOICES]; //NUM_VOICES = 4
 	uint32_t   phase[NUM_VOICES];  // 32 bit to allow for more precision than 16-bit on the playing freq, otherwise it's too imprecise for good sound.
 	int        tstop[NUM_VOICES];
 
@@ -348,7 +348,7 @@ int ba_audio_fill_buffer( volatile uint8_t * outbuffer, int outbuffertail )
 		{
 #if 1
 			int l = player->noiselfsr;
-			if( ( outbufferhead & 3 ) == 0 )
+			if( ( outbufferhead & 3 ) == 0 ) // Only update LFSR every 4th sample to avoid very high frequency stuff
 			{
 				int bit = ((l >> 0) ^ (l >> 2) ^ (l >> 3) ^ (l >> 5)) & 1u;
 				l = player->noiselfsr = (l>>1) | (bit<<15);
