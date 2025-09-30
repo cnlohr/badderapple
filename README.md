@@ -807,7 +807,7 @@ player->outbufferhead = outbufferhead;
 
 ## Output
 
-
+**TODO** Add schematic + Saleae capture.
 
 ## Testing
 
@@ -1523,6 +1523,8 @@ TODO: Add charts
 ```c
 ```
 
+TODO: Add profiling GPIO in Saleae.
+
 ## Firmware (Final notes)
 
 While there was a lot of push and shove to get the overall size small enough eventually I was able to do so, and then continue to push, because nothing is ever in the last place I look! The final size output (at least as of the moment of writing this) is:
@@ -1530,8 +1532,8 @@ While there was a lot of push and shove to get the overall size small enough eve
 ```
 Memory region         Used Size  Region Size  %age Used
            FLASH:       62976 B        62 KB     99.19%
-      BOOTLOADER:        3296 B       3328 B     99.04%
-             RAM:        6400 B         8 KB     78.12%
+      BOOTLOADER:        3324 B       3328 B     99.88%
+             RAM:        8064 B         8 KB     98.44%
 ```
 
 # The web viewer demo
