@@ -807,7 +807,15 @@ player->outbufferhead = outbufferhead;
 
 ## Output
 
-**TODO** Add schematic + Saleae capture.
+![Diagram](https://github.com/user-attachments/assets/e7d4237c-7c90-40b8-9ee5-97ad38611382)
+
+The output is accomplished simply with a PWM signal, but, with a little bit of filtering.  First, to remove the DC offset, otherwise the ground loop isolator, or whatever is downstream will be very unhappy to receive a large DC offset in the signal.
+
+Then, that is output on the SBU pin of the USB type C connector, so it's posible to use an adapter to USB->Headphone adapter with power injection.  This means that through the same connector we can provide power to the badder apple playback unit, as well as getting the audio out to send to the rest of the system.
+
+The filtered output (from a slightly different circuit, with the DC offset removal on the other side) looks like this.  While there's still a little bit of the PWM signal left, it's not much.
+
+![Real Waveform](https://github.com/user-attachments/assets/b346f0c6-9f84-4f6e-be52-2d43a9421293)
 
 ## Testing
 
@@ -1524,14 +1532,77 @@ And then we have the final scanout code.
 		}
 ```
 
-## And not quite fast enough...
+## Why was this needed?
 
-TODO: Add charts
+You might be wondering... was all of this optimization really needed?
 
-```c
+Yes.
+
+Even with a previous implementation hand optimized, with bits and bobs of assembly, I couldn't get it to fit, time-wise.
+
+![perf monitor](https://github.com/user-attachments/assets/0d37af0b-47dd-410b-87b8-996927a033a8)
+
+I used a spare GPIO pin on the 006, that I would turn on immediately before waiting for the next frame, and off while processing.  This told me how much time was spent working on a given frame.  You can see in the analog graph, when there is no CPU time left, when the % FreeTime signal is only long as long as it takes the CPU to realize it has to get right back to work!  When this happens, frames get successively further behind, causing a pileup.
+
+![perf zoom in](https://github.com/user-attachments/assets/10c42b2a-05ea-4d00-8405-d2845c53cd4d)
+
+Some of the random optimizations that came to mind were:
+
+Before Final Optimization:
+
+### Turn all applicable compiler optimiationz on
+
+I ended up using the following.  This really made the code as small and fast as I could get it.
+
+```
+-mrelax -ffunction-sections -flto -Os -ffunction-sections -fdata-sections -fmessage-length=0 -msmall-data-limit=8 -g -Wno-unused-function -Wno-unused-variable -march=rv32ec -mabi=ilp32e 
 ```
 
-TODO: Add profiling GPIO in Saleae.
+### 
+
+### MORE TODO
+
+To get the final optimization:
+
+### Consider register micro-optimization
+
+Manually extract pointers from arrays and use those pointers, instead of dereferencing.
+
+```diff
+-	player->stack[stackplace].remain--;
+-	CHECKPOINT( audio_stack_place = stackplace, audio_stack_remain = player->stack[stackplace].remain, decodephase = "AUDIO: Pulling Note" );
+-	while( player->stack[stackplace].remain == 0 )
++	struct ba_audio_player_stack_element * stack = player->stack;
++	struct ba_audio_player_stack_element * stackpl = stack + stackplace;
++	stackpl->remain--;
++	CHECKPOINT( audio_stack_place = stackplace, 
++	while( stackpl->remain == 0 )
+...
+-	if( tremain > player->stack[stackplace].remain ) tremain = player->stack[stackplace].remain;  //TODO: Fold tremain into remain logic below.
+-	player->stack[stackplace].remain -= tremain;
++	if( tremain > stackpl->remain ) tremain = stackpl->remain;  //TODO: Fold tremain into remain logic below.
++	stackpl->remain -= tremain;
+```
+
+
+### MORE TODO
+
+
+ * 
+ * 
+
+The performance slipped in juuuust under the wire.
+
+![doing better](https://github.com/user-attachments/assets/d2f1c2dc-a1bb-49b9-a114-0837575aa30c)
+
+If we zoom into the section where there was no more CPU time, we can see that while we didn't have any spare time, it was so close, it didn't measurably impact when the frames themselves could delay, and it was only 12 frames... because we are manually syncing the display, there's no way to perceive any slowdown.
+
+![doing better 2](https://github.com/user-attachments/assets/98682350-811d-4c7b-b2a4-35a057b03de8)
+
+## Space constraints
+
+One limit I kept bumping against was the storage limitation.  I wanted all of the code to do playback to live inside the bootloader.  Even though the [ch32fun startup code](https://github.com/cnlohr/ch32fun/blob/master/ch32fun/ch32fun.c#L1042) is very dense, it still did a handful of things that I could hand tweak to be even tighter for this specific tool.
+
 
 ## Firmware (Final notes)
 
