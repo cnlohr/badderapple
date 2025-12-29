@@ -2,7 +2,7 @@
 #define _FUNCONFIG_H
 
 #define FUNCONF_NO_ISR 1
-#define FUNCONF_OVERRIDE_VECTOR_AND_START 1
+#define FUNCONF_OVERRIDE_STARTUP 1
 
 // Though this should be on by default we can extra force it on.
 #define FUNCONF_USE_DEBUGPRINTF 1

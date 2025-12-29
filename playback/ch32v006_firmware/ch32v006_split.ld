@@ -23,6 +23,7 @@ SECTIONS
     .text :
     {
       . = ALIGN(4);
+      *(.startup)
       *(.text)
       *(.text.*)
       *(.rodata)

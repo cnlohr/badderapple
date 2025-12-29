@@ -455,9 +455,9 @@ int main()
 	}
 }
 
+void InterruptVector()         __attribute__((naked)) __attribute((section(".startup")));
 
-
-void handle_reset( void )
+void InterruptVector( void )
 {
 	asm volatile( "\n\
 .option push\n\
