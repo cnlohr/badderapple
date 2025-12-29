@@ -2467,6 +2467,28 @@
 	)
 	(global_label "VBUS"
 		(shape input)
+		(at 101.6 60.96 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "abceda34-5ec7-469e-9834-7cd7e9690d67")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 94.2883 61.0394 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+				(hide yes)
+			)
+		)
+	)
+	(global_label "VBUS"
+		(shape input)
 		(at 154.94 80.01 0)
 		(fields_autoplaced yes)
 		(effects
@@ -2983,7 +3005,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC" "C5221281"
+		(property "LCSC" "C5221294"
 			(at 218.44 60.96 0)
 			(effects
 				(font
@@ -3064,6 +3086,71 @@
 			(project "programmingjig"
 				(path "/fb00fef0-158e-4651-97d6-849960de9d61"
 					(reference "#PWR18")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 101.6 68.58 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "36959a9d-3633-47a7-9dea-b9d5d218e3ec")
+		(property "Reference" "#PWR22"
+			(at 101.6 74.93 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 104.14 71.12 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 101.6 68.58 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 101.6 68.58 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 101.6 68.58 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "24c86cd5-0159-4697-8414-433f3948cd50")
+		)
+		(instances
+			(project "programmingjig"
+				(path "/fb00fef0-158e-4651-97d6-849960de9d61"
+					(reference "#PWR22")
 					(unit 1)
 				)
 			)
@@ -3565,6 +3652,84 @@
 		)
 	)
 	(symbol
+		(lib_id "Device:C")
+		(at 101.6 64.77 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "7ebe9efb-4755-4450-b549-79e8bb72f557")
+		(property "Reference" "C3"
+			(at 104.14 63.5 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "10u"
+			(at 104.14 66.04 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+			(at 102.5652 68.58 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 101.6 64.77 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 101.6 64.77 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C19702"
+			(at 101.6 64.77 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "9a346175-8cca-4437-b40c-f1e8f7305995")
+		)
+		(pin "2"
+			(uuid "c6b4b2d5-a434-43d6-b322-e6d7a113cc3b")
+		)
+		(instances
+			(project "programmingjig"
+				(path "/fb00fef0-158e-4651-97d6-849960de9d61"
+					(reference "C3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Device:R")
 		(at 83.82 50.8 90)
 		(unit 1)
@@ -3760,7 +3925,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC" "C5221281"
+		(property "LCSC" "C5221294"
 			(at 218.44 68.58 0)
 			(effects
 				(font
@@ -4049,84 +4214,6 @@
 			(project "programmingjig"
 				(path "/fb00fef0-158e-4651-97d6-849960de9d61"
 					(reference "C1")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:C")
-		(at 114.3 81.28 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "b3269e87-184a-4047-8b03-5ec8fe026908")
-		(property "Reference" "C6"
-			(at 116.84 80.01 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "4.7u10v"
-			(at 116.84 82.55 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
-			(at 115.2652 85.09 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 114.3 81.28 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" ""
-			(at 114.3 81.28 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "LCSC" "C23733"
-			(at 114.3 81.28 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "d35cde58-cc87-474b-8607-cae7e40b50ec")
-		)
-		(pin "2"
-			(uuid "ec42833a-e879-4905-bafc-9d2fc8cebeb7")
-		)
-		(instances
-			(project "programmingjig"
-				(path "/fb00fef0-158e-4651-97d6-849960de9d61"
-					(reference "C6")
 					(unit 1)
 				)
 			)
@@ -4481,7 +4568,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC" "C5221281"
+		(property "LCSC" "C5221294"
 			(at 218.44 53.34 0)
 			(effects
 				(font
@@ -4497,6 +4584,84 @@
 			(project "programmingjig"
 				(path "/fb00fef0-158e-4651-97d6-849960de9d61"
 					(reference "J11")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:C")
+		(at 114.3 81.28 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "d72c77ab-b924-4612-b10b-473976ab82d0")
+		(property "Reference" "C4"
+			(at 116.84 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "1u25v"
+			(at 116.84 82.55 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
+			(at 115.2652 85.09 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 114.3 81.28 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 114.3 81.28 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "LCSC" "C52923"
+			(at 114.3 81.28 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "ea2c8c46-0ad8-40a8-849c-badd0140fb3f")
+		)
+		(pin "2"
+			(uuid "fd83821a-25ba-424f-8c72-de3727242f96")
+		)
+		(instances
+			(project "programmingjig"
+				(path "/fb00fef0-158e-4651-97d6-849960de9d61"
+					(reference "C4")
 					(unit 1)
 				)
 			)
@@ -4804,7 +4969,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "4.7u10v"
+		(property "Value" "10u"
 			(at 116.84 66.04 0)
 			(effects
 				(font
@@ -4813,7 +4978,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
 			(at 115.2652 68.58 0)
 			(effects
 				(font
@@ -4840,7 +5005,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC" "C23733"
+		(property "LCSC" "C19702"
 			(at 114.3 64.77 0)
 			(effects
 				(font
@@ -5189,7 +5354,6 @@
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "ff0af039-90cb-4e02-a059-a722ead33d0e")
 		(property "Reference" "U3"
 			(at 169.7833 34.29 0)
