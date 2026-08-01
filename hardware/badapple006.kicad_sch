@@ -3258,6 +3258,17 @@
 		)
 		(uuid "8078a770-f511-4699-8d59-35aa5b167b18")
 	)
+	(text "VDD = 3.6V"
+		(exclude_from_sim no)
+		(at 205.232 64.008 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "a3a7ef9c-5a61-4b5b-a0da-29d3aad0d5b5")
+	)
 	(text "OLED DISPLAY: RB066-6448-TSWHG01 (Ronboe)\nTell Agatha CNLohr sent you."
 		(exclude_from_sim no)
 		(at 206.502 116.84 0)
@@ -4630,7 +4641,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
 			(at 59.3852 55.88 0)
 			(hide yes)
 			(show_name no)
@@ -4663,7 +4674,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C23733"
+		(property "LCSC" "C19666"
 			(at 58.42 52.07 0)
 			(hide yes)
 			(show_name no)
@@ -5207,7 +5218,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
 			(at 155.9052 123.19 0)
 			(hide yes)
 			(show_name no)
@@ -5240,7 +5251,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C23733"
+		(property "LCSC" "C19666"
 			(at 154.94 119.38 0)
 			(hide yes)
 			(show_name no)
@@ -5459,7 +5470,7 @@
 				)
 			)
 		)
-		(property "Value" "XC6206P332"
+		(property "Value" "XC6206P362"
 			(at 234.95 34.29 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5503,7 +5514,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C5446"
+		(property "LCSC" "C50593818"
 			(at 234.95 38.1 0)
 			(hide yes)
 			(show_name no)
@@ -6235,7 +6246,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
 			(at 182.5752 123.19 0)
 			(hide yes)
 			(show_name no)
@@ -6268,7 +6279,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C23733"
+		(property "LCSC" "C19666"
 			(at 181.61 119.38 0)
 			(hide yes)
 			(show_name no)
@@ -8281,7 +8292,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
 			(at 122.8852 152.4 0)
 			(hide yes)
 			(show_name no)
@@ -8314,7 +8325,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C23733"
+		(property "LCSC" "C19666"
 			(at 121.92 148.59 0)
 			(hide yes)
 			(show_name no)
@@ -9908,7 +9919,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C2765186"
+		(property "LCSC" "C23376537"
 			(at 53.34 135.89 0)
 			(hide yes)
 			(show_name no)
