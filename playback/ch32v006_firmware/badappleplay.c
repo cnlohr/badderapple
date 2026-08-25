@@ -58,14 +58,14 @@ const uint8_t ssd1306_init_array[] =
 	0xA1, // Segment remap
 	0xC8, // Set COM output scan direction
 	0xDA, 0x12, // Set COM pins hardware configuration
-	0x81, 0xcf, // Contrast control
-	0xD9, 0x22, // Set Pre-Charge Period  (Not used)
+	0x81, 0xff, // Contrast control
+	0xD9, 0xf2, // Set Pre-Charge Period  (Not used on previous version) -- recommended to be 0x22, but 0xf2 looks brighter.
 	0xDB, 0x30, // Set VCOMH Deselect Level
 	0xA4, // Entire display on (a5)/off(a4)
 	0xA6, // Normal (a6)/inverse (a7)
 	0x8D, 0x14, // Set Charge Pump
 	0xAF, // Display On
-	SSD1306_PAGEADDR, 0, 7, // Page setup, start at 0 and end at 7
+	SSD1306_PAGEADDR, 0, 5, // Page setup, start at 0 and end at 5
 };
 
 // ??? No idea but if I don't put this in the main flash partition everything dies.
