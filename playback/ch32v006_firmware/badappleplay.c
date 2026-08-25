@@ -52,7 +52,7 @@ const uint8_t ssd1306_init_array[] =
 	0x20, 0x00, // Horizontal addresing mode
 	0x00, 0x12, 0x40, 0xB0,
 	0xD5, 0xf0, // Function Selection   <<< This controls scan speed. F0 is fastest.  The LSN = D divisor.
-	0xA8, 0x2F, // Set Multiplex Ratio
+	0xA8, 0x3F, // Set Multiplex Ratio
 	0xD3, 0x00, // Set Display Offset
 	0x40,
 	0xA1, // Segment remap
@@ -217,7 +217,7 @@ int main()
 	funDigitalWrite( SSD1306_I2C_BITBANG_SDA, 1 );
 	funDigitalWrite( SSD1306_I2C_BITBANG_SCL, 1 );
 	funDigitalWrite( SSD1306_RST_PIN, 0 );
-//	Delay_Ms(10);
+	Delay_Ms(10);
 	funDigitalWrite( SSD1306_RST_PIN, 1 );
 	Delay_Us(10);
 
@@ -269,7 +269,8 @@ int main()
 	// Weeeird... PUPD works better than GPIO_CFGLR_OUT_AF_PP
 	//funPinMode( PD3, GPIO_CFGLR_OUT_AF_PP );
 	//funPinMode( PD4, GPIO_CFGLR_OUT_AF_PP );
-
+#if 0
+	// TIM1 is for charge pump
 	TIM1->CHCTLR2 = 
 		TIM1_CHCTLR2_OC3M_2 | TIM1_CHCTLR2_OC3M_1 | TIM1_CHCTLR2_OC3PE |
 		TIM1_CHCTLR2_OC4M_2 | TIM1_CHCTLR2_OC4M_1 | TIM1_CHCTLR2_OC4PE;
@@ -288,6 +289,7 @@ int main()
 	TIM1->SWEVGR = TIM2_SWEVGR_UG;
 
 	TIM1->CTLR1 = TIM2_CTLR1_CEN;
+#endif
 
 	// Enable TIM2
 
@@ -444,7 +446,7 @@ int main()
 
 		// Make it so it "would be" off screen but only by 2 pixels.
 		// Overscan screen by 2 pixels, but release from 2-scanline mode.
-		ssd1306_mini_pkt_send( (const uint8_t[]){0xD3, 0x3e, 0xA8, 0x31}, 4, 1 ); 
+		ssd1306_mini_pkt_send( (const uint8_t[]){0xD3, 0x3e, 0xA8, 0x30}, 4, 1 ); 
 
 		int v = AUDIO_BUFFER_SIZE - DMA1_Channel2->CNTR - 1;
 		if( v < 0 ) v = 0;
