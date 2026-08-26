@@ -9,7 +9,7 @@ LDFLAGS=
 CFLAGS+=-I.. -I../../common -I../../vpxtest -mrelax -ffunction-sections -flto -Os -ffunction-sections -fdata-sections -fmessage-length=0 -msmall-data-limit=8 -g -Wno-unused-function -Wno-unused-variable
 LINKER_SCRIPT:=ch32v006_split.ld
 
-all : flash
+all : optionbytes flashdata flash
 
 TARGET:=badappleplay
 TARGET_MCU?=CH32V006
@@ -19,9 +19,9 @@ optionbytes:
 	#$(MINICHLINK)/minichlink -w +a55aff00 option # Enable bootloader, enable RESET
 	#$(MINICHLINK)/minichlink -w +a55aff00 option # Enable bootloader, disable RESET
 	#$(MINICHLINK)/minichlink -w +a55aef10 option # Enable bootloader, enable RESET (Alternate)
-	$(MINICHLINK)/minichlink -w +a55adf20 option # Disable bootloader, disable RESET
+	#$(MINICHLINK)/minichlink -w +a55adf20 option # Disable bootloader, disable RESET
 	#$(MINICHLINK)/minichlink -w +a55acf30 option # Disable bootloader, enable RESET
-	#$(MINICHLINK)/minichlink -w +a55aff00 option # Enable bootloader, disable RESET
+	$(MINICHLINK)/minichlink -w +a55aff00 option # Enable bootloader, disable RESET
 
 flashdata :
 	$(PREFIX)-objcopy -j .fixedflash -O binary $(TARGET).elf fixedflash.bin

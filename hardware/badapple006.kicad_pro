@@ -40,8 +40,8 @@
         "other_text_upright": false,
         "pads": {
           "drill": 0.0,
-          "height": 1.0,
-          "width": 1.0
+          "height": 1.4,
+          "width": 1.4
         },
         "silk_line_width": 0.1,
         "silk_text_italic": false,
@@ -541,7 +541,7 @@
       "gencad": "",
       "idf": "",
       "netlist": "",
-      "plot": "badderapple-rev-",
+      "plot": "badderapple-revB",
       "pos_files": "badapple006-flip-revBad",
       "specctra_dsn": "",
       "step": "",
@@ -556,7 +556,7 @@
       "method": 0,
       "sort_order": 0
     },
-    "bom_export_filename": "badderapple-rev-/${PROJECTNAME}.csv",
+    "bom_export_filename": "badderapple-revB/${PROJECTNAME}.csv",
     "bom_fmt_presets": [],
     "bom_fmt_settings": {
       "field_delimiter": ",",
