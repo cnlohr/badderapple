@@ -240,6 +240,7 @@ int main()
 
 	AFIO->PCFR1 = AFIO_PCFR1_TIM2_RM_0 | AFIO_PCFR1_TIM2_RM_1 | AFIO_PCFR1_TIM2_RM_2;
 
+#if 1
 	TIM2->PSC = 0x0001;
 	TIM2->ATRLR = 255; // Confirmed: 255 here = PWM period of 256.
 
@@ -269,6 +270,8 @@ int main()
 	// Weeeird... PUPD works better than GPIO_CFGLR_OUT_AF_PP
 	//funPinMode( PD3, GPIO_CFGLR_OUT_AF_PP );
 	//funPinMode( PD4, GPIO_CFGLR_OUT_AF_PP );
+#endif
+
 #if 0
 	// TIM1 is for charge pump
 	TIM1->CHCTLR2 = 
@@ -292,7 +295,6 @@ int main()
 #endif
 
 	// Enable TIM2
-
 	TIM1->CH3CVR = 16;
 	TIM1->CH4CVR = 16;
 
@@ -408,10 +410,30 @@ int main()
 			//pixelbase[pmp] = pvo;
 			uint16_t po = pvr;
 
-			if( subframe != 1 ) // Set this to &1 for 50/50 grey.
+#if 0
+			// 1/4 duty cycle so good gamma, but still a little shaky.
+			// Use a even-odd checkerboard dither battern for grey.
+			// value in po>>8 is the "brighter" frame.
+			// value in po is the "dimmer" frame.
+			uint8_t po8 = po>>8;
+			uint8_t invmask = 0xaa>>((i+subframe)&1);
+			uint8_t v[4] = {
+				po8,
+				po8|(po&invmask),
+				po8|(po&invmask),
+				po8 };
+			ssd1306_mini_i2c_sendbyte( v[subframe] );
+#elif 0
+			// Show brights only on the 1st out of 4 frames, more shaky appearing but, better gamma.
+			if( subframe != 0 )
 				ssd1306_mini_i2c_sendbyte( po>>8 );
 			else
 				ssd1306_mini_i2c_sendbyte( po );
+#else
+			// Alternate every other frame.  This has worse gamme but appears more stable.
+			// This is currently my favorite.
+			ssd1306_mini_i2c_sendbyte( po>>((subframe&1)<<3) );
+#endif
 		}
 #else
 		// No horizontal filters.
