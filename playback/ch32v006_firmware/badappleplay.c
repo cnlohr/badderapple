@@ -240,7 +240,7 @@ int main()
 
 	AFIO->PCFR1 = AFIO_PCFR1_TIM2_RM_0 | AFIO_PCFR1_TIM2_RM_1 | AFIO_PCFR1_TIM2_RM_2;
 
-#if 1
+#if 1 // sound
 	TIM2->PSC = 0x0001;
 	TIM2->ATRLR = 255; // Confirmed: 255 here = PWM period of 256.
 
@@ -292,11 +292,10 @@ int main()
 	TIM1->SWEVGR = TIM2_SWEVGR_UG;
 
 	TIM1->CTLR1 = TIM2_CTLR1_CEN;
-#endif
-
-	// Enable TIM2
 	TIM1->CH3CVR = 16;
 	TIM1->CH4CVR = 16;
+#endif
+
 
 	funDigitalWrite( PD7, 1 );
 	// PD6 = Profiling (Debug pin)
@@ -416,13 +415,11 @@ int main()
 			// value in po>>8 is the "brighter" frame.
 			// value in po is the "dimmer" frame.
 			uint8_t po8 = po>>8;
-			uint8_t invmask = 0xaa>>((i+subframe)&1);
-			uint8_t v[4] = {
-				po8,
-				po8|(po&invmask),
-				po8|(po&invmask),
-				po8 };
-			ssd1306_mini_i2c_sendbyte( v[subframe] );
+			uint8_t invmask = 0xaa>>(((i+subframe)&2)>>1);
+			if( subframe & 1 )
+				ssd1306_mini_i2c_sendbyte( po8|(po&invmask) );
+			else
+				ssd1306_mini_i2c_sendbyte( po );
 #elif 0
 			// Show brights only on the 1st out of 4 frames, more shaky appearing but, better gamma.
 			if( subframe != 0 )
@@ -432,7 +429,9 @@ int main()
 #else
 			// Alternate every other frame.  This has worse gamme but appears more stable.
 			// This is currently my favorite.
-			ssd1306_mini_i2c_sendbyte( po>>((subframe&1)<<3) );
+			if( subframe & 1 ) po>>=8;
+			ssd1306_mini_i2c_sendbyte( po );
+			//ssd1306_mini_i2c_sendbyte( po>>((subframe&1)<<3) );
 #endif
 		}
 #else

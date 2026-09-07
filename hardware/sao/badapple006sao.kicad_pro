@@ -541,7 +541,7 @@
       "gencad": "",
       "idf": "",
       "netlist": "",
-      "plot": "badderappleSAO-rev-",
+      "plot": "badderappleSAO-revb",
       "pos_files": "badapple006-flip-revBad",
       "specctra_dsn": "",
       "step": "",
@@ -556,7 +556,7 @@
       "method": 0,
       "sort_order": 0
     },
-    "bom_export_filename": "badderappleSAO-rev-/${PROJECTNAME}.csv",
+    "bom_export_filename": "badderappleSAO-revb/badapple006sao.csv",
     "bom_fmt_presets": [],
     "bom_fmt_settings": {
       "field_delimiter": ",",
@@ -682,7 +682,7 @@
         "uuid": "88f86251-37ea-456e-9a8e-c00115fc8776"
       }
     ],
-    "used_designators": "J1,J10-13,R1,R5-6,C11,C13-18,D2,#PWR8,#PWR29-44,#PWR136-137,U3",
+    "used_designators": "J1,J7,J10-13,R1,R5-6,C11,C13-22,D2,#PWR8,#PWR29-45,#PWR136-137,U3",
     "variants": []
   },
   "sheets": [
