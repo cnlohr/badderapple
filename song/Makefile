@@ -1,4 +1,4 @@
-all : testsynth midiexport fmcomp-vpx-lzss track-float-48000.dat 
+all : testsynth midiexport fmcomp-vpx-lzss track-float-48000.dat  ../playback/badapple_song_huffman_reverselzss.h
 
 CFLAGS:=-Og -g -I../common
 

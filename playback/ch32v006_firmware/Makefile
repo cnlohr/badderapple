@@ -1,6 +1,6 @@
 include ../../common/make.inc
 
-PREFIX:=~/Downloads/xpack-riscv-none-elf-gcc-14.2.0-3/bin/riscv-none-elf
+PREFIX:=~/Downloads/xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf
 OBJCOPY_FLAGS:=-j .init -j .text -j .data -j .padding --set-section-flags .padding=alloc,load
 WRITE_SECTION:=0x1fff0000
 
