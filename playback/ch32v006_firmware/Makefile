@@ -1,6 +1,6 @@
 include ../../common/make.inc
 
-PREFIX:=~/Downloads/xpack-riscv-none-elf-gcc-15.2.0-1/bin/riscv-none-elf
+PREFIX:=~/Downloads/xpack-riscv-none-elf-gcc-14.2.0-3/bin/riscv-none-elf
 OBJCOPY_FLAGS:=-j .init -j .text -j .data -j .padding --set-section-flags .padding=alloc,load
 WRITE_SECTION:=0x1fff0000
 
@@ -23,7 +23,7 @@ optionbytes:
 	#$(MINICHLINK)/minichlink -w +a55acf30 option # Disable bootloader, enable RESET
 	$(MINICHLINK)/minichlink -w +a55aff00 option # Enable bootloader, disable RESET
 
-flashdata :
+flashdata : badappleplay.elf
 	$(PREFIX)-objcopy -j .fixedflash -O binary $(TARGET).elf fixedflash.bin
 	$(MINICHLINK)/minichlink -w fixedflash.bin 0x08000000
 
