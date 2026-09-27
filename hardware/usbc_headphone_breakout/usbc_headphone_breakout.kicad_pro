@@ -39,9 +39,9 @@
         "other_text_thickness": 0.15,
         "other_text_upright": false,
         "pads": {
-          "drill": 0.0,
-          "height": 1.9,
-          "width": 0.7
+          "drill": 0.4,
+          "height": 2.1,
+          "width": 0.9
         },
         "silk_line_width": 0.1,
         "silk_text_italic": false,
@@ -537,7 +537,7 @@
     "last_paths": {
       "idf": "",
       "netlist": "",
-      "plot": "usbc_headphone_breakout-rev-",
+      "plot": "usbc_headphone_breakout-revA",
       "specctra_dsn": "",
       "step": "",
       "vrml": ""
