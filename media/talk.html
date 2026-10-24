@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<HTML>
+<HEAD>
+<TITLE>Bad Apple in 65kB - Hackaday 2026 Talk</TITLE>
+<LINK rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon"> 
+<META name="viewport" content="width=device-width, initial-scale=1.0" />
+<META charset="UTF-8" />
+<STYLE>
+:root { color-scheme: dark; }
+hr {  width: 80% }
+ul { margin: 0px }
+li { margin: 2px }
+.slideCell { margin:0;padding:15px;min-width:1250px;height:690px;overflow:hidden;vertical-align:top }
+.slideHeading { font-size:70px;font-weight:bold }
+.headingHR {  margin:10px;width:80% }
+</STYLE>
+<SCRIPT SRC=presentation.js></script>
+</HEAD>
+
+<BODY onLoad="onLoad()" STYLE="margin:0;padding:0">
+<DIV ID=root STYLE="position:absolute;left:0px;right:0px;width:100%;height:100vh;marin:0;padding:0;box-sizing:border-box;overflow:hidden">
+<!-- an overlay in top left could go here -->
+
+<DIV ID=mainarea STYLE="position:absolute;top:0px;left:0px;transform:matrix(1,0,0,1,5000,0)">
+<DIV ID=innercontainer STYLE="position:absolute;top:0px;left:0px;font-size:220%">
+
+<!-- This is the main page content -->
+
+<TABLE BORDER=0 style="border-spacing:300px;border-collapse: separate;">
+<slide-descriptor title="Title" id="title" view="{ r:0.00000, s:1, x:-640, y:-360, e:'titleslide' }"/>
+<TR>
+
+<TD HALIGN=center class="slideCell" slidejump="title" id="titleslide">
+<div style="position:relative">
+<div style="position:absolute;top:230px;left:740px;">
+<img src=00-first-few-seconds-video.gif width=512 height=384>
+</div></div>
+<div style="font-size:96px;font-weight:bold">Bad Apple in 65 Kilobytes</div>
+<div align=center style="font-size:40px;font-weight:bold">All 6570 Frames.  All 3:39 runtime.</div>
+<hr WIDTH=1200>
+<h3>
+<div style="font-size:36px;">
+<p>Hackaday Supercon 2026 (Nov 6-8)</p>
+<p><a href=https://cnlohr.github.io/lolra_talk>https://github.com/cnlohr/badderapple</a></p>
+<p>cnlohr / Slides rev -</p>
+</div>
+</h3>
+</td>
+<td></td><td></td><td></td><td></td>
+
+
+<td></td>
+
+</tr>
+
+<tr>
+<slide-descriptor title="What Is Bad Apple?" id="whatisbadapple" sp=10 view="{ r:0.00000, s:1, x:-640, y:-360, e:'whatisbadappleslide' }"/>
+<td VALIGN=top class="slideCell" slidejump="whatisbadapple" id="whatisbadappleslide">
+	<table border=0>
+		<tr>
+			<td width=100% valign=top>
+				<div pon="whatisbadapple9" style="position:absolute;left:290px;top"><img src=A4-badappleall.png WIDTH=1300></div>
+				<div class="slideHeading">What is Bad Apple?</div>
+				<hr class="headingHR" align=left>
+				<div pon="whatisbadapple1" poff="whatisbadapple3" style="position:absolute;left:960px;top"><img src=A1-storyboard.png WIDTH=380></div>
+				<div pon="whatisbadapple3" poff="whatisbadapple5" style="position:absolute;left:960px;top"><img src=A3-badapplemv-nikoniko.png WIDTH=380></div>
+				<div pon="whatisbadapple5" poff="whatisbadapple9" style="position:absolute;left:960px;top"><img src=A2-badapplemv.png WIDTH=380></div>
+				<ul style="font-size:150%">
+				<li pon="whatisbadapple0">Started as a storyboard 
+				<li pon="whatisbadapple2">Was animated
+				<li pon="whatisbadapple4">Blew up
+				<li pon="whatisbadapple6">Like Doom 
+				<li style="list-style-type: none">&nbsp
+				<li pon="whatisbadapple8">People ran it on everything.
+				</ul>
+			</td>
+			<td cellspacing=100>
+				<span pon="whatisbadapple7"><img src=A0-willitdoom.png WIDTH=220></span>
+			</td>
+		</tr>
+	</table>
+</td>
+
+
+
+<td VALIGN=top class="slideCell" slidejump="metoo" id="metooslide">
+<div>
+	<SPAN STYLE="position:relative;z-index:5;left:0px">
+		<span pon="metoo0" poff="metoo1" style="position:absolute;left:90px;top:200px"><img src=A5-initialcommit.png width=920></span>
+		<span pon="metoo5" style="position:absolute;left:90px;top"><img src=A6-ch32v006.png width=920></span>
+		<div pon="metoo6" style="position:absolute;left:390px;top:200px;font-size:600%;text-shadow:10px 10px 10px red,0 0 10px blue">13¢</div>
+	</SPAN>
+	<div class="slideHeading">Badder Apple</div>
+	<hr class="headingHR" align=left>
+	<ul style="font-size:130%">
+		<li pon="metoo0">Started 10 years ago
+		<li style="list-style-type: none">
+		<li pon="metoo1">Originally for the ESP8266
+		<li pon="metoo2">Tried lots of compression schemes
+		<li pon="metoo3">Iterated but never found the "right" path
+		<li pon="metoo4">Until...
+	</ul>
+</div>
+</td>
+
+<td VALIGN=top class="slideCell"  slidejump="rules" id="rulesslide">
+	<div class="slideHeading">My Rules</div>
+	<DIV STYLE="position:relative;z-index:5;left:0px">
+		<div pon="rules6" style="position:absolute;left:100px;top:00px;font-size:600%;text-shadow:10px 10px 10px red,0 0 10px blue">TODO Pic of device</div>
+	</DIV>
+	<hr class="headingHR" align=left>
+	<ul style="font-size:130%">
+		<li pon="rules0">Must all fit and run on the 006
+		<li pon="rules1">Run on an OLED (64x48 px)
+		<li pon="rules2">Have audio
+		<li pon="rules3">Run at 30FPS, Full Length (6570 frames)
+		<li pon="rules4">Be recognizable
+		<li pon="rules5">
+<pre>
+Memory region         Used Size  Region Size  %age Used
+           FLASH:       62976 B        62 KB     99.19%
+      BOOTLOADER:        3324 B       3328 B     99.88%
+             RAM:        8064 B         8 KB     98.44%
+</pre>
+	</ul>
+</td>
+
+<Td>
+</td><td></td><td></td><td></td>
+
+
+</tr>
+
+
+
+<tr>
+
+
+<td VALIGN=top class="slideCell" slidejump="tilecomp1" id="tilecomp1slide">
+	<DIV STYLE="position:relative;z-index:5;left:40px">
+		<div pon="tilecomp13" style="position:absolute;left:00px;top:20px"><img src=05-tile-compression-comparison.png WIDTH=1150px></div>
+		<div pon="tilecomp14" style="position:absolute;left:350px;top:20px;font-size:1000%">😵‍💫</div>
+	</DIV>
+	<div class="slideHeading">Tile Compression</div>
+	<hr class="headingHR" align=left>
+	</div>
+	<UL style="font-size:150%">
+		<LI pon="tilecomp10">Onslaught got it to 170kB @ 12FPS
+		<LI pon="tilecomp11">I needed it at 64kB @ 30FPS
+		<LI pon="tilecomp12">Let's use tiles, and look at gzip, zstd...
+	</ul>
+</td>
+
+<td VALIGN=top class="slideCell" slidejump="earlyprocess" id="earlyprocessslide">
+	<div class="slideHeading">Getting off the ground</div>
+	<DIV STYLE="position:relative;z-index:5;left:0px">
+		<div pon="earlyprocess4" style="position:absolute;left:100px;top:00px"><A HREF=https://www.youtube.com/watch?v=OsDy-4L6-tQ><img src=A7-onslaught.png WIDTH=800px></a></div>
+	</DIV>
+	<hr class="headingHR" align=left>
+	</div>
+	<UL style="font-size:150%">
+		<LI pon="earlyprocess0">Raster-based RLE
+		<LI pon="earlyprocess1">Zone updates
+		<LI pon="earlyprocess2">Originally targeting the ESP8286
+		<LI pon="earlyprocess3">But then...
+	</ul>
+</td>
+
+<slide-descriptor title="BadderApple" id="metoo" sp=6 view="{ r:0.00000, s:1, x:-640, y:-360, e:'metooslide' }"/>
+<slide-descriptor title="Rules" id="rules" sp=7 view="{ r:0.00000, s:1, x:-640.00, y:-360, e:'rulesslide' }"/>
+<slide-descriptor title="How Hard?" id="howhard" sp=2 view="{ r:0.00000, s:1, x:-640, y:-360, e:'howhardslide' }"/>
+<slide-descriptor title="Early Process" id="earlyprocess" sp=5 view="{ r:0.00000, s:1, x:-640, y:-360, e:'earlyprocessslide' }"/>
+
+<td VALIGN=top class="slideCell" slidejump="howhard" id="howhardslide">
+<div class="slideHeading">How hard could it be?</div>
+<SPAN STYLE="position:relative;z-index:5;left:250px">
+<SPAN pon="howhard1" STYLE="position:absolute;left:000px;top:00px"><IMG WIDTH=600px SRC=03-HEVC-Comrpession.gif></SPAN>
+</SPAN>
+<hr class="headingHR" align=left>
+<ul style="font-size:130%">
+<LI pon="howhard0">Let's use state-of-the-art HEVC compression.
+</ul>
+</td>
+
+
+<slide-descriptor title="Tile Comp Intro" id="tilecomp1" sp=5 view="{ r:0.00000, s:1, x:-640, y:-360, e:'tilecomp1slide' }"/>
+
+<slide-descriptor title="Audio Intro" id="audiointro" sp=4 view="{ r:0.00000, s:1, x:-640, y:-360, e:'audiointroslide' }"/>
+
+
+<td></td>
+
+</tr>
+
+
+<tr>
+
+
+<td VALIGN=top class="slideCell" slidejump="audiointro" id="audiointroslide">
+
+	<div style="position:relative;left:20px;top:0px">
+		<div pon="audiointro3" style="position:absolute;left:0px;top:0px;"><IMG SRC=04-BadAppleCompressionComparison.png WIDTH=1180></div>
+	</div>
+
+	<div class="slideHeading">Let's Solve Audio First</div>
+	<hr class="headingHR" align=left>
+
+	<div style="position:relative">
+		<ul style="position:absolute;font-size:130%">
+			<li pon="audiointro0" poff="audiointro3">Uncompressed: 42MB
+			<li pon="audiointro1" poff="audiointro3">Compressed (opus): 219kB
+			<li pon="audiointro2" poff="audiointro3">Could do MIDI: 17kB
+		</ul>
+<!--
+		<div style="position:absolute" pon="audiointro3" poff="audiointro4">
+			<TABLE BORDER=1>
+			<tr><th>Compression</th><th>.xml</th><th>.json (jq formatted)</th><th>.json.min</th><th>.bson (binary JSON)</th><th>.mid</th><th>.dat</th></tr>
+			<tr><th>uncompressed</th><td>217686 (5698%)</td><td>150802 (3947%)</td><td>85855 (2247%)</td><td>88677 (2321%)</td><td>17707 (463%)</td><td>3820 (100%)</td></tr>
+			<tr><th>gzip -9</th><td>12001 (314%)</td><td>11458 (300%)</td><td>10590 (277%)</td><td>13720 (359%)</td><td>1329 (34%)</td><td>682 (17.8%)</td></tr>
+			<tr><th>zstd -9</th><td>10052 (263%)</td><td>9480 (248%)</td><td>8877 (232%)</td><td>12182 (319%)</td><td>1332 (35%)</td><td>724 (19.0%)</td></tr>
+			</table>
+		</div>
+-->
+	</div>
+</td>
+
+<slide-descriptor title="Huffman Trees" id="huffmantrees" sp=13 view="{ r:0.00000, s:1, x:-640, y:-360, e:'huffmantreesslide' }"/>
+
+<td VALIGN=top class="slideCell" slidejump="huffmantrees" id="huffmantreesslide">
+	<div class="slideHeading">Huffman Trees</div>
+	<hr class="headingHR" align=left>
+	<div style="position:relative">
+		<div style="position:absolute">
+			<UL style="font-size:150%">
+				<li pon="huffmantrees0" poff="huffmantrees4">Some notes are more common than others.
+				<li pon="huffmantrees1" poff="huffmantrees4">Some note lengths are more common than others.
+				<li pon="huffmantrees2" poff="huffmantrees4">Huffman trees are great for this.
+				<li pon="huffmantrees3" poff="huffmantrees4">Theoretically optimal (bit-boundaries).
+			</ul>
+		</div>
+		<pre pon="huffmantrees5"><span style="font-size:150%">ddddbddddcddcdddddcdddddaddddccc</span></pre>
+		<div style="position:absolute" pon="huffmantrees4" poff="huffmantrees7">
+			<table width=1500><tr><td>
+					<table border=1 pon="huffmantrees6" poff="huffmantrees7">
+							<tr><th>Symbol</th><th>Count</th></tr>
+							<tr><td><span style="font-family:monospace">a</span></td><td>1</td></tr>
+							<tr><td><span style="font-family:monospace">b</span></td><td>1</td></tr>
+							<tr><td><span style="font-family:monospace">c</span></td><td>6</td></tr>
+							<tr><td><span style="font-family:monospace">d</span></td><td>24</td></tr>
+						</table>
+			</td><td>
+				<table border pon="huffmantrees6" poff="huffmantrees7"><tr>
+					<td><pre>a (1)</pre></td>
+					<td><pre>b (1)</pre></td>
+					<td><pre>c (6)</pre></td>
+					<td><pre>d (24)</pre></td>
+				</tr></table>
+			</td></tr></table>
+		</div>
+
+		<div style="position:absolute" pon="huffmantrees7" poff="huffmantrees8">
+			<table width=1500><tr><td>
+					<table border=1  pon="huffmantrees7" poff="huffmantrees8">
+							<tr><th>Symbol</th><th>Count</th></tr>
+							<tr><td><span style="font-family:monospace">a | b</span></td><td>2</td></tr>
+							<tr><td><span style="font-family:monospace">c</span></td><td>6</td></tr>
+							<tr><td><span style="font-family:monospace">d</span></td><td>24</td></tr>
+						</table>
+			</td><td>
+				<table border=1  pon="huffmantrees7" poff="huffmantrees8"><tr>
+					<td><pre>  a|b(2)
+ /     \ 
+a(1)  b(1)</pre></td>
+					<td><pre>c (6)</span></td>
+					<td><pre>d (24)</span></td>
+				</tr></table>
+			</td></tr></table>
+		</div>
+
+
+
+		<div style="position:absolute" pon="huffmantrees8" poff="huffmantrees9">
+			<table width=1500><tr><td>
+					<table border=1  pon="huffmantrees8" poff="huffmantrees9">
+							<tr><th>Symbol</th><th>Count</th></tr>
+							<tr><td><span style="font-family:monospace">a | b | c</span></td><td>8</td></tr>
+							<tr><td><span style="font-family:monospace">d</span></td><td>24</td></tr>
+						</table>
+			</td><td>
+				<table border=1  pon="huffmantrees8" poff="huffmantrees9"><tr>
+					<td><pre>    a|b|c(8)
+     /     \
+  a|b(2)   c(6)  
+ /     \ 
+a(1)  b(1)</pre></td>
+					<td><pre>d (24)</span></td>
+				</tr></table>
+			</td></tr></table>
+		</div>
+
+
+		<div style="position:absolute" pon="huffmantrees9" poff="huffmantrees10">
+			<table width=1500><tr><td>
+					<table border=1  pon="huffmantrees9" poff="huffmantrees10">
+							<tr><th>Symbol</th><th>Count</th></tr>
+							<tr><td><span style="font-family:monospace">a | b | c | d</span></td><td>32</td></tr>
+						</table>
+			</td><td>
+				<table border=1  pon="huffmantrees9" poff="huffmantrees10"><tr>
+					<td><pre>         a|b|c|d(32)
+          /      \
+     a|b|c(8)   d(24)
+     /     \
+  a|b(2)   c(6)  
+ /     \ 
+a(1)  b(1)</pre></td>
+				</tr></table>
+			</td></tr></table>
+		</div>
+
+		<div style="position:absolute" pon="huffmantrees10" poff="huffmantrees11">
+			<table width=1500><tr><td>
+					<table border=1  pon="huffmantrees10" poff="huffmantrees11">
+							<tr><th>Symbol</th><th>Encoding</th></tr>
+							<tr><td><span style="font-family:monospace">a</span></td><td>000</td></tr>
+							<tr><td><span style="font-family:monospace">b</span></td><td>001</td></tr>
+							<tr><td><span style="font-family:monospace">c</span></td><td>01</td></tr>
+							<tr><td><span style="font-family:monospace">d</span></td><td>1</td></tr>
+						</table>
+			</td><td>
+				<table border=1  pon="huffmantrees10" poff="huffmantrees11"><tr>
+					<td><pre>         a|b|c|d(32)
+          /      \
+     a|b|c(8)   d(24)
+     /     \
+  a|b(2)   c(6)  
+ /     \ 
+a(1)  b(1)</pre></td>
+				</tr></table>
+			</td></tr></table>
+		</div>
+
+
+
+		<div style="position:absolute" pon="huffmantrees11" poff="huffmantrees13">
+			<table width=1500><tr><td>
+					<table border=1  pon="huffmantrees11" poff="huffmantrees13">
+							<tr><th>Symbol</th><th>Encoding</th></tr>
+							<tr><td><span style="font-family:monospace">a</span></td><td>000</td></tr>
+							<tr><td><span style="font-family:monospace">b</span></td><td>001</td></tr>
+							<tr><td><span style="font-family:monospace">c</span></td><td>01</td></tr>
+							<tr><td><span style="font-family:monospace">d</span></td><td>1</td></tr>
+						</table>
+			</td><td>
+				<table border=1  pon="huffmantrees11" poff="huffmantrees13"><tr>
+					<td><pre>         a|b|c|d(32)
+          /      \
+     a|b|c(8)   d(24)
+     /     \
+  a|b(2)   c(6)  
+ /     \ 
+a(1)  b(1)</pre></td>
+				</tr></table>
+			</td></tr></table>
+			<pre><span style="font-size:150%">111100111110111011111101111110001111010101</span></pre>
+			<span pon="huffmantrees12">Only 43 bits for 32 symbols!</span>
+		</div>
+
+
+	</div>
+
+</td>
+
+<slide-descriptor title="Huffman Usage" id="huffmanusage" sp=1 view="{ r:0.00000, s:1, x:-640, y:-360, e:'huffmanusageslide' }"/>
+<td align=center class="slideCell" slidejump="huffmanusage" id="huffmanusageslide">
+	<div style="position:relative">
+		<img src=06-huffman-tree.png width=960>
+	</div>
+</td>
+
+
+<td></td>
+
+
+<td></td>
+
+
+</tr>
+
+<tr>
+
+<slide-descriptor title="Overview Part 2" id="overviewpart2" view="{ r:0.00000, s:0.056, x:-442.43, y:-317.45, e:'innercontainer' }"/>
+
+
+</td>
+</tr>
+
+
+</table>
+<br>
+
+<a href="https://smallcounter.com"><IMG SRC=https://smallcounter.com/count.php?c_style=48&id=1792808517><div style="font-size:9px;">free hits counter</div></a>
+
+</DIV></DIV>
+<div style="position:fixed;bottom:0px;width:100%" ID=footer>
+<TABLE WIDTH=100%><TR><TD WIDTH=1><DIV ID=status></DIV></TD><TD WIDTH=1>
+<SPAN ID=transformCopy onClick="transformCopyClick()" style="white-space:nowrap;font-family:monospace;font-size:x-small;user-select:all;cursor:pointer;color:rgba(128,128,128,0.5)"></SPAN>
+</td>
+<td>
+<SPAN ID=showOverview onClick="showOverview()" style="white-space:nowrap;font-family:monospace;font-size:x-small;cursor:pointer;color:rgba(128,128,128,1.0)">Overview</SPAN>
+<SPAN ID=screenStats onClick="screenStatsClick()" style="white-space:nowrap;font-family:monospace;font-size:x-small;user-select:all;cursor:pointer;color:rgba(128,128,128,0.5)">A</SPAN>
+</TD>
+<TD WIDTH=320 STYLE="min-width:200" ALIGN=RIGHT><INPUT TYPE=SUBMIT VALUE="&lt" STYLE="min-width:26px" WIDTH=30 ONCLICK="slidePrev()"><SPAN><SELECT ID=pageSelect></SELECT></SPAN><SPAN ID=pageNumberIndicator STYLE="font-family:sans-serif;font-size:85%">#</SPAN><INPUT TYPE=SUBMIT VALUE="&gt" STYLE="min-width:26px" ONCLICK="slideNext()"></TD></TR>
+</div>
+</DIV>
+
+</BODY>
+</HTML>
+
+
+
+
