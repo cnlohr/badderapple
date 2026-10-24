@@ -42,7 +42,12 @@ li { margin: 2px }
 <div style="font-size:36px;">
 <p>Hackaday Supercon 2026 (Nov 6-8)</p>
 <p><a href=https://cnlohr.github.io/lolra_talk>https://github.com/cnlohr/badderapple</a></p>
-<p>cnlohr / Slides rev -</p>
+<p>cnlohr / Slides rev -<br>
+Original Music by ZUN<br>
+Newer revision by nomico<br>
+Storyboard by Μμ<br>
+Animation by Anira
+</p>
 </div>
 </h3>
 </td>
@@ -125,8 +130,56 @@ Memory region         Used Size  Region Size  %age Used
 	</ul>
 </td>
 
+
+<td VALIGN=top class="slideCell" slidejump="structuraln" id="structuralnslide">
+	<div class="slideHeading">Structural Encoding</div>
+	<hr class="headingHR" align=left>
+	<div style="position:relative">
+		<div style="position:absolute">
+			<UL style="font-size:150%">
+				<li pon="structuraln0">Perfect symbol compression only gets so far.
+				<li pon="structuraln1">Things have structure or repeated patterns.
+				<li pon="structuraln2">What if we look for runs?
+			</ul>
+		<table width=100% pon="structuraln3">
+		<tr><td><pre style="font-size:140%">        aaaaaabaaaacaaaaa</pre></div></td></tr></table>
+
+		<table width=100% pon="structuraln4">
+		<tr><td><pre style="font-size:140%">        a(5x)b(0x)a(3x)c(0x)a(4x)</pre></div></td></tr></table>
+	</div>
+</td>
+
+
 <Td>
-</td><td></td><td></td><td></td>
+
+
+
+<td VALIGN=top class="slideCell" slidejump="inputoutputref" id="inputoutputrefslide">
+	<div class="slideHeading">Output / Input References</div>
+	<hr class="headingHR" align=left>
+	<table width=100%><tr><td>
+		<span style="font-size:180%"><b>Forwards</b></span>
+		<UL style="font-size:150%">
+			<li pon="inputoutputref0">Reference output
+			<li pon="inputoutputref1">Common (gzip, zstd)
+			<li pon="inputoutputref2">Typically better
+			<li pon="inputoutputref3">Buffer output
+			<li pon="inputoutputref4">RAM hungry
+		</ul>
+	</td><td>
+		<span style="font-size:180%"><b>Backwards</b></span>
+		<UL style="font-size:150%">
+			<li pon="inputoutputref0">Reference input
+			<li pon="inputoutputref1">Unusual
+			<li pon="inputoutputref2">Typically worse
+			<li pon="inputoutputref3">Random input access
+			<li pon="inputoutputref4"><b>Tiny RAM</b>
+		</ul>
+	</td></tr></table>
+</td>
+
+
+</td><td></td><td></td>
 
 
 </tr>
@@ -183,12 +236,77 @@ Memory region         Used Size  Region Size  %age Used
 </td>
 
 
+
+<td VALIGN=top class="slideCell" slidejump="structurala" id="structuralaslides">
+	<div class="slideHeading">Structual Encoding</div>
+	<hr class="headingHR" align=left>
+	<div style="position:relative">
+		<div style="position:absolute">
+			<UL style="font-size:150%">
+				<li pon="structurala0">But we can do better!
+				<li pon="structurala1">Look for patterns not just runs.
+				<li pon="structurala3">Lempel-Ziv-Storer-Szymanski (Back-references)
+			</ul>
+		<table width=100% pon="structurala4">
+		<tr><td><pre style="font-size:140%">  0: I am Sam
+  9:
+ 10: Sam I am
+ 19:
+ 20: That Sam-I-am!
+ 35: That Sam-I-am!</pre></td><td><pre style="font-size:140%"> 0: I am Sam
+ 9:
+10: (5,3) (0,4)
+16:
+17: That(4,4)-I-am!(19,15)</pre></td></tr></table>
+		</div>
+	</div>
+</td>
+
+<td align=center class="slideCell" slidejump="songnotes" id="songnotesslide">
+	<div class="slideHeading" align=left>What else has structure?
+		<hr class="headingHR" align=left>
+	</div>
+	<img src=10-lzss.png width=1200>
+</td>
+
+
+<td align=center class="slideCell" slidejump="reverselzss" id="reverselzssslide">
+	<div style="position:relative">
+		<img src=11-reverselzss.png width=900>
+	</div>
+</td>
+
 <slide-descriptor title="Tile Comp Intro" id="tilecomp1" sp=5 view="{ r:0.00000, s:1, x:-640, y:-360, e:'tilecomp1slide' }"/>
 
 <slide-descriptor title="Audio Intro" id="audiointro" sp=4 view="{ r:0.00000, s:1, x:-640, y:-360, e:'audiointroslide' }"/>
 
 
-<td></td>
+<td align=center class="slideCell" slidejump="tilesvideo1" id="tilesvideo1slide" colspan=2>
+	<table><tr><td align=center>
+		<div style="position:relative">
+			<div style="align-items:center;justify-content:center">
+				<img src=20-nogrey.gif width=780> 
+			</div>
+			<span pon=tilesvideo10 style="font-size:140%">80kB</span>
+			<span pon=tilesvideo11 style="font-size:140%">🫤</span>
+		</div>
+
+	</td><td width=300></td><td width=900 valign=top>
+
+		<div class="slideHeading">Needs improvement</div>
+		<hr class="headingHR" align=left>
+		<div style="position:relative">
+				<UL style="font-size:150%">
+					<li pon="tilesneedgooder0">Need greyscale (can't do?)
+					<li pon="tilesneedgooder1">Too big (80kB)
+					<li pon="tilesneedgooder2">Low visual quality
+					<li pon="tilesneedgooder3">You can see blocks
+				</ul>
+		</div>
+	</td></tr></table>
+</td>
+
+
 
 </tr>
 
@@ -330,11 +448,11 @@ a(1)  b(1)</pre></td>
 			</td><td>
 				<table border=1  pon="huffmantrees10" poff="huffmantrees11"><tr>
 					<td><pre>         a|b|c|d(32)
-          /      \
+          /0     \1
      a|b|c(8)   d(24)
-     /     \
+     /0    \1
   a|b(2)   c(6)  
- /     \ 
+ /0    \1
 a(1)  b(1)</pre></td>
 				</tr></table>
 			</td></tr></table>
@@ -354,11 +472,11 @@ a(1)  b(1)</pre></td>
 			</td><td>
 				<table border=1  pon="huffmantrees11" poff="huffmantrees13"><tr>
 					<td><pre>         a|b|c|d(32)
-          /      \
+          /0     \1
      a|b|c(8)   d(24)
-     /     \
+     /0    \1
   a|b(2)   c(6)  
- /     \ 
+ /0    \1
 a(1)  b(1)</pre></td>
 				</tr></table>
 			</td></tr></table>
@@ -371,7 +489,7 @@ a(1)  b(1)</pre></td>
 
 </td>
 
-<slide-descriptor title="Huffman Usage" id="huffmanusage" sp=1 view="{ r:0.00000, s:1, x:-640, y:-360, e:'huffmanusageslide' }"/>
+<slide-descriptor title="Huffman Usage" id="huffmanusage" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'huffmanusageslide' }"/>
 <td align=center class="slideCell" slidejump="huffmanusage" id="huffmanusageslide">
 	<div style="position:relative">
 		<img src=06-huffman-tree.png width=960>
@@ -379,24 +497,246 @@ a(1)  b(1)</pre></td>
 </td>
 
 
+<td VALIGN=top class="slideCell" slidejump="golombc" id="golombcslides">
+	<div class="slideHeading">Exponential-Golomb Encoding</div>
+	<hr class="headingHR" align=left>
+
+	<table width=100%>
+		<tr><td>
+			<table border=1 pon="golombc0">
+			<tr><th>dec</th><th>bin+1</th><th>bin digs-1</th><th>uegolomb</th></tr>
+			<tr><td>0</td><td>1</td><td>0</td><td>1</td></tr>
+			<tr><td>1</td><td>10</td><td>1</td><td><b><u>0</u></b>10</td></tr>
+			<tr><td>2</td><td>11</td><td>1</td><td><b><u>0</u></b>11</td></tr>
+			<tr><td>3</td><td>100</td><td>2</td><td><b><u>00</u></b>100</td></tr>
+			<tr><td>4</td><td>101</td><td>2</td><td><b><u>00</u></b>101</td></tr>
+			<tr><td>5</td><td>110</td><td>2</td><td><b><u>00</u></b>110</td></tr>
+			<tr><td>6</td><td>111</td><td>2</td><td><b><u>00</u></b>111</td></tr>
+			<tr><td>7</td><td>1000</td><td>3</td><td><b><u>000</u></b>1000</td></tr>
+			<tr><td>8</td><td>1001</td><td>3</td><td><b><u>000</u></b>1001</td></tr></table>
+		</td><td>
+			<table border=1 pon="golombc1">
+			<tr><th>num</th><th>uns</th><th>bin+1</th><th>segolomb</th></tr>
+			<tr><td> 0</td><td>0</td><td>1</td><td>1</td></tr>
+			<tr><td> 1</td><td>1</td><td>10</td><td><b><u>0</u></b>10</td></tr>
+			<tr><td>−1</td><td>2</td><td>11</td><td><b><u>0</u></b>11</td></tr>
+			<tr><td> 2</td><td>3</td><td>100</td><td><b><u>00</u></b>100</td></tr>
+			<tr><td>−2</td><td>4</td><td>101</td><td><b><u>00</u></b>101</td></tr>
+			<tr><td> 3</td><td>5</td><td>110</td><td><b><u>00</u></b>110</td></tr>
+			<tr><td>−3</td><td>6</td><td>111</td><td><b><u>00</u></b>111</td></tr>
+			<tr><td> 4</td><td>7</td><td>1000</td><td><b><u>000</u></b>1000</td></tr>
+			<tr><td>−4</td><td>8</td><td>1001</td><td><b><u>000</u></b>1001</td></tr></table>
+	</table>		
+</td>
+
+
+<td VALIGN=top class="slideCell" slidejump="golombb" id="golombbslides">
+	<div class="slideHeading">Exponential-Golomb Encoding</div>
+	<hr class="headingHR" align=left>
+	<div style="position:relative">
+		<div style="position:absolute">
+			<UL style="font-size:150%">
+				<li pon="golombb0">Use fewer bits for smaller numbers.
+				<li pon="golombb1">Use more bits for bigger numbers.
+				<li pon="golombb2">Easy to encode/decode.
+				<li pon="golombb3">No need to store a table!
+				<li pon="golombb4">Extensively used in H.264 and H.265
+			</ul>
+		</div>
+	</div>
+</td>
+
+
+
+<td align=center class="slideCell" slidejump="golomba" id="golombaslide">
+	<div style="position:relative">
+		<img src=A8-exponential-golomb.png width=960>
+	</div>
+</td>
+
+
+<slide-descriptor title="Structural Compression-pre" id="structuraln" sp=5 view="{ r:0.00000, s:1, x:-640, y:-360, e:'structuralnslide' }"/>
+<slide-descriptor title="Structural Compression" id="structurala" sp=5 view="{ r:0.00000, s:1, x:-640, y:-360, e:'structuralaslides' }"/>
+<slide-descriptor title="Song Notes" id="songnotes" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'songnotesslide' }"/>
+<slide-descriptor title="Input / Output References" id="inputoutputref" sp=5 view="{ r:0.00000, s:1, x:-640, y:-360, e:'inputoutputrefslide' }"/>
+<slide-descriptor title="Reverse LZSS" id="reverselzss" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'reverselzssslide' }"/>
+
+
+
+<td align=center class="slideCell" slidejump="tilesset" id="tilessetslide">
+	<div style="position:relative">
+		<img src=21-origtileset.png width=650>
+	</div>
+</td>
+
+
+
+
+<td VALIGN=top class="slideCell" slidejump="discoverkmeans" id="discoverkmeansslide">
+
+	<div class="slideHeading">K-means</div>
+	<hr class="headingHR" align=left>
+
+	<div style="position:relative" >
+		<ul style="position:absolute;font-size:130%">
+			<li pon="discoverkmeans0">Math PhDs
+			<li pon="discoverkmeans1">Scales to 64-dimensions well
+			<li pon="discoverkmeans2">Easily tuneable, for more or less clusters
+		</ul>
+	</div>
+</td>
+
+
+</tr>
+
+<slide-descriptor title="Golomb 1" id="golomba" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'golombaslide' }"/>
+
+
+<slide-descriptor title="Golomb 2" id="golombb" sp=5 view="{ r:0.00000, s:1, x:-640, y:-360, e:'golombbslides' }"/>
+
+<slide-descriptor title="Golomb 3" id="golombc" sp=2 view="{ r:0.00000, s:1, x:-640, y:-360, e:'golombcslides' }"/>
+
+<tr>
+<td></td>
+<td></td>
 <td></td>
 
 
+<slide-descriptor title="Golomb 2" id="reverselzss2" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'reverselzss2slide' }"/>
+<slide-descriptor title="Golomb 3" id="reverselzss3" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'reverselzss3slide' }"/>
+<slide-descriptor title="Song Compression Comparison" id="songcompcheck" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'songcompcheckslide' }"/>
+
+
+
+<td align=center class="slideCell" slidejump="reverselzss2" id="reverselzss2slide">
+	<div style="position:relative">
+		<img src=11-reverselzss.png width=960>
+	</div>
+</td>
+
+
+
+
+<td align=center class="slideCell" slidejump="reverselzss3" id="reverselzss3slide">
+	<div style="position:relative">
+		<img src=12-decode-back-references.png width=800>
+	</div>
+</td>
+
+<td VALIGN=top class="slideCell" slidejump="songcompcheck" id="songcompcheckslide" align=center>
+	<br>
+	<table border=1 pon="golombc0">
+		<tr><th>Compression</th><th>Size</th></tr>
+		<tr><td>Raw .dat</td><td>3820 (100%)</td></tr>
+		<tr><td>Huffman (1 table)</td><td>1644 (43%)</td></tr>
+		<tr><td>Huffman (3 table)</td><td>1516 (40%)</td></tr>
+		<tr><td>VPX (no LZSS)</td><td>1680 (44%)</td></tr>
+		<tr><td>VPX (forward LZSS)</td><td>665 (17.4%)</td></tr>
+		<tr><td>VPX (reverse LZSS)</td><td>673 (17.6%)</td></tr>
+		<tr><td>Huffman (2-table+LZSS)</td><td>704 (18.4%)</td></tr>
+		<tr><td>Huffman (2 table+reverse LZSS)†</td><td>856 (22.4%)</td></tr>
+		<tr><td>gzip -9 (for reference)</td><td>682</td></tr>
+		<tr><td>zstd -9 (for reference)</td><td>724</td></tr>
+	</table>
+</td>
+
+
+
+<slide-descriptor title="Tiles Begin" id="tilesbegin" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'tilesbeginslide' }"/>
+<slide-descriptor title="Tiles Set" id="tilesset" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'tilessetslide' }"/>
+<slide-descriptor title="Initial Video" id="tilesvideo1" sp=2 view="{ r:0.00000, s:1, x:-810, y:-360, e:'tilesvideo1slide' }"/>
+<slide-descriptor title="Needs Improvement" id="tilesneedgooder" sp=4 view="{ r:0.00000, s:0.6, x:-840, y:-260, e:'tilesvideo1slide' }"/>
+<slide-descriptor title="K-Means" id="discoverkmeans" sp=4 view="{ r:0.00000, s:1, x:-640, y:-360, e:'discoverkmeansslide' }"/>
+<slide-descriptor title="K-Means 2" id="kmeans2" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'kmeans2slide' }"/>
+<slide-descriptor title="K-Means 3" id="kmeans3" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'kmeans3slide' }"/>
+<slide-descriptor title="K-Means Improved" id="kmeansimproved" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'kmeansimprovedslide' }"/>
+<slide-descriptor title="Better than Huffman" id="betterthanhuffman" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'betterthanhuffmanslide' }"/>
+
+
+
+<td align=center class="slideCell" slidejump="tilesbegin" id="tilesbeginslide">
+	<div style="position:relative">
+		<img src=19-tilesets.png width=900>
+	</div>
+</td>
+
+
+
+<td align=center class="slideCell" slidejump="kmeans2" id="kmeans2slide">
+	<div style="position:relative">
+		<img src=22-kmeans.gif width=650>
+	</div>
+</td>
+
+
+
+<td align=center class="slideCell"></td>
+
+<tr>
+
 <td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+
+<td VALIGN=top class="slideCell" slidejump="betterthanhuffman" id="betterthanhuffmanslide">
+	<div class="slideHeading">Better than huffman?</div>
+	<hr class="headingHR" align=left>
+	<div style="position:relative">
+			<UL style="font-size:150%">
+				<li><s>Need greyscale (can't do?)</s>
+				<li>Too big (80kB)
+				<li>Low visual quality
+				<li>You can see blocks
+
+				<li pon="betterthanhuffman0">Need greyscale (can't do?)
+				<li pon="betterthanhuffman1">Too big (80kB)
+				<li pon="betterthanhuffman2">Low visual quality
+				<li pon="betterthanhuffman3">You can see blocks
+
+			</ul>
+	</div>
+</td>
+
+
+<td VALIGN=top class="slideCell" slidejump="kmeansimproved" id="kmeansimprovedslide">
+	<div class="slideHeading">Needs improvement</div>
+	<hr class="headingHR" align=left>
+	<div style="position:relative">
+			<UL style="font-size:150%">
+				<li><s>Need greyscale (can't do?)</s>
+				<li>Too big (80kB)
+				<li>Low visual quality
+				<li>You can see blocks
+			</ul>
+	</div>
+</td>
+
+
+
+
+<td align=center class="slideCell" slidejump="kmeans3" id="kmeans3slide">
+	<div style="position:relative">
+		<img src=23-kmeans-winnow.gif width=1200>
+	</div>
+</td>
+
 
 
 </tr>
 
 <tr>
 
+
+</tr>
+
+</table>
+
+
 <slide-descriptor title="Overview Part 2" id="overviewpart2" view="{ r:0.00000, s:0.056, x:-442.43, y:-317.45, e:'innercontainer' }"/>
 
 
-</td>
-</tr>
-
-
-</table>
 <br>
 
 <a href="https://smallcounter.com"><IMG SRC=https://smallcounter.com/count.php?c_style=48&id=1792808517><div style="font-size:9px;">free hits counter</div></a>
