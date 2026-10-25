@@ -227,7 +227,7 @@ Memory region         Used Size  Region Size  %age Used
 <td VALIGN=top class="slideCell" slidejump="howhard" id="howhardslide">
 <div class="slideHeading">How hard could it be?</div>
 <SPAN STYLE="position:relative;z-index:5;left:250px">
-<SPAN pon="howhard1" STYLE="position:absolute;left:000px;top:00px"><IMG WIDTH=600px SRC=03-HEVC-Comrpession.gif></SPAN>
+<SPAN pon="howhard1" STYLE="position:absolute;left:000px;top:100px"><IMG WIDTH=600px SRC=03-HEVC-Comrpession.gif></SPAN>
 </SPAN>
 <hr class="headingHR" align=left>
 <ul style="font-size:130%">
@@ -299,8 +299,8 @@ Memory region         Used Size  Region Size  %age Used
 				<UL style="font-size:150%">
 					<li pon="tilesneedgooder0">Need greyscale (can't do?)
 					<li pon="tilesneedgooder1">Too big (80kB)
-					<li pon="tilesneedgooder2">Low visual quality
-					<li pon="tilesneedgooder3">You can see blocks
+					<li pon="tilesneedgooder2">You can see blocks
+					<li pon="tilesneedgooder3">Low visual quality
 				</ul>
 		</div>
 	</td></tr></table>
@@ -647,16 +647,23 @@ a(1)  b(1)</pre></td>
 <slide-descriptor title="Tiles Set" id="tilesset" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'tilessetslide' }"/>
 <slide-descriptor title="Initial Video" id="tilesvideo1" sp=2 view="{ r:0.00000, s:1, x:-810, y:-360, e:'tilesvideo1slide' }"/>
 <slide-descriptor title="Needs Improvement" id="tilesneedgooder" sp=4 view="{ r:0.00000, s:0.6, x:-840, y:-260, e:'tilesvideo1slide' }"/>
-<slide-descriptor title="K-Means" id="discoverkmeans" sp=5 view="{ r:0.00000, s:1, x:-640, y:-360, e:'discoverkmeansslide' }"/>
+<slide-descriptor title="K-Means" id="discoverkmeans" sp=4 view="{ r:0.00000, s:1, x:-640, y:-360, e:'discoverkmeansslide' }"/>
 <slide-descriptor title="K-Means 2" id="kmeans2" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'kmeans2slide' }"/>
 <slide-descriptor title="K-Means 3" id="kmeans3" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'kmeans3slide' }"/>
-<slide-descriptor title="K-Means Improved" id="kmeansimproved" sp=1 view="{ r:0.00000, s:1, x:-640, y:-360, e:'kmeansimprovedslide' }"/>
+<slide-descriptor title="K-Means Improved" id="kmeansimproved" sp=2 view="{ r:0.00000, s:1, x:-640, y:-360, e:'kmeansimprovedslide' }"/>
 <slide-descriptor title="Reordering" id="reordering" sp=7 view="{ r:0.00000, s:1, x:-640, y:-360, e:'reorderingslide' }"/>
 <slide-descriptor title="Better than Huffman" id="betterthanhuffman" sp=8 view="{ r:0.00000, s:1, x:-640, y:-360, e:'betterthanhuffmanslide' }"/>
-<slide-descriptor title="Range Coding" id="rangecoding" sp=3 view="{ r:0.00000, s:1, x:-640, y:-360, e:'rangecodingslide' }"/>
+<slide-descriptor title="Range Coding" id="rangecoding" sp=4 view="{ r:0.00000, s:1, x:-640, y:-360, e:'rangecodingslide' }"/>
 
-<slide-descriptor title="Range Coding" id="whatisrangecoding" sp=1 view="{ r:0.00000, s:1, x:-640, y:-360, e:'whatisrangecodingslide' }"/>
+<slide-descriptor title="Range Coding" id="whatisrangecoding" sp=7 view="{ r:0.00000, s:1, x:-640, y:-360, e:'whatisrangecodingslide' }"/>
 <slide-descriptor title="Entropy Surprisal" id="entropsurprisal" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'entropsurprisalslide' }"/>
+<slide-descriptor title="Entropy Practical" id="entropypractical" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'entropypracticalslide' }"/>
+<slide-descriptor title="Glyph Classify A" id="glyphclassifyA" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'glyphclassifyAslide' }"/>
+<slide-descriptor title="Glyph Classify B" id="glyphclassifyB" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'glyphclassifyBslide' }"/>
+<slide-descriptor title="Entropy Improved" id="entropyimproved" sp=1 view="{ r:0.00000, s:1, x:-640, y:-360, e:'entropyimprovedslide' }"/>
+<slide-descriptor title="Deblocking" id="deblocking" sp=5 view="{ r:0.00000, s:1, x:-640, y:-360, e:'deblockingslide' }"/>
+<slide-descriptor title="Deblocking Compare" id="deblockingcompare" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'deblockingcompareslide' }"/>
+<slide-descriptor title="Deblocking Improved" id="deblockingimproved" sp=1 view="{ r:0.00000, s:1, x:-640, y:-360, e:'deblockingimprovedslide' }"/>
 
 
 
@@ -680,7 +687,14 @@ a(1)  b(1)</pre></td>
 
 <tr>
 
-<td></td>
+
+<td align=center class="slideCell" slidejump="entropypractical" id="entropypracticalslide">
+	<div style="position:relative">
+		<img src=09-entropy-in-practical.png width=1200>
+	</div>
+</td>
+
+
 
 <td align=center class="slideCell" slidejump="entropsurprisal" id="entropsurprisalslide">
 	<div style="position:relative">
@@ -689,12 +703,18 @@ a(1)  b(1)</pre></td>
 </td>
 
 <td VALIGN=top class="slideCell" slidejump="whatisrangecoding" id="whatisrangecodingslide">
-	<div class="slideHeading">Range Coding?</div>
+	<div class="slideHeading">VPX or "Binary Range Coding"</div>
 	<hr class="headingHR" align=left>
 	<div style="position:relative">
 		<UL style="font-size:150%">
 			<!--<div pon="betterthanhuffman0" style="position:absolute;left:540px;top"><img src=A9-lyuma1.png WIDTH=740></div>-->
-			<li pon="whatisrangecoding0">todo todo
+			<li pon="whatisrangecoding0"><span style="font-family:monospace">b</span> = a bit (0 or 1)
+			<li pon="whatisrangecoding1"><span style="font-family:monospace">prob</span> = probability of a 0.
+			<ul><li pon="whatisrangecoding2">integer, 0..255 out of 256</ul>
+			<li pon="whatisrangecoding3">When encoding: <span style="font-family:monospace"><b>vpx_write</b>(w, b, prob);</span>
+			<li pon="whatisrangecoding4">When decoding: <span style="font-family:monospace">b = <b>vpx_read</b>(w, prob);</span>
+			<li pon="whatisrangecoding5"><a href=https://github.com/cnlohr/vpxcoding>github.com/cnlohr/vpxcoding</a>
+			<li pon="whatisrangecoding6"><a href=https://codeberg.org/cnlohr/speedtropy>codeberg.org/cnlohr/speedtropy</a>
 		</ul>
 	</div>
 </td>
@@ -710,6 +730,7 @@ a(1)  b(1)</pre></td>
 			<li pon=rangecoding0>Can be arbitrary.
 			<li pon=rangecoding1>Probabilities can change per-read.
 			<li pon=rangecoding2>VPX is a "special" case of range coding.
+			<ul><li pon=rangecoding3>VPX from google's VP8, VP9 video codecs.</ul>
 		</ul>
 	</div>
 </td>
@@ -754,12 +775,12 @@ a(1)  b(1)</pre></td>
 	<hr class="headingHR" align=left>
 	<div style="position:relative">
 		<UL style="font-size:150%">
-			<li><s>Need greyscale (can't do?)</s>
+			<li><span style="position:absolute" pon=kmeansimproved0><s>Need greyscale (can't do?)</s></span><span style="position:absolute">Need greyscale (can't do?)</s></span>
 			<li>Too big (80kB)
-			<li>Low visual quality
 			<li>You can see blocks
+			<li>Low visual quality
 		</ul>
-		<div pon="kmeansimproved0" style="position:absolute;left:140px;top"><img src=29-tile-compression-files.png WIDTH=940></div>
+		<div pon="kmeansimproved1" style="position:absolute;left:140px;top"><img src=29-tile-compression-files.png WIDTH=940></div>
 	</div>
 </td>
 
@@ -777,6 +798,86 @@ a(1)  b(1)</pre></td>
 </tr>
 
 <tr>
+
+
+<td align=center class="slideCell" slidejump="glyphclassifyA" id="glyphclassifyAslide">
+	<div style="position:relative">
+		<img src=31-glyph-classification-A.png width=1200>
+	</div>
+</td>
+
+
+
+<td align=center class="slideCell" slidejump="glyphclassifyB" id="glyphclassifyBslide">
+	<div style="position:relative">
+		<img src=32-glyph-classification-B.png width=1200>
+	</div>
+</td>
+
+
+
+
+<td VALIGN=top class="slideCell" slidejump="entropyimproved" id="entropyimprovedslide">
+	<div class="slideHeading">Needs improvement</div>
+	<hr class="headingHR" align=left>
+	<div style="position:relative">
+		<UL style="font-size:150%">
+			<li><s>Need greyscale (can't do?)</s>
+			<li><span style="position:absolute" pon=entropyimproved0><s>Too big (80kB)</s></span><span style="position:absolute">Too big (80kB)</span>
+			<li>You can see blocks
+			<li>Low visual quality
+		</ul>
+	</div>
+</td>
+
+
+<td VALIGN=top class="slideCell" slidejump="deblocking" id="deblockingslide">
+	<div class="slideHeading">Deblocking Filter</div>
+	<hr class="headingHR" align=left>
+	<div style="position:relative" width=100%>
+		<div style="position:absolute">
+			<UL style="font-size:150%">
+				<li pon=deblocking1>Idea stolen from h.264
+				<li pon=deblocking2>Feather edges of blocks
+				<li pon=deblocking3>Only need one pixel
+				<li pon=deblocking4	>Must be performed<br>
+					horizontally and<br>vertically.
+			</ul>
+		</div>
+		<div style="position:absolute;left:700px" width=100%>
+			<img src="25-edgeblur.png" width=560 pon=deblocking0>
+		</div>
+	</div>
+</td>
+
+
+
+
+<td align=center class="slideCell" slidejump="deblockingcompare" id="deblockingcompareslide">
+	<br><br>
+	<div style="position:relative">
+		<img src=26-kernel-compare-A.gif width=600>
+		<img src=26-kernel-compare-B.gif width=600>
+	</div>
+</td>
+
+
+
+
+<td VALIGN=top class="slideCell" slidejump="deblockingimproved" id="deblockingimprovedslide">
+	<div class="slideHeading">Needs improvement</div>
+	<hr class="headingHR" align=left>
+	<div style="position:relative">
+		<UL style="font-size:150%">
+			<li><s>Need greyscale (can't do?)</s>
+			<li><s>Too big (80kB)</s>
+			<li><span style="position:absolute" pon=deblockingimproved0><s>You can see blocks</s></span><span style="position:absolute">You can see blocks</span>
+			<li>Low visual quality
+		</ul>
+	</div>
+</td>
+
+
 
 
 </tr>
