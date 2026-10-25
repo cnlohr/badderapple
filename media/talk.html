@@ -19,7 +19,6 @@ li { margin: 2px }
 
 
 <!-- TODO
-1. Add speedtropy embedded decode
 2. Add hero frame
 3. Discuss playback
 4. Mention demo viewer.
@@ -73,7 +72,7 @@ Animation by Anira
 	<table border=0>
 		<tr>
 			<td width=100% valign=top>
-				<div pon="whatisbadapple9" style="position:absolute;left:290px;top"><img src=A4-badappleall.png WIDTH=1300></div>
+				<div pon="whatisbadapple9" style="position:absolute;left:315px;top"><img src=A4-badappleall.png WIDTH=1250></div>
 				<div class="slideHeading">What is Bad Apple?</div>
 				<hr class="headingHR" align=left>
 				<div pon="whatisbadapple1" poff="whatisbadapple3" style="position:absolute;left:960px;top"><img src=A1-storyboard.png WIDTH=380></div>
@@ -234,14 +233,14 @@ Memory region         Used Size  Region Size  %age Used
 <slide-descriptor title="Early Process" id="earlyprocess" sp=5 view="{ r:0.00000, s:1, x:-640, y:-360, e:'earlyprocessslide' }"/>
 
 <td VALIGN=top class="slideCell" slidejump="howhard" id="howhardslide">
-<div class="slideHeading">How hard could it be?</div>
-<SPAN STYLE="position:relative;z-index:5;left:250px">
-<SPAN pon="howhard1" STYLE="position:absolute;left:000px;top:100px"><IMG WIDTH=600px SRC=03-HEVC-Comrpession.gif></SPAN>
-</SPAN>
-<hr class="headingHR" align=left>
-<ul style="font-size:130%">
-<LI pon="howhard0">Let's use state-of-the-art HEVC compression.
-</ul>
+	<div class="slideHeading">How hard could it be?</div>
+	<SPAN STYLE="position:relative;z-index:5;left:250px">
+	<SPAN pon="howhard1" STYLE="position:absolute;left:000px;top:100px"><IMG WIDTH=600px SRC=03-HEVC-Comrpession.gif></SPAN>
+	</SPAN>
+	<hr class="headingHR" align=left>
+	<ul style="font-size:130%">
+		<LI pon="howhard0">Let's use state-of-the-art HEVC compression.
+	</ul>
 </td>
 
 
@@ -609,7 +608,38 @@ a(1)  b(1)</pre></td>
 <tr>
 <td></td>
 <td></td>
-<td></td>
+
+
+<td VALIGN=top class="slideCell" slidejump="speedtropy" id="speedtropyslide">
+	<div style="position:relative">
+<pre>
+int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>uint8_t</font> prob )
+{
+	<font color=green>while</font>( range <= (<b>0x10000</b>) )
+	{
+		<font color=red>uint8_t</font> data = *(bitstream++);
+		range <<= <b>8</b>;
+		value = (value << <b>8</b>) | data;
+	}
+
+	<font color=red>uint32_t</font> split = (range>><b>8</b>) * prob;
+	<font color=red>int</font> bit = value >= split;
+
+	<font color=green>if</font>( !bit )
+		range = split;
+	<font color=green>else</font>
+	{
+		value -= split;
+		range -= split;
+	}
+	<font color=teal><i>// <b>8</b> asm instructions in fast-path, <b>18</b> in slow-path.</i></font>
+	<font color=green>return</font> bit;
+}
+</pre>
+	</div>
+</td>
+
+
 
 
 <slide-descriptor title="Golomb 2" id="reverselzss2" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'reverselzss2slide' }"/>
@@ -665,6 +695,7 @@ a(1)  b(1)</pre></td>
 <slide-descriptor title="Range Coding" id="rangecoding" sp=4 view="{ r:0.00000, s:1, x:-640, y:-360, e:'rangecodingslide' }"/>
 
 <slide-descriptor title="Range Coding" id="whatisrangecoding" sp=7 view="{ r:0.00000, s:1, x:-640, y:-360, e:'whatisrangecodingslide' }"/>
+<slide-descriptor title="Speedtropy" id="speedtropy" sp=0 view="{ r:0.00000, s:1.000, x:-618.40, y:-385.71, e:'speedtropyslide' }"/>
 <slide-descriptor title="Entropy Surprisal" id="entropsurprisal" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'entropsurprisalslide' }"/>
 <slide-descriptor title="Entropy Practical" id="entropypractical" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'entropypracticalslide' }"/>
 <slide-descriptor title="Glyph Classify A" id="glyphclassifyA" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'glyphclassifyAslide' }"/>
@@ -747,7 +778,7 @@ a(1)  b(1)</pre></td>
 
 
 <td VALIGN=top class="slideCell" slidejump="betterthanhuffman" id="betterthanhuffmanslide">
-	<div class="slideHeading">Better than huffman?</div>
+	<div class="slideHeading">Better than Huffman?</div>
 	<hr class="headingHR" align=left>
 	<div style="position:relative">
 			<UL style="font-size:150%">
@@ -763,15 +794,15 @@ a(1)  b(1)</pre></td>
 
 
 <td VALIGN=top class="slideCell" slidejump="reordering" id="reorderingslide">
-	<div class="slideHeading">Reorder Data</div>
-	<hr class="headingHR" align=left>
 	<div style="position:relative">
+				<div pon="reordering6" style="position:absolute;left:-5px;top"><img src=05-tile-compression-comparison.png WIDTH=1200></div>
+	<div class="slideHeading">Reorder Data</div>
+		<hr class="headingHR" align=left>
 			<UL style="font-size:150%">
-				<div pon="reordering6" style="position:absolute;left:140px;top"><img src=05-tile-compression-comparison.png WIDTH=940></div>
 				<div pon="reordering2" poff="reordering3" style="position:absolute;left:240px;top"><img src=33-updateorder.png WIDTH=720></div>
 				<li pon="reordering0">Tiles are stored as 32-bit
 				<li pon="reordering1">Raster order or depth order?
-				<li pon="reordering4">[x][y][z] vs [z][x][y].
+				<li pon="reordering4">[x][y][t] vs [t][x][y].
 				<li pon="reordering5">Changes the locality of the data.
 			</ul>
 	</div>
@@ -798,7 +829,7 @@ a(1)  b(1)</pre></td>
 
 <td align=center class="slideCell" slidejump="kmeans3" id="kmeans3slide">
 	<div style="position:relative">
-		<img src=23-kmeans-winnow.gif width=1200>
+		<img src=23-kmeans-winnow.gif width=1280>
 	</div>
 </td>
 
@@ -888,10 +919,335 @@ a(1)  b(1)</pre></td>
 
 
 
+<td align=center class="slideCell" colspan=2 style="overflow:visible" slidejump="mlcompare2" id="mlcompare2">
+	<div style="position:relative">
+	<div style="position:absolute;top:-50px;left:850px">
+			<img src=105_ml_opt.png width=1200 pon=mlcompare20>
+	</div>
+</td>
+
+</td><td>
+
+<td VALIGN=top class="slideCell" slidejump="mlexplain" id="mlexplainslide">
+	<div style="font-size:90%">
+		<div class="slideHeading" style="font-size:180%">Framing as a Machine Learning Problem</div>
+		<hr class="headingHR" align=left>
+		<div style="position:relative">
+			<UL style="font-size:150%">
+				<li pon="mlexplain0">Use a semantic loss function
+				<ul><li pon="mlexplain1" style="font-size:80%">Cares less about per-pixel brightness</ul>
+				<ul><li pon="mlexplain2" style="font-size:80%">Cares more about “semantic content”</ul>
+				<li pon="mlexplain3">Write the video rendering as a PyTorch problem
+				<ul><li pon="mlexplain4" style="font-size:80%">Optimize outputs as nn.parameters: tiles, sequence</ul>
+				<ul><li pon="mlexplain5" style="font-size:80%">Use torch autodiff → Everything needs to be differentiable</ul>
+				<li pon="mlexplain6">Optimize outputs (tiles, sequence) as nn.parameter-s
+				<ul><li pon="mlexplain7" style="font-size:80%">Requires some alternate representations</ul>
+				<li pon="mlexplain8">Add in an optical flow target for motion
+			</ul>
+		</div>
+	</div>
+</td>
+
+</tr>
+
+<tr>
+<td></td>
+<td></td>
+
+
+<td VALIGN=top class="slideCell" slidejump="optimizationfinal" id="optimizationfinalslide">
+	<br>
+	<table width=100%>
+		<tr>
+			<td valign=center><img src=121_topleft_noblend.png width=380px></td>
+			<td valign=center><img src=123_topctr_noblend.png width=380px></td>
+			<td valign=center><img src=125_topright_noblend.png width=380px></td>
+		</tr>
+		<tr>
+			<td valign=center><img src=122_btmleft_blend.png width=380px></td>
+			<td valign=center><img src=124_btmctr_blend.png width=380px></td>
+			<td valign=center><img src=126_btmright_blend.png width=380px></td>
+		</tr>
+	</table>
+</td>
+
+
+
+
+<td VALIGN=top class="slideCell" slidejump="optimizationtileedge" id="optimizationtileedgeslide">
+	<div class="slideHeading" style="font-size:140%">Optimization: Tile Edges</div>
+	<hr class="headingHR" align=left>
+	<table width=100%>
+	<tr>
+	<td align=center><img src=118_left_init_tiles.png width=380px> </td>
+	<td align=center><img src=119_ctr_fp_tiles.png width=380px> </td>
+	<td align=center><img src=120_right_quant_tiles.png width=380px> </td>
+	</tr></table>
+</td>
+
+
+
+<td VALIGN=top class="slideCell" slidejump="optimizationgen" id="optimizationgenslide">
+	<div class="slideHeading" style="font-size:140%">Optimization</div>
+	<hr class="headingHR" align=left>
+	<table>
+	<tr>
+	<td valign=center>TODO</td>
+	<td width=100px></td>
+	<td valign=center><center>TODO</center></td>
+	</tr></table>
+</td>
+
+<td></td>
+
+<td align=center class="slideCell" slidejump="mloriginal" id="mloriginalslide">
+	<div style="position:relative">
+		<img src=100_fullres.png width=1100>
+	</div>
+</td>
+
+<td align=center class="slideCell" slidejump="mlkmeans" id="mlkmeansslide">
+	<div style="position:relative;left:90px">
+		<div style="position:absolute">
+			<img src=103_kmeans_tiles.png width=1100>
+		</div>
+		<div style="position:absolute">
+			<img src=104_kmeans_labels.png width=1100 pon=mlcompare0>
+		</div>
+	</div>
+</td>
+
+<td></td>
+
+<td VALIGN=top class="slideCell" slidejump="lpips" id="lpipsslide">
+	<div class="slideHeading">How hard could it be?</div>
+	<hr class="headingHR" align=left>
+	<img pon="lpips0" width=1240px SRC=106_lpips_explainer.png>
+</td>
+
+</tr>
+<tr>
+
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+
+<td VALIGN=top class="slideCell" slidejump="opticalflow" id="opticalflowslide">
+	<div class="slideHeading" style="font-size:140%">Video Rendering: Optical Flow</div>
+	<hr class="headingHR" align=left>
+	<table>
+	<tr>
+	<td pon=opticalflow0 valign=center><img src=108_block_diagram.png width=600px></td>
+	<td width=100px></td>
+	<td pon=opticalflow1 valign=center><center><img src=117_lk_flow.png width=500px><br>Lucas-Kanade Optical Flow</center></td>
+	</tr></table>
+</td>
+
+
+<td></td>
+<td align=center class="slideCell" slidejump="mldownsample" id="mldownsampleslide">
+	<div style="position:relative">
+		<img src=101_downsample.png width=1100>
+	</div>
+</td>
+
+<td align=center class="slideCell" slidejump="mlquantize" id="mlquantizeslide">
+	<div style="position:relative">
+		<img src=102_quantize.png width=1100>
+	</div>
+</td>
+
+<td></td>
+
+<td VALIGN=top HALIGN=center class="slideCell" slidejump="lpips2" id="lpips2slide">
+	<div style="position:relative" align=center>
+		<img width=1100px SRC=107_lpips_dog.png>
+	</div>
+</td>
+
+<td></td>
+
+
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+
+<td VALIGN=top class="slideCell" slidejump="neighbortileblending" id="neighbortileblendingslide">
+	<div class="slideHeading" style="font-size:140%">Neighbor Tile Blending</div>
+	<hr class="headingHR" align=left>
+	<span pon=neighbortileblending0>
+		Simulate firmware’s bitwise blending filter on block edges<br>
+		Convert truth table to trilinear lut for fp32 eval:<br>
+		<center><span style="font-family:monospace;font-size:160%"><b>f( left, center, right ) → new_center</b></span></center>
+	</span>
+
+	<div style="position:relative">
+	<div style="position:absolute">
+		<img pon=neighbortileblending1 src=115_trilinear_blend_fp.png width=1240>
+	</div>
+	<div style="position:absolute">
+		<img pon=neighbortileblending2 src=116_trilinar_blend_quant.png width=1240>
+	</div>
+	</div>
+</td>
+
+
+<td VALIGN=top class="slideCell" slidejump="mlquant" id="mlquantslide">
+	<div class="slideHeading" style="font-size:140%">Quantization</div>
+	<hr class="headingHR" align=left>
+	<br>
+	<table width=1277px><tr>
+	<td pon=mlquant0><ul><li style="font-size:120%">Pass 1: Optimize in fp32<ul><li style="font-size:60%">Produces better-than-display output</ul></ul></td>
+	<td pon=mlquant1 width=55%><ul><li style="font-size:120%">Pass 2: Quantized fine-tune<ul><li style="font-size:60%">Recovers detail lost at 3 gray levels</ul></ul></td>
+	</td></table>
+	<br>
+	<table><tr>
+	<td><img src=112_left_kmeans.png width=400px></td>
+	<td pon=mlquant0><img src=113_ctr_fp_opt.png width=400px></td>
+	<td pon=mlquant1><img src=114_right_quantize_ref.png width=400px></td>
+	</tr></table>
+</td>
+
+
+<td VALIGN=top class="slideCell" slidejump="choosingtiles" id="choosingtilesslide">
+	<div class="slideHeading" style="font-size:140%">Choosing Tiles from Categorical Distributions</div>
+	<hr class="headingHR" align=left>
+	<div style="position:absolute">
+		<table><tr>
+			<td valign=center><center><span style="font-size:100%">“Sequence”<br>
+				P(tile) @ (x, y, t)</span><br><img src=200_sequence.png width=260px></center></td>
+			<td><center><span style="font-size:150px">⮕</span><br><span style="font-size:100%">@ frame N</span></center></td>
+			<td valign=bottom><center><img src=201_1d_categorical.png width=400px><br>
+				<span style="font-size:100%">Categorical distribution<br>
+				P(tile) for this spot & time</span></center></td>
+			<td valign=top><div style="position:relative;top:181px"><img src=203_assembled.png width=380px></div></td>
+		</tr></table>
+	</div>
+	<div style="position:relative" pon=choosingtiles0>
+		<div style="position:absolute;left:576px;top:40px">
+			<img src=203b-helper.png width=400px>
+		</div>
+	</div>
+</td>
+
+
+<td VALIGN=top class="slideCell" slidejump="assemblingframesfromtiles" id="assemblingframesfromtilesslide">
+	<div class="slideHeading" style="font-size:140%">Assembling Frames from Tiles</div>
+	<hr class="headingHR" align=left>
+	<table><tr>
+	<td valign=center pon=assemblingframesfromtiles0><img src=109_tiles_example.png width=320px></td>
+	<td valign=center pon=assemblingframesfromtiles0><font size=150px>+</font></td>
+	<td valign=center pon=assemblingframesfromtiles0>
+		<table border=1><tr>
+			<td valign=center><font size=100px>Per-Frame Tile Idx<br>@ Each Location</font></td>
+		</tr></table></td>
+	<td valign=center pon=assemblingframesfromtiles0><font size=150px>⮕</font></td>
+	<td valign=center pon=assemblingframesfromtiles0><img src=110_frame_example.png width=380px></td>
+	</tr></table>
+	<div style="font-family:monospace;position:absolute" pon=assemblingframesfromtiles1 poff=assemblingframesfromtiles2>
+		<table>
+			<tr><td>tiles = np.fromfile( <font color=green>"blocks.dat"</font>, <font color=red>dtype</font>=np.float32).reshape( <b>-1</b>, <b>8</b>, <b>8</b>)</td></tr>
+			<tr><td>stream = np.fromfile( <font color=green>"stream.dat"</font>, <font color=red>dtype</font>=np.int32).reshape( <b>-1</b>, <b>48</b>//<b>8</b>, <b>64</b>//<b>8</b>)</td></tr>
+			<tr><td>assembled_tiles = tiles[stream]</td></tr>
+			<tr><td>assembled_tiles = assembled_tiles.transpose( <b>0</b>, <b>1</b>, <b>3</b>, <b>2</b>, <b>4</b>)</td></tr>
+			<tr><td>assembled_images = assembled_tiles.reshape( stream.shape[ <b>0</b> ],</td></tr>
+			<tr><td>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp stream.shape[ <b>1</b> ] * <b>8</b>,</td></tr>
+			<tr><td>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+			stream.shape[ <b>2</b> ] * <b>8</b>)</td></tr>
+		</table>
+	</div>
+
+	<div style="font-family:monospace;position:absolute" pon=assemblingframesfromtiles2>
+		<table>
+			<tr><td>block_weights = F.one_hot( <font color=purple>self</font>.sequence[frame_idxs , ...].argmax( <font color=red>dim</font> = <B>-1</b>),</td></tr>
+			<tr><td>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<Font color=red>num_classes = <font color=purple>self</font>.sequence.size( <b>-1</b> )
+			<tr><td>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp).float()
+			<tr><td>uf_reconstructed = torch.matmul( block_weights,
+			<tr><td>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspblock_rep.view( self.n_blocks, block_len)
+			<tr><td>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp).permute( <b>0</b>, <b>2</b>, <b>1</b>)
+			<tr><td>reconstructed = <font color=purple>self</font>.fold(uf_reconstructed)
+		</table>
+	</div>
+</td>
+
+<td VALIGN=top class="slideCell" slidejump="framingasml2" id="framingasml2slide">
+	<div class="slideHeading" style="font-size:160%">Framing as a Machine Learning Problem</div>
+	<hr class="headingHR" align=left>
+	<table><tr>
+	<td>
+		<div style="position:relative">
+			<UL style="font-size:120%">
+				<li pon="framingasml20">Very discrete space - Hard to take derivatives
+				<ul><li pon="framingasml21" style="font-size:80%">3 gray levels</ul>
+				<ul><li pon="framingasml22" style="font-size:80%">Discrete choice of which tile goes in which square</ul>
+				<li pon="framingasml23">Interconnected problem space
+				<ul><li pon="framingasml24" style="font-size:80%">Tile blending → Replacing one tile changes 8 neighbors</ul>
+				<ul><li pon="framingasml25" style="font-size:80%">Moving video + few tiles → Replacing a tile generates motion</ul>
+				<li pon="framingasml26">Still needs to compress nicely
+			</ul>
+		</div>
+	</td>
+		<td width=1px>
+			<img src=109_tiles_example.png width=300px>
+			<img src=110_frame_example.png width=340px>
+		</td>
+	</tr></table>
+</td>
+
+<td VALIGN=top class="slideCell" slidejump="framingasml" id="framingasmlslide">
+	<div class="slideHeading" style="font-size:160%">Framing as a Machine Learning Problem</div>
+	<hr class="headingHR" align=left>
+	<table><tr>
+	<td width=1px><img src=108_block_diagram.png width=580px></td>
+	<td>
+		<div style="position:relative">
+			<UL style="font-size:120%">
+				<li pon="framingasml0">Tiles represented natively
+				<ul><li pon="framingasml1" style="font-size:80%">Just an array of 256 8x8 images</ul>
+				<li pon="framingasml2">Categorical logits for sequences
+				<ul><li pon="framingasml3" style="font-size:80%">256 bins, one per tile...</ul>
+				<ul><li pon="framingasml4" style="font-size:80%">For each tile spot in video (x 48)...</ul>
+				<ul><li pon="framingasml5" style="font-size:80%">For every frame (x 6572)</ul>
+				<li pon="framingasml6">Total 80.77M params (~323 MB)
+				<ul><li pon="framingasml7" style="font-size:80%">~80M sequence params</ul>
+				<ul><li pon="framingasml8" style="font-size:80%">+ 16,384 tiles</ul>
+			</ul>
+	</div>
+	</td></tr></table>
+</td>
 
 </tr>
 
 </table>
+
+
+<!-- evan's section -->
+<slide-descriptor title="ML-Original" id="mloriginal" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'mloriginalslide' }"/>
+<slide-descriptor title="ML-Downsample" id="mldownsample" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'mldownsampleslide' }"/>
+<slide-descriptor title="ML-Quantize" id="mlquantize" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'mlquantizeslide' }"/>
+<slide-descriptor title="ML-KMeans" id="mlkmeans" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'mlkmeansslide' }"/>
+<slide-descriptor title="ML-Compare" id="mlcompare" sp=1 view="{ r:0.00000, s:0.340, x:-3829.37, y:-2931.37, e:'innercontainer' }"/>
+<slide-descriptor title="ML-Compare2" id="mlcompare2" sp=1 view="{ r:0.00000, s:0.340, x:-3818.31, y:-2545.06, e:'innercontainer' }"/>
+<slide-descriptor title="ML-Explain" id="mlexplain" sp=9 view="{ r:0.00000, s:1, x:-640, y:-360, e:'mlexplainslide' }"/>
+<slide-descriptor title="ML-LPIPS" id="lpips" sp=1 view="{ r:0.00000, s:1, x:-640, y:-360, e:'lpipsslide' }"/>
+<slide-descriptor title="ML-LPIPS2" id="lpips2" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'lpips2slide' }"/>
+<slide-descriptor title="ML-Framing" id="framingasml" sp=9 view="{ r:0.00000, s:1, x:-640, y:-360, e:'framingasmlslide' }"/>
+<slide-descriptor title="ML-Framing2" id="framingasml2" sp=7 view="{ r:0.00000, s:1, x:-640, y:-360, e:'framingasml2slide' }"/>
+<slide-descriptor title="ML-Assembling" id="assemblingframesfromtiles" sp=3 view="{ r:0.00000, s:1, x:-640, y:-360, e:'assemblingframesfromtilesslide' }"/>
+<slide-descriptor title="ML-Choosing Tiles" id="choosingtiles" sp=1 view="{ r:0.00000, s:1, x:-640, y:-360, e:'choosingtilesslide' }"/>
+<slide-descriptor title="ML-Quantization" id="mlquant" sp=2 view="{ r:0.00000, s:1, x:-640, y:-360, e:'mlquantslide' }"/>
+<slide-descriptor title="ML-Neighbor Blending" id="neighbortileblending" sp=3 view="{ r:0.00000, s:1, x:-640, y:-360, e:'neighbortileblendingslide' }"/>
+<slide-descriptor title="ML-Optical Flow" id="opticalflow" sp=2 view="{ r:0.00000, s:1, x:-640, y:-360, e:'opticalflowslide' }"/>
+
+<slide-descriptor title="ML-Optimization" id="optimizationgen" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'optimizationgenslide' }"/>
+<slide-descriptor title="ML-Optimization-Tile Edges" id="optimizationtileedge" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'optimizationtileedgeslide' }"/>
+<slide-descriptor title="ML-Optimization-Final" id="optimizationfinal" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'optimizationfinalslide' }"/>
+
+
+
 
 
 <slide-descriptor title="Overview Part 2" id="overviewpart2" view="{ r:0.00000, s:0.056, x:-442.43, y:-317.45, e:'innercontainer' }"/>
