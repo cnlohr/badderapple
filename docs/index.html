@@ -109,12 +109,12 @@ Animation by Anira
 	</SPAN>
 	<div class="slideHeading">Badder Apple</div>
 	<hr class="headingHR" align=left>
-	<ul style="font-size:130%">
+	<ul style="font-size:150%">
 		<li pon="metoo0">Started 10 years ago
 		<li style="list-style-type: none">
 		<li pon="metoo1">Originally for the ESP8266
 		<li pon="metoo2">Tried lots of compression schemes
-		<li pon="metoo3">Iterated but never found the "right" path
+		<li pon="metoo3">Iterated but never found an interesting take
 		<li pon="metoo4">Until...
 	</ul>
 </div>
@@ -231,7 +231,7 @@ Memory region         Used Size  Region Size  %age Used
 	</ul>
 </td>
 
-<slide-descriptor title="BadderApple" id="metoo" sp=6 view="{ r:0.00000, s:1, x:-640, y:-360, e:'metooslide' }"/>
+<slide-descriptor title="BadderApple" id="metoo" sp=7 view="{ r:0.00000, s:1, x:-640, y:-360, e:'metooslide' }"/>
 <slide-descriptor title="Rules" id="rules" sp=7 view="{ r:0.00000, s:1, x:-640.00, y:-360, e:'rulesslide' }"/>
 <slide-descriptor title="How Hard?" id="howhard" sp=2 view="{ r:0.00000, s:1, x:-640, y:-360, e:'howhardslide' }"/>
 <slide-descriptor title="Early Process" id="earlyprocess" sp=5 view="{ r:0.00000, s:1, x:-640, y:-360, e:'earlyprocessslide' }"/>
@@ -610,8 +610,20 @@ a(1)  b(1)</pre></td>
 <slide-descriptor title="Golomb 3" id="golombc" sp=2 view="{ r:0.00000, s:1, x:-640, y:-360, e:'golombcslides' }"/>
 
 <tr>
-<td></td>
-<td></td>
+
+<td align=center class="slideCell" slidejump="entropypractical" id="entropypracticalslide">
+	<div style="position:relative">
+		<img src=09-entropy-in-practical.png width=1200>
+	</div>
+</td>
+
+
+<td align=center class="slideCell" slidejump="entropsurprisal" id="entropsurprisalslide">
+	<div style="position:relative">
+		<img src=08-entropcoding.png width=1200>
+	</div>
+</td>
+
 
 
 <td VALIGN=top class="slideCell" slidejump="speedtropy" id="speedtropyslide">
@@ -672,13 +684,13 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 	<table border=1 pon="golombc0">
 		<tr><th>Compression</th><th>Size</th></tr>
 		<tr><td>Raw .dat</td><td>3820 (100%)</td></tr>
-		<tr><td>Huffman (1 table)</td><td>1644 (43%)</td></tr>
-		<tr><td>Huffman (3 table)</td><td>1516 (40%)</td></tr>
-		<tr><td>VPX (no LZSS)</td><td>1680 (44%)</td></tr>
-		<tr><td>VPX (forward LZSS)</td><td>665 (17.4%)</td></tr>
-		<tr><td>VPX (reverse LZSS)</td><td>673 (17.6%)</td></tr>
+		<tr><td><font color=gray>Huffman (1 table)</font></td><td><font color=gray>1644 (43%)</font></td></tr>
+		<tr><td><font color=gray>Huffman (3 table)</font></td><td><font color=gray>1516 (40%)</font></td></tr>
+		<tr><td><font color=gray>VPX (no LZSS)</font></td><td><font color=gray>1680 (44%)<font></td></tr>
+		<tr><td><font color=gray>VPX (forward LZSS)</font></td><td><font color=gray>665 (17.4%)</font></td></tr>
+		<tr><td><font color=gray>VPX (reverse LZSS)</font></td><td><font color=gray>673 (17.6%)</font></td></tr>
 		<tr><td>Huffman (2-table+LZSS)</td><td>704 (18.4%)</td></tr>
-		<tr><td>Huffman (2 table+reverse LZSS)†</td><td>856 (22.4%)</td></tr>
+		<tr><td><b>Huffman (2 table+reverse LZSS)†</b></td><td><b>856 (22.4%)</b></td></tr>
 		<tr><td>gzip -9 (for reference)</td><td>682</td></tr>
 		<tr><td>zstd -9 (for reference)</td><td>724</td></tr>
 	</table>
@@ -704,6 +716,10 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 <slide-descriptor title="Entropy Practical" id="entropypractical" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'entropypracticalslide' }"/>
 <slide-descriptor title="Glyph Classify A" id="glyphclassifyA" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'glyphclassifyAslide' }"/>
 <slide-descriptor title="Glyph Classify B" id="glyphclassifyB" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'glyphclassifyBslide' }"/>
+
+<slide-descriptor title="Comp Comp" id="compcomp2" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'compcomp2slide' }"/>
+
+
 <slide-descriptor title="Entropy Improved" id="entropyimproved" sp=1 view="{ r:0.00000, s:1, x:-640, y:-360, e:'entropyimprovedslide' }"/>
 <slide-descriptor title="Deblocking" id="deblocking" sp=5 view="{ r:0.00000, s:1, x:-640, y:-360, e:'deblockingslide' }"/>
 <slide-descriptor title="Deblocking Compare" id="deblockingcompare" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'deblockingcompareslide' }"/>
@@ -732,19 +748,13 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 <tr>
 
 
-<td align=center class="slideCell" slidejump="entropypractical" id="entropypracticalslide">
+<td align=center class="slideCell" slidejump="glyphclassifyA" id="glyphclassifyAslide">
 	<div style="position:relative">
-		<img src=09-entropy-in-practical.png width=1200>
+		<img src=31-glyph-classification-A.png width=880>
 	</div>
 </td>
 
-
-
-<td align=center class="slideCell" slidejump="entropsurprisal" id="entropsurprisalslide">
-	<div style="position:relative">
-		<img src=08-entropcoding.png width=1200>
-	</div>
-</td>
+<td></td>
 
 <td VALIGN=top class="slideCell" slidejump="whatisrangecoding" id="whatisrangecodingslide">
 	<div class="slideHeading">VPX or "Binary Range Coding"</div>
@@ -843,15 +853,6 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 
 <tr>
 
-
-<td align=center class="slideCell" slidejump="glyphclassifyA" id="glyphclassifyAslide">
-	<div style="position:relative">
-		<img src=31-glyph-classification-A.png width=880>
-	</div>
-</td>
-
-
-
 <td align=center class="slideCell" slidejump="glyphclassifyB" id="glyphclassifyBslide">
 	<div style="position:relative">
 		<img src=32-glyph-classification-B.png width=880>
@@ -859,6 +860,22 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 </td>
 
 
+<td VALIGN=top class="slideCell" slidejump="compcomp2" id="compcomp2slide" align=center>
+	<br>
+	<table border=1 pon="golombc0">
+		<tr><th>Compression</th><th>Size</th></tr>
+		<tr><td>Raw .dat</td><td>3820 (100%)</td></tr>
+		<tr><td><font color=gray>Huffman (1 table)</font></td><td><font color=gray>1644 (43%)</font></td></tr>
+		<tr><td><font color=gray>Huffman (3 table)</font></td><td><font color=gray>1516 (40%)</font></td></tr>
+		<tr><td><font color=gray>VPX (no LZSS)</font></td><td><font color=gray>1680 (44%)<font></td></tr>
+		<tr><td><b>VPX (forward LZSS)</b></td><td><b>665 (17.4%)</b></td></tr>
+		<tr><td><font color=gray>VPX (reverse LZSS)</font></td><td><font color=gray>673 (17.6%)</font></td></tr>
+		<tr><td>Huffman (2-table+LZSS)</td><td>704 (18.4%)</td></tr>
+		<tr><td>Huffman (2 table+reverse LZSS)</td><td>856 (22.4%)</td></tr>
+		<tr><td>gzip -9 (for reference)</td><td>682</td></tr>
+		<tr><td>zstd -9 (for reference)</td><td>724</td></tr>
+	</table>
+</td>
 
 
 <td VALIGN=top class="slideCell" slidejump="entropyimproved" id="entropyimprovedslide">
@@ -930,7 +947,8 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 	</div>
 </td>
 
-</td><td>
+<td></td>
+
 
 <td VALIGN=top class="slideCell" slidejump="mlexplain" id="mlexplainslide">
 	<div style="font-size:90%">
@@ -956,8 +974,6 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 
 <tr>
 <td></td>
-
-
 
 <td VALIGN=top class="slideCell" slidejump="herocellwant" id="herocellwantslide">
 	<div class="slideHeading" style="font-size:140%">Hero Cell</div>
@@ -1314,7 +1330,7 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 
 
 <td VALIGN=top class="slideCell" slidejump="horizdeblock2" id="horizdeblock2slide">
-	<div class="slideHeading">We make the 13¢ uC do μC do SIMD</div>
+	<div class="slideHeading">We make the 13¢ μC do SIMD</div>
 	<hr class="headingHR" align=left>
 	<table width=100%>
 	<tr>
@@ -1337,20 +1353,20 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 	<div class="slideHeading">Operations are 32-bits</div>
 	<hr class="headingHR" align=left>
 	<div style="font-family:monospace;position:absolute">
-<font color=blue>void</font> EmitEdge( <font color=blue>graphictype</font> tgprev, <font color=blue>graphictype</font> tg, <font color=blue>graphictype</font> tgnext )<br>
+<font color=green>void</font> EmitEdge( <font color=green>uint16_t</font> tgprev, <font color=green>uint16_t</font> tg, <font color=green>uint16_t</font> tgnext )<br>
 {<br>
 	<font color=teal>&nbsp&nbsp&nbsp&nbsp// pixel data is stoblue 8-pixels-at-a-time. The MSB for each pixel is</font><br>
 	<font color=teal>&nbsp&nbsp&nbsp&nbsp// the top byte, and the LSB for each pixel is the bottom byte.</font><br>
 <br>
-	<font color=blue>&nbsp&nbsp&nbsp&nbspgraphictype</font> A = tgprev >> <b>8</b>;<br>
-	<font color=blue>&nbsp&nbsp&nbsp&nbspgraphictype</font> B = tgprev;&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<font color=teal>// implied & 0xff</font><br>
-	<font color=blue>&nbsp&nbsp&nbsp&nbspgraphictype</font> C = tgnext >> <b>8</b>;<br>
-	<font color=blue>&nbsp&nbsp&nbsp&nbspgraphictype</font> D = tgnext;&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<font color=teal>// implied & 0xff</font><br>
-	<font color=blue>&nbsp&nbsp&nbsp&nbspgraphictype</font> E = tg >> <b>8</b>;<br>
-	<font color=blue>&nbsp&nbsp&nbsp&nbspgraphictype</font> F = tg;&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<font color=teal>// implied & 0xff</font><br>
+	<font color=green>&nbsp&nbsp&nbsp&nbspuint16_t</font> A = tgprev >> <b>8</b>;<br>
+	<font color=green>&nbsp&nbsp&nbsp&nbspuint16_t</font> B = tgprev;&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<font color=teal>// implied & 0xff</font><br>
+	<font color=green>&nbsp&nbsp&nbsp&nbspuint16_t</font> C = tgnext >> <b>8</b>;<br>
+	<font color=green>&nbsp&nbsp&nbsp&nbspuint16_t</font> D = tgnext;&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<font color=teal>// implied & 0xff</font><br>
+	<font color=green>&nbsp&nbsp&nbsp&nbspuint16_t</font> E = tg >> <b>8</b>;<br>
+	<font color=green>&nbsp&nbsp&nbsp&nbspuint16_t</font> F = tg;&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<font color=teal>// implied & 0xff</font><br>
 <br>
-	<font color=blue>&nbsp&nbsp&nbsp&nbspint</font> tghi = (D&E)|(B&E)|(B&C&F)|(A&D&F);&nbsp<font color=teal>// 8 bits worth of MSBs</font><br>
-	<font color=blue>&nbsp&nbsp&nbsp&nbspint</font> tglo = E|C|A|(D&F)|(B&F)|(B&D);&nbsp&nbsp&nbsp&nbsp&nbsp<font color=teal>// 8 bits worth of LSBs</font><br>
+	<font color=green>&nbsp&nbsp&nbsp&nbspint</font> tghi = (D&E)|(B&E)|(B&C&F)|(A&D&F);&nbsp<font color=teal>// 8 bits worth of MSBs</font><br>
+	<font color=green>&nbsp&nbsp&nbsp&nbspint</font> tglo = E|C|A|(D&F)|(B&F)|(B&D);&nbsp&nbsp&nbsp&nbsp&nbsp<font color=teal>// 8 bits worth of LSBs</font><br>
 <br>
 &nbsp&nbsp&nbsp&nbspPMEmit( (tghi << <b>8</b>) | tglo ); <font color=teal>// Write to intermediate framebuffer.</font><br>
 }
