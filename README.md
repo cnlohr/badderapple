@@ -1226,8 +1226,8 @@ Then we move onto the next bit, and only include tiles which match our most sign
 To store these ※s in a table, we can store the tree of these values in a breadth-first array representation of the tree.
 
 <P ALIGN=CENTER>
-![breadth-first array](https://github.com/user-attachments/assets/1b1b5062-6d4c-4466-94f1-ae529cb8ed03)
-<BR>[credit](https://en.wikipedia.org/wiki/Binary_tree#/media/File:Binary_tree_in_array.svg)
+<img src=https://github.com/user-attachments/assets/1b1b5062-6d4c-4466-94f1-ae529cb8ed03 alt="breadth-first array">
+<BR><a href=https://en.wikipedia.org/wiki/Binary_tree#/media/File:Binary_tree_in_array.svg>credit</a>
 </P>
 
 To produce this tree, we can generate all the frequencies for all of our elements, and let `ProbabilityTreeGenerateProbabilities` generate the `probabilities` table.
