@@ -21,7 +21,6 @@ li { margin: 2px }
 <!-- TODO
 1. Pic of device
 2. Build Pic
-3. Maybe make big comparison after "Operations are 32-bits"
 -->
 
 
@@ -1076,7 +1075,7 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 
 
 <td VALIGN=top class="slideCell" slidejump="herocellapply" id="herocellapplyslide">
-	<div class="slideHeading" style="font-size:140%">It works</div>
+	<div class="slideHeading" style="font-size:140%">It works!</div>
 	<hr class="headingHR" align=left>
 	<table width=100%>
 	<tr>
@@ -1086,7 +1085,18 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 	</tr></table>
 </td>
 
-<td></td>
+<td VALIGN=top class="slideCell" slidejump="overallcomparison" id="overallcomparisonslide">
+	<table width=100%><tr>
+	<td><img src=20-nogrey.gif width=400px></center></td>
+		<td width=100%><table width=100%><tr><td align=left>Monochrome</td></tr><tr><td><br></td></tr><tr><td align=right>Raw K-Means</td></tr></table></td>
+	<td><img src=26-kernel-compare-A.gif width=400px><font size=5></td>
+	</tr><tr>
+	<td><center><img src=00-first-few-seconds-video.gif width=400px></center></td>
+		<td width=100%><table width=100%><tr><td align=left>Final</td></tr><tr><td><br></td></tr><tr><td align=right>De-Blocking Filter</td></tr></table></td>
+	<td><center><img src=26-kernel-compare-B.gif width=400px></center></td>
+	</tr></table>
+</td>
+
 
 <td VALIGN=top class="slideCell" slidejump="opticalflow" id="opticalflowslide">
 	<div class="slideHeading" style="font-size:140%">Video Rendering: Optical Flow</div>
@@ -1125,6 +1135,7 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 
 
 <tr>
+
 <td></td>
 
 
@@ -1155,7 +1166,18 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 	</tr></table>
 </td>
 
-<td></td>
+
+<td VALIGN=top class="slideCell" slidejump="completetheowl" id="completetheowlslide">
+	<div class="slideHeading" style="font-size:140%">Complete the Owl</div>
+	<hr class="headingHR" align=left>
+		<UL style="font-size:150%">
+			<li pon=completetheowl0>Compress Video
+			<li pon=completetheowl1>Decompress Video
+			<li pon=completetheowl2>Write the player in the bootloader
+			<li pon=completetheowl3>3328 bytes, let's goooo
+		</ul>
+</td>
+
 
 <td VALIGN=top class="slideCell" slidejump="neighbortileblending" id="neighbortileblendingslide">
 	<div class="slideHeading" style="font-size:140%">Neighbor Tile Blending</div>
@@ -1318,7 +1340,7 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 		<li style="font-size:140%" pon=horizdeblock1>T + ( N + P + 1 ) / 2 - 1
 		<li style="font-size:140%" pon=horizdeblock2>Need to unpack pixels
 		<li style="font-size:140%" pon=horizdeblock3>5 Operations Per Pixel (after unpack)
-		<li style="font-size:140%" pon=horizdeblock4>Too Slow
+		<li style="font-size:140%" pon=horizdeblock4>Too Slow (~72 op/8px)
 		<li style="font-size:140%" pon=horizdeblock5>But what if?
 	</td>
 	<td valign=center>
@@ -1355,8 +1377,8 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 	<div style="font-family:monospace;position:absolute">
 <font color=green>void</font> EmitEdge( <font color=green>uint16_t</font> tgprev, <font color=green>uint16_t</font> tg, <font color=green>uint16_t</font> tgnext )<br>
 {<br>
-	<font color=teal>&nbsp&nbsp&nbsp&nbsp// pixel data is stoblue 8-pixels-at-a-time. The MSB for each pixel is</font><br>
-	<font color=teal>&nbsp&nbsp&nbsp&nbsp// the top byte, and the LSB for each pixel is the bottom byte.</font><br>
+	<font color=teal>&nbsp&nbsp&nbsp&nbsp// pixel data is to compute 8-pixels-at-a-time. The MSB for each pixel</font><br>
+	<font color=teal>&nbsp&nbsp&nbsp&nbsp// is the top byte, and the LSB for each pixel is the bottom byte.</font><br>
 <br>
 	<font color=green>&nbsp&nbsp&nbsp&nbspuint16_t</font> A = tgprev >> <b>8</b>;<br>
 	<font color=green>&nbsp&nbsp&nbsp&nbspuint16_t</font> B = tgprev;&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<font color=teal>// implied & 0xff</font><br>
@@ -1476,6 +1498,10 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 <slide-descriptor title="Hero Cell Want" id="herocellwant" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'herocellwantslide' }"/>
 <slide-descriptor title="Hero Cell Have" id="herocellhave" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'herocellhaveslide' }"/>
 <slide-descriptor title="Hero Cell Apply" id="herocellapply" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'herocellapplyslide' }"/>
+
+<slide-descriptor title="Overall Comparison" id="overallcomparison" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'overallcomparisonslide' }"/>
+<slide-descriptor title="Complete the Owl" id="completetheowl" sp=4 view="{ r:0.00000, s:1, x:-640, y:-360, e:'completetheowlslide' }"/>
+
 <slide-descriptor title="Outta Time" id="outtatime" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'outtatimeslide' }"/>
 <slide-descriptor title="Done Needs" id="doneneeds" sp=2 view="{ r:0.00000, s:1, x:-640, y:-360, e:'doneneedsslide' }"/>
 
