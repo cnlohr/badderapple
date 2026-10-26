@@ -1463,7 +1463,7 @@ The idea is that the horizontal filter is run by reading the given tile data fro
 
 So yes, in a manner of sense you could turn the ch32v006 into a SIMD processor.  This is sort of 8 SIMD, but you could process up to 32-bits worth at once!
 
-### Horizontal D-Blocking Filter
+### Horizontal De-Blocking Filter
 
 On scanout is where we compute our horizontal deblocking filter.  Because our OLED Display has a weird scanout, we will perform the blur on the first and last pixel of every output group-of-8 pixels.
 

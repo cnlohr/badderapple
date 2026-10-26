@@ -19,9 +19,9 @@ li { margin: 2px }
 
 
 <!-- TODO
-2. Add hero frame
-3. Discuss playback
-4. Mention demo viewer.
+1. Pic of device
+2. Build Pic
+3. Link functional demo
 -->
 
 
@@ -35,6 +35,9 @@ li { margin: 2px }
 <!-- This is the main page content -->
 
 <TABLE BORDER=0 style="border-spacing:300px;border-collapse: separate;">
+
+<slide-descriptor title="Overview Start" id="overviewpart2" view="{ r:0.00000, s:0.056, x:-445.26, y:-359.97, e:'innercontainer' }"/>
+
 <slide-descriptor title="Title" id="title" view="{ r:0.00000, s:1, x:-640, y:-360, e:'titleslide' }"/>
 <TR>
 
@@ -119,7 +122,7 @@ Animation by Anira
 <td VALIGN=top class="slideCell"  slidejump="rules" id="rulesslide">
 	<div class="slideHeading">My Rules</div>
 	<DIV STYLE="position:relative;z-index:5;left:0px">
-		<div pon="rules6" style="position:absolute;left:100px;top:00px;font-size:600%;text-shadow:10px 10px 10px red,0 0 10px blue">TODO Pic of device</div>
+		<div pon="rules6" style="position:absolute;left:100px;top:00px;font-size:600%;color:red">TODO Pic of device</div>
 	</DIV>
 	<hr class="headingHR" align=left>
 	<ul style="font-size:130%">
@@ -952,7 +955,20 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 
 <tr>
 <td></td>
-<td></td>
+
+
+
+<td VALIGN=top class="slideCell" slidejump="herocellwant" id="herocellwantslide">
+	<div class="slideHeading" style="font-size:140%">Hero Cell</div>
+	<hr class="headingHR" align=left>
+	<table width=100%>
+	<tr>
+	<td valign=center>
+		<center><img src=34-hero-cell.png width=800px></center>
+	</td>
+	</tr></table>
+</td>
+
 
 
 <td VALIGN=top class="slideCell" slidejump="optimizationfinal" id="optimizationfinalslide">
@@ -990,24 +1006,24 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 <td VALIGN=top class="slideCell" slidejump="optimizationgen" id="optimizationgenslide">
 	<div class="slideHeading" style="font-size:140%">Optimization</div>
 	<hr class="headingHR" align=left>
-	<table>
+	<table width=100%>
 	<tr>
-	<td valign=center>TODO</td>
-	<td width=100px></td>
-	<td valign=center><center>TODO</center></td>
+	<td valign=center>
+		<center><img src=300_training.gif width=1200px></center>
+	</td>
 	</tr></table>
 </td>
 
 <td></td>
 
-<td align=center class="slideCell" slidejump="mloriginal" id="mloriginalslide">
-	<div style="position:relative">
+<td align=center class="slideCell" style="overflow:visible" slidejump="mloriginal" id="mloriginalslide">
+	<div style="position:relative;top:-60px">
 		<img src=100_fullres.png width=1100>
 	</div>
 </td>
 
-<td align=center class="slideCell" slidejump="mlkmeans" id="mlkmeansslide">
-	<div style="position:relative;left:90px">
+<td align=center class="slideCell" slidejump="mlkmeans" style="overflow:visible"  id="mlkmeansslide">
+	<div style="position:relative;left:90px;top:-60px">
 		<div style="position:absolute">
 			<img src=103_kmeans_tiles.png width=1100>
 		</div>
@@ -1029,8 +1045,30 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 <tr>
 
 <td></td>
-<td></td>
-<td></td>
+
+<td VALIGN=top class="slideCell" slidejump="herocellhave" id="herocellhaveslide">
+	<div class="slideHeading" style="font-size:140%">Hero Cell Editor</div>
+	<hr class="headingHR" align=left>
+	<table width=100%>
+	<tr>
+	<td valign=center>
+		<center><img src=35-hero-cell-2.png width=1200px></center>
+	</td>
+	</tr></table>
+</td>
+
+
+<td VALIGN=top class="slideCell" slidejump="herocellapply" id="herocellapplyslide">
+	<div class="slideHeading" style="font-size:140%">It works</div>
+	<hr class="headingHR" align=left>
+	<table width=100%>
+	<tr>
+	<td valign=center>
+		<center><img src=01-overview.png width=1100px></center>
+	</td>
+	</tr></table>
+</td>
+
 <td></td>
 
 <td VALIGN=top class="slideCell" slidejump="opticalflow" id="opticalflowslide">
@@ -1046,14 +1084,14 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 
 
 <td></td>
-<td align=center class="slideCell" slidejump="mldownsample" id="mldownsampleslide">
-	<div style="position:relative">
+<td align=center class="slideCell" style="overflow:visible" slidejump="mldownsample" id="mldownsampleslide">
+	<div style="position:relative;top:-60px">
 		<img src=101_downsample.png width=1100>
 	</div>
 </td>
 
-<td align=center class="slideCell" slidejump="mlquantize" id="mlquantizeslide">
-	<div style="position:relative">
+<td align=center class="slideCell" slidejump="mlquantize" style="overflow:visible" id="mlquantizeslide">
+	<div style="position:relative;top:-60px">
 		<img src=102_quantize.png width=1100>
 	</div>
 </td>
@@ -1071,8 +1109,35 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 
 <tr>
 <td></td>
-<td></td>
-<td></td>
+
+
+
+<td VALIGN=top class="slideCell" slidejump="doneneeds" id="doneneedsslide">
+	<div class="slideHeading">Needs improvement</div>
+	<hr class="headingHR" align=left>
+	<div style="position:relative">
+		<UL style="font-size:150%">
+			<li><s>Need greyscale (can't do?)</s>
+			<li><s>Too big (80kB)</s>
+			<li><s>You can see blocks</s>
+			<li><span style="position:absolute" pon=doneneeds0><s>Low visual quality</s></span><span style="position:absolute">Low visual quality</span>
+			<li pon=doneneeds1>It actually needs to work
+		</ul>
+	</div>
+</td>
+
+
+<td VALIGN=top class="slideCell" slidejump="outtatime" id="outtatimeslide">
+	<div class="slideHeading" style="font-size:140%">Outta time</div>
+	<hr class="headingHR" align=left>
+	<table width=100%>
+	<tr>
+	<td valign=center>
+		<center><img src=39-outtatime.png width=1100px></center>
+	</td>
+	</tr></table>
+</td>
+
 <td></td>
 
 <td VALIGN=top class="slideCell" slidejump="neighbortileblending" id="neighbortileblendingslide">
@@ -1221,6 +1286,148 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 
 </tr>
 
+<tr>
+<td></td>
+
+
+<td VALIGN=top class="slideCell" slidejump="horizdeblock" id="horizdeblockslide">
+	<div class="slideHeading" style="font-size:150%">Horizontal De-Blocking Filter</div>
+	<hr class="headingHR" align=left>
+	<table width=100%>
+	<tr>
+	<td valign=top>
+	<ul>
+		<li style="font-size:140%" pon=horizdeblock0>Gamma-correct:<br>0→0, 1→1, 2→3
+		<li style="font-size:140%" pon=horizdeblock1>T + ( N + P + 1 ) / 2 - 1
+		<li style="font-size:140%" pon=horizdeblock2>Need to unpack pixels
+		<li style="font-size:140%" pon=horizdeblock3>5 Operations Per Pixel (after unpack)
+		<li style="font-size:140%" pon=horizdeblock4>Too Slow
+		<li style="font-size:140%" pon=horizdeblock5>But what if?
+	</td>
+	<td valign=center>
+		<center><img src=25-edgeblur.png width=600px></center>
+	</td>
+	</tr></table>
+</td>
+
+
+
+<td VALIGN=top class="slideCell" slidejump="horizdeblock2" id="horizdeblock2slide">
+	<div class="slideHeading">We make the 13¢ uC do μC do SIMD</div>
+	<hr class="headingHR" align=left>
+	<table width=100%>
+	<tr>
+	<td valign=top>
+		<UL style="font-size:150%">
+			<li pon=horizdeblock20>Make a full truth table for all in-and-outs
+			<li pon=horizdeblock21>Use a web converter to decompose the math into gates.
+			<li pon=horizdeblock23>We only need 2-bit math
+			<li pon=horizdeblock24>Turn it into C code.
+		</ul>
+
+
+	<td valign=center>
+		<center><img src=37-mixer-logic.png width=600px pon=horizdeblock22></center>
+	</td>
+	</tr></table>
+</td>
+
+<td VALIGN=top class="slideCell" slidejump="horizdeblock3" id="horizdeblock3slide">
+	<div class="slideHeading">Operations are 32-bits</div>
+	<hr class="headingHR" align=left>
+	<div style="font-family:monospace;position:absolute">
+<font color=blue>void</font> EmitEdge( <font color=blue>graphictype</font> tgprev, <font color=blue>graphictype</font> tg, <font color=blue>graphictype</font> tgnext )<br>
+{<br>
+	<font color=teal>&nbsp&nbsp&nbsp&nbsp// pixel data is stoblue 8-pixels-at-a-time. The MSB for each pixel is</font><br>
+	<font color=teal>&nbsp&nbsp&nbsp&nbsp// the top byte, and the LSB for each pixel is the bottom byte.</font><br>
+<br>
+	<font color=blue>&nbsp&nbsp&nbsp&nbspgraphictype</font> A = tgprev >> <b>8</b>;<br>
+	<font color=blue>&nbsp&nbsp&nbsp&nbspgraphictype</font> B = tgprev;&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<font color=teal>// implied & 0xff</font><br>
+	<font color=blue>&nbsp&nbsp&nbsp&nbspgraphictype</font> C = tgnext >> <b>8</b>;<br>
+	<font color=blue>&nbsp&nbsp&nbsp&nbspgraphictype</font> D = tgnext;&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<font color=teal>// implied & 0xff</font><br>
+	<font color=blue>&nbsp&nbsp&nbsp&nbspgraphictype</font> E = tg >> <b>8</b>;<br>
+	<font color=blue>&nbsp&nbsp&nbsp&nbspgraphictype</font> F = tg;&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<font color=teal>// implied & 0xff</font><br>
+<br>
+	<font color=blue>&nbsp&nbsp&nbsp&nbspint</font> tghi = (D&E)|(B&E)|(B&C&F)|(A&D&F);&nbsp<font color=teal>// 8 bits worth of MSBs</font><br>
+	<font color=blue>&nbsp&nbsp&nbsp&nbspint</font> tglo = E|C|A|(D&F)|(B&F)|(B&D);&nbsp&nbsp&nbsp&nbsp&nbsp<font color=teal>// 8 bits worth of LSBs</font><br>
+<br>
+&nbsp&nbsp&nbsp&nbspPMEmit( (tghi << <b>8</b>) | tglo ); <font color=teal>// Write to intermediate framebuffer.</font><br>
+}
+	</div>
+</td>
+
+
+
+<td VALIGN=top class="slideCell" slidejump="notouttatime" id="notouttatimeslide">
+	<div class="slideHeading" style="font-size:140%"><i>Not</i> outta time</div>
+	<hr class="headingHR" align=left>
+	<table width=100%>
+	<tr>
+	<td valign=center>
+		<center><img src=41-not-outtatime.png width=1100px></center>
+	</td>
+	</tr></table>
+</td>
+
+
+<td VALIGN=top class="slideCell" slidejump="littletimeleft" id="littletimeleftslide">
+	<div class="slideHeading" style="font-size:140%"><i>Not</i> outta time</div>
+	<hr class="headingHR" align=left>
+	<table width=100%>
+	<tr>
+	<td valign=center>
+		<center><img src=40-outtatime.png width=1100px></center>
+	</td>
+	</tr></table>
+</td>
+
+
+<td VALIGN=top class="slideCell" slidejump="hwdesign" id="hwdesignslide">
+	<table width=100%>
+	<tr>
+	<td valign=center>
+		<center><img src=36-hardware.png width=720px></center>
+	</td>
+	</tr></table>
+</td>
+
+
+<td VALIGN=top class="slideCell" slidejump="hwbuild" id="hwbuildslide">
+	<div class="slideHeading" style="font-size:140%">Build</div>
+	<hr class="headingHR" align=left>
+	<table width=100%>
+	<tr>
+	<td valign=center>
+		<div style="left:100px;top:00px;font-size:600%;color:red">TODO Pic of device</div>
+	</td>
+	</tr></table>
+</td>
+
+
+<td VALIGN=top class="slideCell" slidejump="rawdraw" id="rawdrawslide">
+	<div class="slideHeading" style="font-size:140%">Rawdraw</div>
+	<table width=100%>
+	<tr>
+	<td valign=center>
+		<center><img src=44-rawdraw.png width=850px></center>
+	</td>
+	</tr></table>
+</td>
+
+
+<td VALIGN=top class="slideCell" slidejump="webviewer" id="webviewerslide">
+	<div class="slideHeading" style="font-size:140%">Web Viewer</div>
+	<table width=100%>
+	<tr>
+	<td valign=center>
+		<center><img src=45-demoviewer.png width=850px></center>
+	</td>
+	</tr></table>
+</td>
+
+
+</tr>
+
 </table>
 
 
@@ -1229,7 +1436,7 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 <slide-descriptor title="ML-Downsample" id="mldownsample" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'mldownsampleslide' }"/>
 <slide-descriptor title="ML-Quantize" id="mlquantize" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'mlquantizeslide' }"/>
 <slide-descriptor title="ML-KMeans" id="mlkmeans" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'mlkmeansslide' }"/>
-<slide-descriptor title="ML-Compare" id="mlcompare" sp=1 view="{ r:0.00000, s:0.340, x:-3829.37, y:-2931.37, e:'innercontainer' }"/>
+<slide-descriptor title="ML-Compare" id="mlcompare" sp=1 view="{ r:0.00000, s:0.340, x:-3829.37, y:-2901.13, e:'innercontainer' }"/>
 <slide-descriptor title="ML-Compare2" id="mlcompare2" sp=1 view="{ r:0.00000, s:0.340, x:-3818.31, y:-2545.06, e:'innercontainer' }"/>
 <slide-descriptor title="ML-Explain" id="mlexplain" sp=9 view="{ r:0.00000, s:1, x:-640, y:-360, e:'mlexplainslide' }"/>
 <slide-descriptor title="ML-LPIPS" id="lpips" sp=1 view="{ r:0.00000, s:1, x:-640, y:-360, e:'lpipsslide' }"/>
@@ -1247,10 +1454,26 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 <slide-descriptor title="ML-Optimization-Final" id="optimizationfinal" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'optimizationfinalslide' }"/>
 
 
+<slide-descriptor title="Hero Cell Want" id="herocellwant" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'herocellwantslide' }"/>
+<slide-descriptor title="Hero Cell Have" id="herocellhave" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'herocellhaveslide' }"/>
+<slide-descriptor title="Hero Cell Apply" id="herocellapply" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'herocellapplyslide' }"/>
+<slide-descriptor title="Outta Time" id="outtatime" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'outtatimeslide' }"/>
+<slide-descriptor title="Done Needs" id="doneneeds" sp=2 view="{ r:0.00000, s:1, x:-640, y:-360, e:'doneneedsslide' }"/>
+
+<slide-descriptor title="Horizontal Deblocking" id="horizdeblock" sp=6 view="{ r:0.00000, s:1, x:-640, y:-360, e:'horizdeblockslide' }"/>
+<slide-descriptor title="Horizontal Deblocking 2" id="horizdeblock2" sp=5 view="{ r:0.00000, s:1, x:-640, y:-360, e:'horizdeblock2slide' }"/>
+<slide-descriptor title="Horizontal Deblocking 3" id="horizdeblock3" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'horizdeblock3slide' }"/>
+<slide-descriptor title="Not Outta Time" id="notouttatime" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'notouttatimeslide' }"/>
+<slide-descriptor title="Little Time Left" id="littletimeleft" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'littletimeleftslide' }"/>
+<slide-descriptor title="Design" id="hwdesign" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'hwdesignslide' }"/>
+<slide-descriptor title="Build" id="hwbuild" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'hwbuildslide' }"/>
+<slide-descriptor title="Rawdraw" id="rawdraw" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'rawdrawslide' }"/>
+<slide-descriptor title="Webviewer" id="webviewer" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'webviewerslide' }"/>
 
 
 
-<slide-descriptor title="Overview Part 2" id="overviewpart2" view="{ r:0.00000, s:0.056, x:-442.43, y:-317.45, e:'innercontainer' }"/>
+
+<slide-descriptor title="Overview Final" id="overviewpart2" view="{ r:0.00000, s:0.056, x:-445.26, y:-359.97, e:'innercontainer' }"/>
 
 
 <br>
