@@ -1,6 +1,12 @@
 # badder apple
 
-# This writeup is incomplete, please do not share it on social media yet.
+> [!IMPORTANT]  
+> This writeup is incomplete, please do not share it on social media yet.
+
+> [!NOTE]
+> Conference talk slides are at: [https://cnlohr.github.io/badderapple](https://cnlohr.github.io/badderapple)
+>
+> Interactive web demo is at: [https://cnlohr.github.io/badderapple/badderapple.html](https://cnlohr.github.io/badderapple/badderapple.html)
 
 What started as my shot at bad apple on an ESP8266 ended in the biggest spiral into my longest running project. The final outcome from this project was all 6570 frames, at 64x48 pixels, with sound and code for playback in 64.5kB, running on a 10-cent ch32v006. This is the story of bad*der* apple.
 
