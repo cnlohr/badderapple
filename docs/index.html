@@ -1302,11 +1302,11 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 	</tr></table>
 	<div style="font-family:monospace;position:absolute" pon=assemblingframesfromtiles1 poff=assemblingframesfromtiles2>
 		<table>
-			<tr><td>tiles = np.fromfile( <font color=green>"blocks.dat"</font>, <font color=red>dtype</font>=np.float32).reshape( <b>-1</b>, <b>8</b>, <b>8</b>)</td></tr>
-			<tr><td>stream = np.fromfile( <font color=green>"stream.dat"</font>, <font color=red>dtype</font>=np.int32).reshape( <b>-1</b>, <b>48</b>//<b>8</b>, <b>64</b>//<b>8</b>)</td></tr>
+			<tr><td>tiles = np.fromfile(<font color=green>"blocks.dat"</font>, <font color=red>dtype</font>=np.float32).reshape(<b>-1</b>, <b>8</b>, <b>8</b>)</td></tr>
+			<tr><td>stream = np.fromfile(<font color=green>"stream.dat"</font>, <font color=red>dtype</font>=np.int32).reshape(<b>-1</b>, <b>48</b>//<b>8</b>, <b>64</b>//<b>8</b>)</td></tr>
 			<tr><td>assembled_tiles = tiles[stream]</td></tr>
-			<tr><td>assembled_tiles = assembled_tiles.transpose( <b>0</b>, <b>1</b>, <b>3</b>, <b>2</b>, <b>4</b>)</td></tr>
-			<tr><td>assembled_images = assembled_tiles.reshape( stream.shape[ <b>0</b> ],</td></tr>
+			<tr><td>assembled_tiles = assembled_tiles.transpose(<b>0</b>, <b>1</b>, <b>3</b>, <b>2</b>, <b>4</b>)</td></tr>
+			<tr><td>assembled_images = assembled_tiles.reshape(stream.shape[ <b>0</b> ],</td></tr>
 			<tr><td>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp stream.shape[ <b>1</b> ] * <b>8</b>,</td></tr>
 			<tr><td>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
 			stream.shape[ <b>2</b> ] * <b>8</b>)</td></tr>
