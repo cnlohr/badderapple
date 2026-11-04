@@ -241,8 +241,8 @@ int main()
 	AFIO->PCFR1 = AFIO_PCFR1_TIM2_RM_0 | AFIO_PCFR1_TIM2_RM_1 | AFIO_PCFR1_TIM2_RM_2;
 
 #if 1 // sound
-	TIM2->PSC = 0x0001;
-	TIM2->ATRLR = 255; // Confirmed: 255 here = PWM period of 256.
+	TIM2->PSC = 0x0000;
+	TIM2->ATRLR = 511; // Confirmed: 255 here = PWM period of 256.  -- Originally with PSC=1.  But it was too loud for some systems, so setting to PSC=0, 511 (512 period)
 
 	// for channel 1 and 2, let CCxS stay 00 (output), set OCxM to 110 (PWM I)
 	// enabling preload causes the new pulse width in compare capture register only to come into effect when UG bit in SWEVGR is set (= initiate update) (auto-clears)

@@ -27,6 +27,8 @@ flashdata : badappleplay.elf
 	$(PREFIX)-objcopy -j .fixedflash -O binary $(TARGET).elf fixedflash.bin
 	$(MINICHLINK)/minichlink -w fixedflash.bin 0x08000000
 
+everything : optionbytes flashdata all
+
 # Barf.  Ugh... I cannot figure out a way to properly pad.
 FLASH_COMMAND:=truncate -s 3328 $(TARGET).bin; $(CH32FUN)/../minichlink/minichlink -a -U -w $(TARGET).bin $(WRITE_SECTION) -B
 
