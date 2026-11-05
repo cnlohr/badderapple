@@ -12,6 +12,7 @@ playback : playback.c ba_play.h ../vpxtest/badapple_data.h
 	objdump -S $@ > $@.lst || true
 
 playback.gif : playback
+	echo "WARNING: This playback tool does not do edge blending."
 	./playback
 
 gifsicle.gif : playback.gif
