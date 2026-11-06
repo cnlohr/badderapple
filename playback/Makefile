@@ -12,7 +12,6 @@ playback : playback.c ba_play.h ../vpxtest/badapple_data.h
 	objdump -S $@ > $@.lst || true
 
 playback.gif : playback
-	echo "WARNING: This playback tool does not do edge blending."
 	./playback
 
 gifsicle.gif : playback.gif
@@ -20,6 +19,13 @@ gifsicle.gif : playback.gif
 
 playback.mp4 : playback.gif
 	ffmpeg -loglevel quiet -y -f f32le -ar 48000 -ac 1 -i audio.dump -r 30 -i playback.gif -af adelay=1350 -vf "scale=trunc(iw/2)*4:trunc(ih/2)*4" -r 30 -crf 15 playback.mp4
+
+# actually needs rawframeoutdata.dat
+helloiam : helloiam.c playback.gif
+	gcc -o $@ -g helloiam.c -std=gnu2x $(CFLAGS) $(LDFLAGS)
+
+helloiam.png : helloiam hello_i_am_blank_cnlohr.png
+	./helloiam hello_i_am_blank_cnlohr.png
 
 clean :
 	rm -rf playback

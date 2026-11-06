@@ -8,6 +8,9 @@
 
 #include "ba_play_audio.h"
 
+int rfo = 0;
+int oframe = 0;
+FILE * rawframeoutdata;
 
 #define CNFG_IMPLEMENTATION
 #include "rawdraw_sf.h"
@@ -28,6 +31,7 @@ ba_play_context ctx;
 ge_GIF * gifout;
 
 #ifdef VPX_GREY4
+
 
 int PValueAt( int x, int y, int * edge )
 {
@@ -420,12 +424,14 @@ int PixelBlend( int tgprev, int tg, int tgnext )
 	// this+(next+prev+1)/2-1 assuming 0..3, skip 2.
 	//printf( "%d\n", tg );
 
+#if 0
 	const uint8_t potable[16] = {
 		0x50, 0xf4, 0xf5, 0xf5,
 		0xf4, 0xf5, 0xfd, 0xfd,
 		0xf5, 0xfd, 0xfd, 0xfd,
 		0xf5, 0xfd, 0xfd, 0xfd,
 	};
+#endif
 
 	tg = (potable[tgprev+tgnext*4]>>(tg*2)) &0x3;
 
@@ -490,13 +496,14 @@ void EmitSamples8()
 		}
 	}
 
+	oframe++;
 
 	int x, y;
 	for( y = 0; y < RESY; y++ )
 	for( x = 0; x < RESX; x++ )
 	{
 		int vi = 0;
-#ifndef NO_DEBLOCKING_FILTER
+#if NO_DEBLOCKING_FILTER == 0
 		if( ( y & 7 ) == 0 )
 		{
 			vi = PixelBlend( fba[y+1][x], fba[y][x], (y>0)?fba[y-1][x]:fba[y+1][x] );
@@ -510,6 +517,11 @@ void EmitSamples8()
 		{
 			vi = fba[y][x];
 		}
+
+		uint8_t vio = vi;
+		fwrite( &vio, 1, 1, rawframeoutdata );
+		rfo++;
+
 		float f = vi * 128;
 		if( f < 0 ) f = 0; 
 		if( f > 255.5 ) f = 255.5;
@@ -531,6 +543,8 @@ int main()
 {
 	int x, y;
 	int frame = 0;
+
+	rawframeoutdata = fopen( "rawframeoutdata.dat", "wb" );
 
 	CNFGSetup( "test", 1024, 768 );
 
@@ -565,6 +579,9 @@ int main()
 				{
 					int sample = SampleValueAt( x, y );
 					int f = sample;
+					uint8_t vio = f;
+					fwrite( &vio, 1, 1, rawframeoutdata );
+
 #ifdef VPX_GREY4
 					f = f * 85;
 #elif defined( VPX_GREY3 )
@@ -581,10 +598,10 @@ int main()
 					uint32_t color = (v<<24) | (v<<16) | (v<<8) | 0xFF;
 					CNFGColor( color );
 					CNFGTackRectangle( x*ZOOM, y*ZOOM, x*ZOOM+ZOOM, y*ZOOM+ZOOM );
+
 				}
 			}
 		}
-
 #endif
 
 		// Dither framerate of output.
@@ -607,7 +624,11 @@ int main()
 		}
 
 		CNFGSwapBuffers();
+
 	}
+
+	fclose( rawframeoutdata );
+	fprintf( stderr, "RFO: %d / %d\n", rfo, oframe );
 
 	ge_close_gif( gifout );
 
