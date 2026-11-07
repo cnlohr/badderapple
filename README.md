@@ -1,9 +1,11 @@
 # badder apple
 
 > [!IMPORTANT]  
-> This writeup is incomplete, please do not share it on social media yet.
+> The Hackaday X 2026 talk will be posted here once released by hackaday.
 
 > [!NOTE]
+> Conference Talk Recording is here: [https://www.youtube.com/live/fTX_KNxXj-M](https://www.youtube.com/live/fTX_KNxXj-M)
+>
 > Hackaday X 2026 Superconference talk slides are at: [https://cnlohr.github.io/badderapple](https://cnlohr.github.io/badderapple)
 >
 > Interactive web demo is at: [https://cnlohr.github.io/badderapple/badderapple.html](https://cnlohr.github.io/badderapple/badderapple.html)
