@@ -24,8 +24,8 @@ playback.mp4 : playback.gif
 helloiam : helloiam.c playback.gif
 	gcc -o $@ -g helloiam.c -std=gnu2x $(CFLAGS) $(LDFLAGS)
 
-helloiam.png : helloiam hello_i_am_blank_cnlohr.png
-	./helloiam hello_i_am_blank_cnlohr.png
+helloiam.png : helloiam hello_i_am_blank_input.png
+	./helloiam hello_i_am_blank_input.png
 
 clean :
 	rm -rf playback
