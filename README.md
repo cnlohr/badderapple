@@ -1,7 +1,7 @@
 # badder apple
 
 > [!IMPORTANT]  
-> This writeup is incomplete, please do not share it on social media yet.
+> The Hackaday X 2026 talk will be posted here once released by hackaday.
 
 > [!NOTE]
 > Hackaday X 2026 Superconference talk slides are at: [https://cnlohr.github.io/badderapple](https://cnlohr.github.io/badderapple)
