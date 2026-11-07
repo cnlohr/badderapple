@@ -4,7 +4,7 @@
 > This writeup is incomplete, please do not share it on social media yet.
 
 > [!NOTE]
-> Conference talk slides are at: [https://cnlohr.github.io/badderapple](https://cnlohr.github.io/badderapple)
+> Hackaday X 2026 Superconference talk slides are at: [https://cnlohr.github.io/badderapple](https://cnlohr.github.io/badderapple)
 >
 > Interactive web demo is at: [https://cnlohr.github.io/badderapple/badderapple.html](https://cnlohr.github.io/badderapple/badderapple.html)
 

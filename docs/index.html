@@ -18,11 +18,6 @@ li { margin: 2px }
 </HEAD>
 
 
-<!-- TODO
-1. Pic of device
-2. Build Pic
--->
-
 
 <BODY onLoad="onLoad()" STYLE="margin:0;padding:0">
 <DIV ID=root STYLE="position:absolute;left:0px;right:0px;width:100%;height:100vh;marin:0;padding:0;box-sizing:border-box;overflow:hidden">
@@ -41,8 +36,8 @@ li { margin: 2px }
 <slide-descriptor title="Overview Start" id="overviewpart2" view="{ r:0.00000, s:0.056, x:-445.26, y:-359.97, e:'innercontainer' }"/>
 
 <slide-descriptor title="Title" id="title" view="{ r:0.00000, s:1, x:-640, y:-360, e:'titleslide' }"/>
-<slide-descriptor title="Title" id="helloiame" view="{ r:0.00000, s:1, x:-640, y:-360, e:'helloiamselide' }"/>
 <slide-descriptor title="Title" id="helloiamc" view="{ r:0.00000, s:1, x:-640, y:-360, e:'helloiamcslide' }"/>
+<slide-descriptor title="Title" id="helloiame" view="{ r:0.00000, s:1, x:-640, y:-360, e:'helloiamselide' }"/>
 <slide-descriptor title="Title" id="weboverview" view="{ r:0.00000, s:1, x:-640, y:-360, e:'weboverviewslide' }"/>
 
 <slide-descriptor title="MentionGithub0" id="mentiongithub0" sp=0 view="{ r:0.00000, s:0.302, x:-109.61, y:-335.27, e:'githubpage' }"/>
@@ -57,13 +52,15 @@ li { margin: 2px }
 <center><a href=badderapple.html><img src=01-overview.png width=1200></a></center>
 </td>
 
+<TD HALIGN=center class="slideCell" slidejump="helloiame" id="helloiamselide">
+<center><img src=A19-helloiamevan.png width=1080></center>
+</td>
+
+
 <TD HALIGN=center class="slideCell" slidejump="helloiamc" id="helloiamcslide">
 <center><img src=A18-helloiamcnlohr.png width=1080></center>
 </td>
 
-<TD HALIGN=center class="slideCell" slidejump="helloiame" id="helloiamselide">
-<center><img src=A19-helloiamevan.png width=1080></center>
-</td>
 
 <TD HALIGN=center class="slideCell" slidejump="title" id="titleslide">
 <div style="position:relative">
@@ -196,22 +193,20 @@ Memory region         Used Size  Region Size  %age Used
 	<div class="slideHeading">Output / Input References</div>
 	<hr class="headingHR" align=left>
 	<table width=100%><tr><td>
-		<span style="font-size:180%"><b>Forwards</b></span>
+		<span style="font-size:180%"><b>Output-ref</b></span>
 		<UL style="font-size:150%">
-			<li pon="inputoutputref0">Reference output
-			<li pon="inputoutputref1">Common (gzip, zstd)
-			<li pon="inputoutputref2">Typically better
-			<li pon="inputoutputref3">Buffer output
-			<li pon="inputoutputref4">RAM hungry
+			<li pon="inputoutputref0">Common (gzip, zstd)
+			<li pon="inputoutputref1">Typically better
+			<li pon="inputoutputref2">Buffer output
+			<li pon="inputoutputref3">RAM hungry
 		</ul>
 	</td><td>
-		<span style="font-size:180%"><b>Backwards</b></span>
+		<span style="font-size:180%"><b>Input-ref</b></span>
 		<UL style="font-size:150%">
-			<li pon="inputoutputref0">Reference input
-			<li pon="inputoutputref1">Unusual
-			<li pon="inputoutputref2">Typically worse
-			<li pon="inputoutputref3">Random input access
-			<li pon="inputoutputref4"><b>Tiny RAM</b>
+			<li pon="inputoutputref0">Unusual
+			<li pon="inputoutputref1">Typically worse
+			<li pon="inputoutputref2">Random input access
+			<li pon="inputoutputref3"><b>Tiny RAM</b>
 		</ul>
 	</td></tr></table>
 </td>
@@ -596,7 +591,7 @@ a(1)  b(1)</pre></td>
 <slide-descriptor title="Structural Compression-pre" id="structuraln" sp=5 view="{ r:0.00000, s:1, x:-640, y:-360, e:'structuralnslide' }"/>
 <slide-descriptor title="Structural Compression" id="structurala" sp=5 view="{ r:0.00000, s:1, x:-640, y:-360, e:'structuralaslides' }"/>
 <slide-descriptor title="Song Notes" id="songnotes" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'songnotesslide' }"/>
-<slide-descriptor title="Input / Output References" id="inputoutputref" sp=5 view="{ r:0.00000, s:1, x:-640, y:-360, e:'inputoutputrefslide' }"/>
+<slide-descriptor title="Input / Output References" id="inputoutputref" sp=4 view="{ r:0.00000, s:1, x:-640, y:-360, e:'inputoutputrefslide' }"/>
 <slide-descriptor title="Reverse LZSS" id="reverselzss" sp=0 view="{ r:0.00000, s:1, x:-640, y:-360, e:'reverselzssslide' }"/>
 
 
@@ -814,8 +809,8 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 			<li pon="whatisrangecoding0"><span style="font-family:monospace">b</span> = a bit (0 or 1)
 			<li pon="whatisrangecoding1"><span style="font-family:monospace">prob</span> = probability of a 0.
 			<ul><li pon="whatisrangecoding2">integer, 0..255 out of 256</ul>
-			<li pon="whatisrangecoding3">When encoding: <span style="font-family:monospace"><b>vpx_write</b>(w, b, prob);</span>
-			<li pon="whatisrangecoding4">When decoding: <span style="font-family:monospace">b = <b>vpx_read</b>(w, prob);</span>
+			<li pon="whatisrangecoding3">When encoding: <span style="font-family:monospace"><b>vpx_write</b>(b, prob);</span>
+			<li pon="whatisrangecoding4">When decoding: <span style="font-family:monospace">b = <b>vpx_read</b>(prob);</span>
 			<li pon="whatisrangecoding5"><a href=https://github.com/cnlohr/vpxcoding>github.com/cnlohr/vpxcoding</a>
 			<li pon="whatisrangecoding6"><a href=https://codeberg.org/cnlohr/speedtropy>codeberg.org/cnlohr/speedtropy</a>
 		</ul>
@@ -946,7 +941,7 @@ int <font color=lightblue><b>SpeedtropyEmbeddedRead</b></font>( <font color=red>
 </center>
 			</td>
 <td style="font-size:140%" pon=entropytree5><center><table border=1>
-<tr><td>85%</td><td>76%</td><td>24%</td></tr></table>
+<tr><td>85%</td><td>76%</td><td>67%</td></tr></table>
 	<span pon=entropytree6>Bit order<br>doesn't matter.</span><br>
 	<span pon=entropytree7>Tree only overhead</span>
 </center>
